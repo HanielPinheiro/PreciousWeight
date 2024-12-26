@@ -1,6 +1,6 @@
 # Balança Neonatal
 ## Descrição
-Entendendo que o foco do projeto é aprimorar o produto para um modelo mais próximo do estado da arte, que consecultivamente representa aquele pronto para o mercado, vamos aprimorar o fluxo do projeto, de modo ao sistema de pesagem ser sincronizado a um aplicativo por meio de um microcontrolador com interface Wi-Fi (NodeMCU).
+Entendendo que o foco do projeto é aprimorar o produto para um modelo mais próximo do estado da arte - aquele pronto para o mercado - vamos aprimorar o fluxo do projeto de modo que o sistema de pesagem possa ser sincronizado a um aplicativo através de um microcontrolador com interface Wi-Fi (NodeMCU).
 
 ## Desenvolvimento do software
 <br/>
@@ -19,7 +19,7 @@ A central controladora desaparecerá. <br/>
 A tela de interface será o aplicativo.
 
 ## Sugestões de nome pro produto e pro app:
- - Precious Weight
+ - Precious Weight - Escolhi esse, podemos mudar depois.
  - Prem Balance
  - IncuBalance
  - Weight Premies
