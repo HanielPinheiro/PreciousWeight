@@ -1,4 +1,4 @@
-# Balançaa Neonatal
+# Balança Neonatal
 ## Descrição
 Entendendo que o foco do projeto é aprimorar o produto para um modelo mais próximo do estado da arte, que consecultivamente representa aquele pronto para o mercado, vamos aprimorar o fluxo do projeto, de modo ao sistema de pesagem ser sincronizado a um aplicativo por meio de um microcontrolador com interface Wi-Fi (NodeMCU).
 
