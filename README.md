@@ -1,25 +1,43 @@
-# Balançaa Neonatal
-## Descrição
-Entendendo que o foco do projeto é aprimorar o produto para um modelo mais próximo do estado da arte, que consecultivamente representa aquele pronto para o mercado, vamos aprimorar o fluxo do projeto, de modo ao sistema de pesagem ser sincronizado a um aplicativo por meio de um microcontrolador com interface Wi-Fi (NodeMCU).
+# Fluxo da API
 
-## Desenvolvimento do software
-<br/>
-O design será feito em FIGMA. <br/>
-O app será feito em Flutter. <br/>
-Utilizar-se-á de APIS feita em Java para testar a sincronia entre App e MCU. <br/>
-Por fim, a API passará para a nuvem na AWS, onde o sistema será avaliado. <br/>
-A arquitetura do App é de MVC, e o desenvolvimento será orientado a componentes/módulos. <br/>
+## Passo 1: Seleção e Verificação da Balança
 
-## Desenvolvimento do hardware
-<br/>
-As células de carga serão as mesmas.<br/>
-A base da esturtura e o acabamento serão aperfeiçoados. <br/>
-O Arduino será substituído pelo NodeMCU. <br/> 
-A central controladora desaparecerá. <br/>
-A tela de interface será o aplicativo.
+Verifique o estado atual da balança na tabela balanca:
 
-## Sugestões de nome pro produto e pro app:
- - Precious Weight
- - Prem Balance
- - IncuBalance
- - Weight Premies
+ - Estado_Balanca = 0 (vaga): A balança está disponível para uso.
+ - Estado_Balanca = 1 (operante): A balança está em uso.
+ - Estado_Balanca = 2 (inoperante): A balança não está funcional.
+
+Ao alterar o estado da balança:
+
++ Atualize o campo Estado_Balanca na tabela balanca.
++ Crie um registro na tabela log_balanca com os seguintes valores:
+  + data_log: Timestamp da mudança.
+  + id_balanca: Identificação da balança.
+  + estado_balanca: Estado anterior.
+  + novo_estado_balanca: Novo estado.       
+        
+
+## Passo 2: Vinculação do Paciente à Balança
+
+Ao associar um paciente a uma balança:
+
+- Verifique se a balança está operante (Estado_Balanca = 1).
+- Atualize os registros necessários para vincular o paciente.
+
+Crie um registro na tabela log_paciente:
+
+  - data_log: Timestamp do vínculo.
+  - id_paciente: ID do paciente.
+  - id_balanca: ID da balança anteriormente usada (ou NULL se for a primeira vez).
+  - novo_id_balanca: ID da nova balança vinculada.
+
+## Passo 3: Registro de Pesagem
+
+Após o paciente ser vinculado a uma balança:
+
+- Registre o peso na tabela peso com os seguintes valores:
+  - data_peso: Data e hora da medição.
+  - id_balanca: ID da balança usada.
+  - id_paciente: ID do paciente.
+  - peso: Valor medido (em miligramas ou gramas, conforme resolução mínima da balança).
