@@ -3,6 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 
 class Definitions {
   static double opacity = 1;
+  static EdgeInsets top_30 = EdgeInsets.fromLTRB(0, 30, 0, 0);
+  static EdgeInsets top_40 = EdgeInsets.fromLTRB(0, 40, 0, 0);
   static EdgeInsets top_50 = EdgeInsets.fromLTRB(0, 50, 0, 0);
   static EdgeInsets all = EdgeInsets.all(20);
 
@@ -17,6 +19,11 @@ class Definitions {
 
   static TextStyle amaranth_20_white = GoogleFonts.amaranth(fontSize: 20, color: white);
   static TextStyle amaranth_24_white = GoogleFonts.amaranth(fontSize: 24, color: white);
+  static TextStyle amaranth_29_black = GoogleFonts.amaranth(fontSize: 29, color: partial_black);
   static TextStyle baloo2_24_white = GoogleFonts.baloo2(fontSize: 24, fontWeight: FontWeight.w800, color: white);
+  static TextStyle roboto_32_black = GoogleFonts.robotoFlex(fontSize: 32, color: Definitions.partial_black);
+  static TextStyle notosans_50_white = GoogleFonts.notoSansKr(fontSize: 50, color: Definitions.white);
+  static TextStyle caprasimo_50_orange = GoogleFonts.caprasimo(fontSize: 50, color: Definitions.strong_orange);
+
 
 }

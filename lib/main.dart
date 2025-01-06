@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'pages/login.dart';
+import 'pages/home.dart';
 
 void main() {
-  runApp(Orchestror());
+    runApp(Orchestror());
 }
 
 class Orchestror extends StatelessWidget {
@@ -16,10 +16,14 @@ class Orchestror extends StatelessWidget {
       child: MaterialApp(
         title: 'Precious Weight',
         theme: ThemeData(useMaterial3: true),
-        home: LoginPage(),
+        home: HomePage(),
       ),
     );
   }
 }
 
-class GlobalItens extends ChangeNotifier {/* To be used*/}
+class GlobalItens extends ChangeNotifier {
+  /* To be used*/
+}
+
+

@@ -1,8 +1,8 @@
-import 'package:app_files/structures/definitions.dart';
 import 'package:flutter/material.dart';
+import 'definitions.dart';
 
 class BasicStructureOfViews {
-  static Widget Login(Widget? childrens_top, Widget? childrens_down) {
+  static Login(Widget? childrensTop, Widget? childrensDown) {
     return Column(children: <Widget>[
       Expanded(
         flex: 4, // 40%
@@ -11,7 +11,7 @@ class BasicStructureOfViews {
             child: Padding(
                 /*Aqui, padding 50 em top para dar espaço no topo e não prejudicar logotipo*/
                 padding: Definitions.top_50,
-                child: Container(color: Definitions.white, child: childrens_top))),
+                child: Container(color: Definitions.white, child: childrensTop))),
       ),
       Expanded(
           flex: 6, // 60%
@@ -20,42 +20,33 @@ class BasicStructureOfViews {
               child: Padding(
                 /*Aqui, padding 50 em top para dar espaço no topo e não prejudicar logotipo*/
                 padding: Definitions.all,
-                child: Container(color: Definitions.blue, child: childrens_down),
+                child: Container(color: Definitions.blue, child: childrensDown),
               )))
     ]); //,
   }
 
-  static RoundedInput(String text) {
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(text, style: Definitions.amaranth_20_white),
-      SizedBox(height: 5),
-      TextFormField(
-        decoration: InputDecoration(
-          filled: true,
-          fillColor: Definitions.white,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
-        ),
+  static Home(Widget? childrensTop, Widget? childrensMid, Widget? childrensDown) {
+    return Column(children: <Widget>[
+      Expanded(
+        flex: 10, // 10%
+        child: Container(
+            color: Definitions.white,
+            child: Padding(padding: Definitions.top_30, child: Container(color: Definitions.white, child: childrensTop))),
       ),
-    ]);
-  }
-
-  static AlignedTextButton(String text, TextStyle style, Alignment align, VoidCallback? action) {
-    return Align(
-        alignment: align, //Alignment.centerRight,
-        child: TextButton(
-            onPressed: action, //() { },
-            child: Text(text, style: style) //Definitions.amaranth_20_white),
-            ));
-  }
-
-  static RoundedElevatedButton(String text, Color color, TextStyle style, VoidCallback? action) {
-    return ElevatedButton(
-        onPressed: action,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: color,
-          padding: const EdgeInsets.symmetric(vertical: 7),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-        ),
-        child: Text(text, style: style));
+      Expanded(
+        flex: 75, // 75%
+        child: Container(
+            color: Definitions.blue,
+            child: Padding(padding: Definitions.top_40, child: Container(color: Definitions.blue, child: childrensMid))),
+      ),
+      Expanded(
+          flex: 15, // 15%
+          child: Container(
+              color: Definitions.strong_orange,
+              child: Padding(
+                padding: Definitions.all,
+                child: Container(color: Definitions.strong_orange, child: childrensDown),
+              )))
+    ]); //,
   }
 }
