@@ -1,6 +1,7 @@
+import 'package:app_files/pages/login/login.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'pages/home.dart';
+import 'pages/home/home.dart';
 
 void main() {
     runApp(Orchestror());
@@ -16,7 +17,7 @@ class Orchestror extends StatelessWidget {
       child: MaterialApp(
         title: 'Precious Weight',
         theme: ThemeData(useMaterial3: true),
-        home: HomePage(),
+        home: LoginPage(),
       ),
     );
   }

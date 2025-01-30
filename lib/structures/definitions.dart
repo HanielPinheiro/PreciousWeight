@@ -8,7 +8,7 @@ class Definitions {
   static EdgeInsets top_50 = EdgeInsets.fromLTRB(0, 50, 0, 0);
   static EdgeInsets all = EdgeInsets.all(20);
 
-  static Color strong_orange = Color.fromRGBO(255, 120, 0, opacity);
+  static Color strongOrange = Color.fromRGBO(255, 120, 0, opacity);
   static Color medium_orange = Color.fromRGBO(255, 182, 118, opacity);
   static Color light_orange = Color.fromRGBO(250, 151, 63, opacity);
   static Color blue = Color.fromRGBO(92, 94, 163, opacity);
@@ -21,9 +21,9 @@ class Definitions {
   static TextStyle amaranth_24_white = GoogleFonts.amaranth(fontSize: 24, color: white);
   static TextStyle amaranth_29_black = GoogleFonts.amaranth(fontSize: 29, color: partial_black);
   static TextStyle baloo2_24_white = GoogleFonts.baloo2(fontSize: 24, fontWeight: FontWeight.w800, color: white);
-  static TextStyle roboto_32_black = GoogleFonts.robotoFlex(fontSize: 32, color: Definitions.partial_black);
+  static TextStyle roboto_32_black = GoogleFonts.robotoFlex(fontWeight: FontWeight.normal, fontSize: 32, color: Definitions.partial_black);
   static TextStyle notosans_50_white = GoogleFonts.notoSansKr(fontSize: 50, color: Definitions.white);
-  static TextStyle caprasimo_50_orange = GoogleFonts.caprasimo(fontSize: 50, color: Definitions.strong_orange);
+  static TextStyle caprasimo_50_orange = GoogleFonts.caprasimo(fontSize: 50, color: Definitions.strongOrange);
 
 
 }

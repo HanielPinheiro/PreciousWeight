@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'definitions.dart';
 
 class BasicStructureOfViews {
-  static Login(Widget? childrensTop, Widget? childrensDown) {
+  static Widget Login(Widget? childrensTop, Widget? childrensDown) {
     return Column(children: <Widget>[
       Expanded(
         flex: 4, // 40%
@@ -25,7 +25,7 @@ class BasicStructureOfViews {
     ]); //,
   }
 
-  static Home(Widget? childrensTop, Widget? childrensMid, Widget? childrensDown) {
+  static Widget Home(Widget? childrensTop, Widget? childrensMid, Widget? childrensDown) {
     return Column(children: <Widget>[
       Expanded(
         flex: 10, // 10%
@@ -42,10 +42,10 @@ class BasicStructureOfViews {
       Expanded(
           flex: 15, // 15%
           child: Container(
-              color: Definitions.strong_orange,
+              color: Definitions.strongOrange,
               child: Padding(
                 padding: Definitions.all,
-                child: Container(color: Definitions.strong_orange, child: childrensDown),
+                child: Container(color: Definitions.strongOrange, child: childrensDown),
               )))
     ]); //,
   }
