@@ -1,30 +1,17 @@
-import 'package:app_files/pages/login/login.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'pages/home/home.dart';
+import 'views/login/login.dart';
 
-void main() {
-    runApp(Orchestror());
-}
+void main() => runApp(PreciousWeightApp());
 
-class Orchestror extends StatelessWidget {
-  const Orchestror({super.key});
-
+class PreciousWeightApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (context) => GlobalItens(),
-      child: MaterialApp(
-        title: 'Precious Weight',
-        theme: ThemeData(useMaterial3: true),
-        home: LoginPage(),
-      ),
+    return MaterialApp(
+      title: 'Precious Weight',
+      themeMode: ThemeMode.system,
+      theme: ThemeData.light(useMaterial3: true),
+      darkTheme: ThemeData.dark(useMaterial3: true),
+      home: const LoginPage(), // Start with the login page
     );
   }
 }
-
-class GlobalItens extends ChangeNotifier {
-  /* To be used*/
-}
-
-
