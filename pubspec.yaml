@@ -1,6 +1,6 @@
-name: compass_app
+name: precious_weight
 description: >-
-  The app that permiss monitore real-time data of the baby scales
+  The app that make possible to monitor in real-time the data of baby scales
 publish_to: none
 version: 0.1.0
 

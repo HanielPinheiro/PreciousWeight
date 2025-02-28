@@ -1,4 +1,4 @@
-import 'package:compass_app/models/weight/weight.dart';
+import '../../models/weight/weight.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../design/colors.dart';

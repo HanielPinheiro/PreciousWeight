@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../repository/design/fonts.dart';
 import '../../repository/widgets/menu.dart';
 
 class LoginPage extends StatefulWidget {
@@ -21,13 +22,14 @@ class _LoginPageState extends State<LoginPage> {
           children: <Widget>[
             const SizedBox(height: 80.0),
             Column(children: <Widget>[
-              Icon(
-                Icons.cabin,
-                size: 100,
-                semanticLabel: 'logo',
-              ),
+              Image.asset("assets/imgs/logo.png", fit: BoxFit.fitWidth),
               const SizedBox(height: 16.0),
-              Text('GOMA', style: Theme.of(context).textTheme.headlineSmall)
+              RichText(
+                  textAlign: TextAlign.center,
+                  text: TextSpan(children: [
+                    TextSpan(text: 'Precious ', style: notosans_50_blue),
+                    TextSpan(text: 'Weight', style: caprasimo_50_orange),
+                  ])),
             ]),
             const SizedBox(height: 120.0),
             TextField(controller: _usernameController, decoration: const InputDecoration(prefixIcon: Icon(Icons.person), labelText: 'Username')),
