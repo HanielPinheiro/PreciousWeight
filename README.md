@@ -46,9 +46,9 @@ Entendendo que o foco do projeto é aprimorar o produto para um modelo mais pró
 - password (Not Null)
 - pepper //is a hash that is added to the password before it be crypto. It is splited in midlle, first half go in the end of passwor, last half go in beggining
 - salt (Not Null) //is a hash that will be the crypto key to password
-** The user input the password, password added by pepper, crypto by salt, must match password in db **
-** if user reset password, generate new salt and pepper, generate random combination to be the password sended by e-mail **
-** the data sended to api must be crypto by a algorithm that dont need key, like md5 **
+` The user input the password, password added by pepper, crypto by salt, must match password in db `
+` if user reset password, generate new salt and pepper, generate random combination to be the password sended by e-mail `
+` the data sended to api must be crypto by a algorithm that dont need key, like md5 `
 
 ## table: scales
 - cd_scale
