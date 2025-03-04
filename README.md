@@ -56,7 +56,6 @@ Entendendo que o foco do projeto é aprimorar o produto para um modelo mais pró
 - eFuse_MAC
 - provision_id `nome do dispositivo  -> PW_ + Wifi_MAC`
 - pop
-- key
 - uuid
 `To think about...`
 - decryptKey (Not Null) //Periodically changed
