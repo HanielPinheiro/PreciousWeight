@@ -15,10 +15,10 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+    return SafeArea (
+      child: Scaffold(
+        body: ListView(
+          padding: const EdgeInsets.symmetric(horizontal: 8.0),
           children: <Widget>[
             const SizedBox(height: 80.0),
             Column(children: <Widget>[
@@ -27,41 +27,63 @@ class _LoginPageState extends State<LoginPage> {
               RichText(
                   textAlign: TextAlign.center,
                   text: TextSpan(children: [
-                    TextSpan(text: 'Precious ', style: notosans_50_blue),
-                    TextSpan(text: 'Weight', style: caprasimo_50_orange),
-                  ])),
+                    TextSpan(text: 'Precious ', style: notosans_50.copyWith(
+                      color:Theme.of(context).colorScheme.onPrimary,
+                    )),
+                    TextSpan(text: 'Weight', style: caprasimo_50.copyWith(
+                      color:Theme.of(context).colorScheme.onSecondary,
+                    ))
+                  ])
+              ),
             ]),
             const SizedBox(height: 120.0),
-            TextField(controller: _usernameController, decoration: const InputDecoration(prefixIcon: Icon(Icons.person), labelText: 'Username')),
+            TextField(controller: _usernameController,
+                style: TextStyle(color: Theme.of(context).colorScheme.primary),
+                decoration: InputDecoration(
+                  prefixIcon: Icon(Icons.person, color: Theme.of(context).colorScheme.primary),
+                  labelText: 'Username',
+                  labelStyle: TextStyle(color: Theme.of(context).colorScheme.primary),
+                  hintText: 'Digite seu usuário',
+                  hintStyle: TextStyle(color: Theme.of(context).colorScheme.primary),
+                  enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Theme.of(context).colorScheme.primary)),
+                  focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Theme.of(context).colorScheme.secondary)),
+                ),
+            ),
             const SizedBox(height: 12.0),
-            TextField(controller: _passwordController, decoration: const InputDecoration(prefixIcon: Icon(Icons.password), labelText: 'Password'), obscureText: true),
+            TextField(controller: _passwordController,
+                style: TextStyle(color: Theme.of(context).colorScheme.primary),
+                decoration: InputDecoration(
+                  prefixIcon: Icon(Icons.password, color: Theme.of(context).colorScheme.primary),
+                  labelText: 'Password',
+                  labelStyle: TextStyle(color: Theme.of(context).colorScheme.primary),
+                  enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Theme.of(context).colorScheme.primary)),
+                  focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Theme.of(context).colorScheme.secondary)),
+                ),
+              obscureText: true),
+            const SizedBox(height: 20.0),
             OverflowBar(
               alignment: MainAxisAlignment.end,
               children: <Widget>[
                 TextButton(
-                  onPressed: () {
-                    _usernameController.clear();
-                    _passwordController.clear();
-                  },
-                  style: TextButton.styleFrom(backgroundColor: Theme.of(context).scaffoldBackgroundColor, foregroundColor: Theme.of(context).appBarTheme.foregroundColor),
+                  onPressed: () {_usernameController.clear();_passwordController.clear();},
+                  style: TextButton.styleFrom(
+                      foregroundColor: Theme.of(context).colorScheme.primary,
+                      backgroundColor: Theme.of(context).colorScheme.surface,
+                      side: BorderSide(color: Theme.of(context).colorScheme.primary, width: 1.0, style: BorderStyle.solid,),
+                      padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  ),
                   child: const Text('CANCEL'),
                 ),
+                const SizedBox(width: 8.0),
                 ElevatedButton.icon(
-                  icon: Icon(
-                    Icons.login,
-                    color: Theme.of(context).appBarTheme.foregroundColor,
-                  ),
+                  icon: Icon(Icons.login,color: Theme.of(context).colorScheme.surface,),
                   label: const Text('LOGIN'),
-                  onPressed: () {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (context) => MenuManager()),
-                    );
-                  },
+                  onPressed: () {Navigator.pushReplacement( context,MaterialPageRoute(builder: (context) => MenuManager()),);},
                   style: ElevatedButton.styleFrom(
-                    foregroundColor: Theme.of(context).appBarTheme.foregroundColor,
-                    backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
-                    elevation: 10.0,
+                    foregroundColor: Theme.of(context).colorScheme.surface,
+                    backgroundColor: Theme.of(context).colorScheme.onSecondary,
+                    elevation: 4.0,
+                    // side: BorderSide(color: Theme.of(context).colorScheme.onSecondary, width: 1.0, style: BorderStyle.solid,),
                   ),
                 ),
               ],

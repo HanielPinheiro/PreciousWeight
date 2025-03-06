@@ -1,14 +1,14 @@
-import '../../models/weight/weight.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import '../../models/weight/weight.dart';
 import '../design/colors.dart';
+import '../design/design_rules.dart';
 import '../design/fonts.dart';
-import '../design/theme.dart';
 
 class ElementsOfViews {
   static Widget RoundedInput(String text) {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(text, style: amaranth_20_white),
+      Text(text, style: amaranth_20),
       SizedBox(height: 5),
       TextFormField(
         decoration: InputDecoration(
@@ -50,14 +50,14 @@ class ElementsOfViews {
           padding: EdgeInsets.all(9),
           decoration: BoxDecoration(
             color: white, // Background color
-            border: Border.all(color: partial_black),
+            border: Border.all(color: black),
             borderRadius: BorderRadius.circular(15),
           ),
           child: Row(
             children: [
               Image.asset("assets/imgs/$lbl_img", width: 80, height: 80, fit: BoxFit.cover),
               SizedBox(width: 12),
-              Expanded(child: Text(label, style: amaranth_29_black)),
+              Expanded(child: Text(label, style: amaranth_29)),
             ],
           ),
         ),
@@ -87,7 +87,7 @@ class ElementsOfViews {
           alignment: Alignment.center, // Centers the text inside the card
           child: Text(
             label,
-            style: amaranth_29_black,
+            style: amaranth_29,
             textAlign: TextAlign.center, // Ensures text alignment
           ),
         ),

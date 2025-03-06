@@ -22,8 +22,8 @@ class HomePage extends StatelessWidget {
       RichText(
         textAlign: TextAlign.center,
         text: TextSpan(children: [
-          TextSpan(text: 'Precious ', style: notosans_50_blue),
-          TextSpan(text: 'Weight', style: caprasimo_50_orange),
+          TextSpan(text: 'Precious ', style: notosans_50),
+          TextSpan(text: 'Weight', style: caprasimo_50),
         ]),
       ),
       SizedBox(height: 65),

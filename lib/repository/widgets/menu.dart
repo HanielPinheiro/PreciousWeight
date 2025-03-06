@@ -5,7 +5,7 @@ import '../../views/home/home.dart';
 import '../../views/login/login.dart';
 import '../../views/logs/logs.dart';
 import '../../views/scales/scales.dart';
-import '../design/constants.dart';
+import '../helper/constants.dart';
 
 class MenuManager extends StatefulWidget {
   @override

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:precious_weight/repository/design/theme.dart';
 import 'views/login/login.dart';
 
 void main() => runApp(PreciousWeightApp());
@@ -9,8 +10,8 @@ class PreciousWeightApp extends StatelessWidget {
     return MaterialApp(
       title: 'Precious Weight',
       themeMode: ThemeMode.system,
-      theme: ThemeData.light(useMaterial3: true),
-      darkTheme: ThemeData.dark(useMaterial3: true),
+      theme: PreciousWeightTheme.light(),
+      darkTheme: PreciousWeightTheme.dark(),
       home: const LoginPage(), // Start with the login page
     );
   }
