@@ -1,2 +1,0 @@
-D:/CoisasDoHani/PreciousWeight_App/android/app/.cxx/Debug/656873g6/x86/CMakeFiles/edit_cache.dir
-D:/CoisasDoHani/PreciousWeight_App/android/app/.cxx/Debug/656873g6/x86/CMakeFiles/rebuild_cache.dir

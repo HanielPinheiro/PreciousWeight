@@ -7,14 +7,14 @@ version: 0.1.0
 environment:
   sdk: ^3.5.0
 dependencies:
-  fl_chart: ^0.70.2
   flutter:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
   google_fonts: ^6.2.1
-  mobile_scanner: ^6.0.6
   pretty_qr_code: ^3.3.0
+  fl_chart: ^0.70.2
+  mobile_scanner: ^6.0.7
 
 dev_dependencies:
   flutter_test:
