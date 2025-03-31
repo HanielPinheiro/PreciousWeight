@@ -12,14 +12,17 @@ class ScaleDetails extends StatelessWidget {
   Widget build(
     BuildContext context,
   ) {
-    return SafeArea(child: Scaffold(appBar: AppBar(title: Text('Dados da Balança')),
-        body: Column(
-            mainAxisSize: MainAxisSize.max,
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              ElementsOfViews.CardToText("Código ID: ${scale.id}", white),
-              ElementsOfViews.CardToText("MAC Address: ${scale.hash}", white),
-              ElementsOfViews.CardToText("Estado da balança: ${scale.status == 1 ? 'Operante' : 'Inoperante'}", scale.status == 1 ? green : red)])));
+    return SafeArea(
+        child: Scaffold(
+            appBar: ElementsOfViews.SimpleAppBar(context, 'Dados da Balança'),
+            body: Column(
+                mainAxisSize: MainAxisSize.max,
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  ElementsOfViews.CardToText(context,"Código ID: ${scale.id}", ),
+                  ElementsOfViews.CardToText(context,"MAC Address: ${scale.hash}", ),
+                  ElementsOfViews.CardToText(context,"Estado da balança: ${scale.status == 1 ? 'Operante' : 'Inoperante'}",bgColor: scale.status == 1 ? green : red)])
+        ));
   }
 }

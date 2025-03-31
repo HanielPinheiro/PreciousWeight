@@ -29,19 +29,19 @@ class PreciousWeightTheme {
 
   static ColorScheme lightColorScheme = ColorScheme(
     primary: black,
-    onPrimary: blue,
-    secondary: gray,
-    onSecondary: strongOrange,
-    surface: white,
+    secondary: light_gray,
     onSurface: gray,
+    surface: white,
+    onPrimary: blue,
+    onSecondary: strongOrange,
+    onTertiary: medium_orange,
     error: red,
-    onError: light_gray,
+    onError: light_orange,
     brightness: Brightness.light
   );
 
   static ColorScheme darkColorScheme = lightColorScheme.copyWith(
     primary: white,
-    secondary: light_gray,
     surface: black,
     brightness: Brightness.dark
   );

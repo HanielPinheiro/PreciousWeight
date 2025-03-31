@@ -1,12 +1,10 @@
-// Constants
-import '../patients/patient.dart';
+import '../babies/baby.dart';
 import '../scales/scales.dart';
 
-const String weight_key = 'peso'; // Added constant for weight
+const String weight_key = 'peso';
 const String weight_id = 'id_peso';
 const String weight_date = 'date_peso';
 
-// WeightModel Class
 class WeightModel {
   final int id;
   final DateTime date;

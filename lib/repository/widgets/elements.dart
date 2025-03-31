@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../models/weight/weight.dart';
 import '../design/colors.dart';
-import '../design/design_rules.dart';
+import '../design/button_styles.dart';
 import '../design/fonts.dart';
 
 class ElementsOfViews {
@@ -40,7 +40,8 @@ class ElementsOfViews {
         child: Text(text, style: style));
   }
 
-  static Widget ScanButton(String label, String lbl_img, VoidCallback onTap) {
+  static Widget ScanButton(BuildContext context, String label, String lbl_img, VoidCallback onTap) {
+    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 25),
       child: InkWell(
@@ -49,15 +50,16 @@ class ElementsOfViews {
         child: Container(
           padding: EdgeInsets.all(9),
           decoration: BoxDecoration(
-            color: white, // Background color
-            border: Border.all(color: black),
+            color: theme.colorScheme.surface,
+            border: Border.all(color: theme.colorScheme.primary),
             borderRadius: BorderRadius.circular(15),
           ),
           child: Row(
             children: [
               Image.asset("assets/imgs/$lbl_img", width: 80, height: 80, fit: BoxFit.cover),
               SizedBox(width: 12),
-              Expanded(child: Text(label, style: amaranth_29)),
+              Expanded(child: Text(label, style: amaranth_29.copyWith(
+                  color:theme.colorScheme.primary))),
             ],
           ),
         ),
@@ -65,29 +67,49 @@ class ElementsOfViews {
     );
   }
 
-  static Widget CardToList(IconData icon, String title, String subtitle, VoidCallback detailsScreen) {
+  static Widget CardToList(BuildContext context, IconData icon,
+      String title, String subtitle, VoidCallback detailsScreen) {
     return Card(
+        color: Theme.of(context).colorScheme.surface,
+        elevation: 5,
+        shadowColor: Theme.of(context).colorScheme.primary,
+        shape: RoundedRectangleBorder(
+          side: BorderSide(
+            color: Theme.of(context).colorScheme.primary,
+            width: 1.0,
+          ),
+          borderRadius: BorderRadius.circular(12),
+        ),
         child: GestureDetector(
-            onDoubleTap: detailsScreen,
+            onTap: detailsScreen,
             child: ListTile(
-              leading: Icon(icon),
-              title: Text(title),
-              subtitle: Text(subtitle),
+              leading: Icon(icon, color: Theme.of(context).colorScheme.primary),
+              title: Text(title, style: headlineSmall.copyWith(color: Theme.of(context).colorScheme.primary)),
+              subtitle: Text(subtitle, style: bodyLarge.copyWith(color: Theme.of(context).colorScheme.primary)),
+
             )));
   }
 
-  static Widget CardToText(String label, Color? bgColor) {
+  static Widget CardToText(BuildContext context, String label, {Color? bgColor, Color? fgColor}) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 25),
       child: Card(
-        color: bgColor,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        elevation: 5,
+        shadowColor: Theme.of(context).colorScheme.primary,
+        shape: RoundedRectangleBorder(
+          side: BorderSide(
+            color: Theme.of(context).colorScheme.primary,
+            width: 1.0,
+          ),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        color: bgColor ?? Theme.of(context).colorScheme.surface,
         child: Container(
           padding: EdgeInsets.all(9),
           alignment: Alignment.center, // Centers the text inside the card
           child: Text(
             label,
-            style: amaranth_29,
+            style: amaranth_29.copyWith(color: fgColor ?? Theme.of(context).colorScheme.primary),
             textAlign: TextAlign.center, // Ensures text alignment
           ),
         ),
@@ -124,14 +146,34 @@ class ElementsOfViews {
     );
   }
 
-  static PreferredSizeWidget SimpleAppBar(String title, String label, Icon? _icon, VoidCallback action) {
-    return AppBar(title: Text(title), actions: <Widget>[
-      TextButton.icon(
-        icon: _icon != null ? _icon : null,
-        label: Text(label),
-        style: MyButtonStyles.whiteDefaultPurplePressed,
-        onPressed: action,
-      )
-    ]);
+  static PreferredSizeWidget MenuAppBar(BuildContext context, String title, String label, Icon? _icon, VoidCallback action) {
+    return AppBar(
+        title: Text(title, style: headlineMedium.copyWith(
+              color:Theme.of(context).brightness == Brightness.dark? Colors.white: Theme.of(context).colorScheme.onPrimary)
+        ),
+        shape: Border(bottom:BorderSide(color: Theme.of(context).colorScheme.primary, width: 1.0, style: BorderStyle.solid)),
+        // foregroundColor: Theme.of(context).brightness == Brightness.dark? Colors.white: Theme.of(context).colorScheme.onPrimary,
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        actions: <Widget>[
+          ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: 100, minHeight: 40,maxHeight: 40),
+            child:
+            OutlinedButton .icon(
+                icon: _icon ?? const SizedBox.shrink(),
+                label: Text(label, style: headlineSmall.copyWith(color: Theme.of(context).brightness == Brightness.dark?
+                                                                Colors.white: Theme.of(context).colorScheme.onPrimary),),
+                style: MyButtonStyles().GetLogoutButtonStyle(context),
+                onPressed: action,)
+          )]
+    );
+  }
+
+  static PreferredSizeWidget SimpleAppBar(BuildContext context, String title) {
+    return AppBar(
+        title: Text(title, style: displayMedium.copyWith(color:Theme.of(context).colorScheme.primary),),
+        shape: Border(bottom:BorderSide(color: Theme.of(context).colorScheme.primary, width: 1.0, style: BorderStyle.solid)),
+        foregroundColor: Theme.of(context).colorScheme.primary,
+        backgroundColor: Theme.of(context).colorScheme.surface,
+    );
   }
 }

@@ -1,7 +1,7 @@
 import '../scales/scales.dart';
 import '../weight/weight.dart';
 
-const String patient_tableName = "patients";
+const String patient_tableName = "babies";
 const String patient_id = "id_baby";
 const String patient_hospitalRegister = "hospital_register";
 const String patient_name = "full_name";

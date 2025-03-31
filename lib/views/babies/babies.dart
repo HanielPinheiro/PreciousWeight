@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../models/patients/patients_repository.dart';
+import '../../models/babies/babies_repository.dart';
 
 class BabiesPage extends StatelessWidget{
   @override

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/enums.dart';
 import '../../models/logs/log.dart';
-import '../../repository/design/colors.dart';
 import '../../repository/widgets/elements.dart';
 
 class LogDetails extends StatelessWidget {
@@ -12,26 +11,26 @@ class LogDetails extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var modelScale = <Widget>[
-      ElementsOfViews.CardToText("Código do Log: ${log.id}", white),
-      ElementsOfViews.CardToText("Tipo do Log: ${LogModel.GetLogTypeLabel(log.logType)}", white),
-      ElementsOfViews.CardToText("Data do Log: ${log.date}", white),
-      ElementsOfViews.CardToText("Id da balança: ${log.scaleId}", white),
-      ElementsOfViews.CardToText("Estado anterior da balança: ${log.prevState}", white),
-      ElementsOfViews.CardToText("Novo estado da balança: ${log.newState}", white),
+      ElementsOfViews.CardToText(context,"Código do Log: ${log.id}", ),
+      ElementsOfViews.CardToText(context,"Tipo do Log: ${LogModel.GetLogTypeLabel(log.logType)}", ),
+      ElementsOfViews.CardToText(context,"Data do Log: ${log.date}", ),
+      ElementsOfViews.CardToText(context,"Id da balança: ${log.scaleId}", ),
+      ElementsOfViews.CardToText(context,"Estado anterior da balança: ${log.prevState}", ),
+      ElementsOfViews.CardToText(context,"Novo estado da balança: ${log.newState}"),
     ];
 
     var modelPatient= <Widget>[
-      ElementsOfViews.CardToText("Código do Log: ${log.id}", white),
-      ElementsOfViews.CardToText("Tipo do Log: ${LogModel.GetLogTypeLabel(log.logType)}", white),
-      ElementsOfViews.CardToText("Data do Log: ${log.date}", white),
-      ElementsOfViews.CardToText("Código Id do Bebê: ${log.patientId}", white),
-      ElementsOfViews.CardToText("Id da balança: ${log.scaleId}", white),
-      ElementsOfViews.CardToText("Id da nova balança: ${log.newScaleId}", white),
+      ElementsOfViews.CardToText(context,"Código do Log: ${log.id}", ),
+      ElementsOfViews.CardToText(context,"Tipo do Log: ${LogModel.GetLogTypeLabel(log.logType)}", ),
+      ElementsOfViews.CardToText(context,"Data do Log: ${log.date}", ),
+      ElementsOfViews.CardToText(context,"Código Id do Bebê: ${log.patientId}", ),
+      ElementsOfViews.CardToText(context,"Id da balança: ${log.scaleId}", ),
+      ElementsOfViews.CardToText(context,"Id da nova balança: ${log.newScaleId}", ),
     ];
 
     return SafeArea(
         child: Scaffold(
-            appBar: AppBar(title: Text('Dados do Relatório')),
+            appBar: ElementsOfViews.SimpleAppBar(context, 'Dados do Relatório'),
             body: Column(
                 mainAxisSize: MainAxisSize.max,
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,

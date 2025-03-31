@@ -26,6 +26,7 @@ class ScalesRepository {
   static List<Widget> GetScalesLikeCards(BuildContext context) {
     return scales.map((_scale) {
       return ElementsOfViews.CardToList(
+        context,
         Icons.scale,
         'Código da Balança  #${_scale.id}',
         'Estado: ${_scale.status == 1 ? 'Operante' : 'Inoperante'}',

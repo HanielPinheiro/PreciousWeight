@@ -26,8 +26,13 @@ class LogsRepository {
 
   static List<Widget> GetLogsLikeCards(BuildContext context) {
     return logs.map((_log) {
-      return ElementsOfViews.CardToList(Icons.history,'Log #${_log.id} - ${LogModel.GetLogTypeLabel(_log.logType)}','Date: ${_log.date}',
-            () {Navigator.push(context,MaterialPageRoute(builder: (context) => LogDetails(log: _log)),);},);
+      return ElementsOfViews.CardToList(
+            context,
+            Icons.history,
+            'Log #${_log.id} - ${LogModel.GetLogTypeLabel(_log.logType)}',
+            'Date: ${_log.date}',
+            () {Navigator.push(context,MaterialPageRoute(builder:
+                (context) => LogDetails(log: _log)),);},);
     }).toList();
   }
 }

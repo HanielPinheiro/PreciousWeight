@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../models/patients/patient.dart';
+import '../../models/babies/baby.dart';
 import '../../models/scales/scales_repository.dart';
 import '../../repository/widgets/elements.dart';
 import '../../views/babies/babies_details.dart';
@@ -40,11 +40,13 @@ class BabiesRepository {
 
   static List<Widget> GetBabiesLikeCards(BuildContext context) {
     return babies.map((_baby) {
-      return ElementsOfViews.CardToList(Icons.baby_changing_station, _baby.name!, 'Último peso: ${_baby.weight}g', () {
-        Navigator.push(
+      return ElementsOfViews.CardToList(
           context,
-          MaterialPageRoute(builder: (context) => BabiesDetails(baby: _baby)),
-        );
+          Icons.baby_changing_station,
+          _baby.name!,
+          'Último peso: ${_baby.weight}g', () {
+          Navigator.push(context,MaterialPageRoute(
+            builder: (context) => BabiesDetails(baby: _baby)));
       });
     }).toList();
   }
