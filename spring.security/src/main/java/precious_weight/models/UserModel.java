@@ -7,33 +7,36 @@ import precious_weight.controllers.LoginController;
 import java.util.Set;
 import java.util.UUID;
 
+import static precious_weight.config.constants.*;
+
 @Entity
-@Table(name = "users")
+@Table(name = UserTableName)
 public class UserModel {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "user_id")
+    @Column(name = UserTableFieldName_Id, nullable = false)
     private UUID userId;
 
-    @Column(unique = true)
+    @Column(name = UserTableFieldName_Email, nullable = false, unique = true)
     private String email;
 
+    @Column(name = UserTableFieldName_Password, nullable = false)
     private String password;
 
+    @Column(name = UserTableFieldName_Organization, nullable = false)
     private String organization;
 
     @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JoinTable(
-            name="user_roles_rel",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "role_id")
+            name=UserRoleRelationshipTableName,
+            joinColumns = @JoinColumn(name = UserTableFieldName_Id),
+            inverseJoinColumns = @JoinColumn(name = RoleTableFieldName_Id)
     )
     private Set<RoleModel> roleModels;
 
     public UUID getUserId() {
         return userId;
     }
-
     public void setUserId(UUID userId) {
         this.userId = userId;
     }
@@ -41,7 +44,6 @@ public class UserModel {
     public String getEmail() {
         return email;
     }
-
     public void setEmail(String email) {
         this.email = email;
     }
@@ -49,7 +51,6 @@ public class UserModel {
     public String getPassword() {
         return password;
     }
-
     public void setPassword(String password) {
         this.password = password;
     }
@@ -57,7 +58,6 @@ public class UserModel {
     public String getOrganization() {
         return organization;
     }
-
     public void setOrganization(String organization) {
         this.organization = organization;
     }
@@ -65,7 +65,6 @@ public class UserModel {
     public Set<RoleModel> getRoles() {
         return roleModels;
     }
-
     public void setRoles(Set<RoleModel> roleModels) {
         this.roleModels = roleModels;
     }

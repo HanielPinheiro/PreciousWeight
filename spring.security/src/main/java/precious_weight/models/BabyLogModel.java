@@ -12,52 +12,53 @@ public class BabyLogModel implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer idLog;
+    @Column(name = LogsFieldName_Id, nullable = false)
+    private Integer logId;
 
-    @Column(nullable = false)
-    private LocalDateTime dataLog;
+    @Column(name = LogsFieldName_Date, nullable = false, unique = true)
+    private LocalDateTime logDate;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = BabyLogsFieldName_BabyId, nullable = false)
-    private BabyModel babyModel;
+    @Column(name = BabyTableFieldName_Id, nullable = false)
+    private Integer babyId;
 
-    @ManyToOne(optional = true) 
-    @JoinColumn(name = BabyLogsFieldName_ScaleId, nullable = true)
-    private ScaleModel scaleModel;
+    @Column(name = ScaleTableFieldName_Id, nullable = true)
+    private Integer scaleId;
 
-    @Column(nullable = false)
+    @Column(name = BabyLogsFieldName_NewId, nullable = false)
     private Integer newScaleId;
 
-    public Integer getIdLog() {
-        return idLog;
+
+
+    public Integer getLogId() {
+        return logId;
     }
 
-    public void setIdLog(Integer idLog) {
-        this.idLog = idLog;
+    public void setLogId(Integer logId) {
+        this.logId = logId;
     }
 
-    public LocalDateTime getDataLog() {
-        return dataLog;
+    public LocalDateTime getLogDate() {
+        return logDate;
     }
 
-    public void setDataLog(LocalDateTime dataLog) {
-        this.dataLog = dataLog;
+    public void setLogDate(LocalDateTime logDate) {
+        this.logDate = logDate;
     }
 
-    public BabyModel getPaciente() {
-        return babyModel;
+    public Integer getBabyId() {
+        return babyId;
     }
 
-    public void setPaciente(BabyModel babyModel) {
-        this.babyModel = babyModel;
+    public void setBabyId(Integer babyId) {
+        this.babyId = babyId;
     }
 
-    public ScaleModel getBalanca() {
-        return scaleModel;
+    public Integer getScaleId() {
+        return scaleId;
     }
 
-    public void setBalanca(ScaleModel scaleModel) {
-        this.scaleModel = scaleModel;
+    public void setScaleId(Integer scaleId) {
+        this.scaleId = scaleId;
     }
 
     public Integer getNewScaleId() {

@@ -1,7 +1,7 @@
 package precious_weight.controllers;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
@@ -9,11 +9,14 @@ import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 import precious_weight.models.RoleModel;
 import precious_weight.interfaces.iUser;
 
 import java.time.Instant;
 import java.util.stream.Collectors;
+
+import static precious_weight.config.constants.*;
 
 @RestController
 public class LoginController {
@@ -22,22 +25,20 @@ public class LoginController {
     private final iUser iUser;
     private final BCryptPasswordEncoder passwordEncoder;
 
-    public LoginController(JwtEncoder jwtEncoder,
-                           iUser iUser,
+    public LoginController(JwtEncoder jwtEncoder, iUser iUser,
                            BCryptPasswordEncoder passwordEncoder) {
-        this.jwtEncoder = jwtEncoder;
-        this.iUser = iUser;
-        this.passwordEncoder = passwordEncoder;
-    }
+                                this.jwtEncoder = jwtEncoder;
+                                this.iUser = iUser;
+                                this.passwordEncoder = passwordEncoder;
+                           }
 
-    @PostMapping("/login")
+    @PostMapping(LoginControllerName)
     public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest loginRequest) {
 
         var user = iUser.findByEmail(loginRequest.username);
 
-        if (user.isEmpty() || !user.get().isLoginCorrect(loginRequest, passwordEncoder)) {
-            throw new BadCredentialsException("user or password is invalid!");
-        }
+        if (user.isEmpty() || !user.get().isLoginCorrect(loginRequest, passwordEncoder)) throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+
 
         var now = Instant.now();
         var expiresIn = 300L;
@@ -48,12 +49,12 @@ public class LoginController {
                 .collect(Collectors.joining(" "));
 
         var claims = JwtClaimsSet.builder()
-                .issuer("precious_weight_backend")
-                .subject(user.get().getUserId().toString())
-                .issuedAt(now)
-                .expiresAt(now.plusSeconds(expiresIn))
-                .claim("scope", scopes)
-                .build();
+                        .issuer(LoginController_BackEndName)
+                        .subject(user.get().getUserId().toString())
+                        .issuedAt(now)
+                        .expiresAt(now.plusSeconds(expiresIn))
+                        .claim(LoginController_Scope, scopes)
+                        .build();
 
         var jwtValue = jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
 
@@ -63,10 +64,6 @@ public class LoginController {
     public static class LoginRequest {
         private String username;
         private String password;
-
-        // Default constructor
-        public LoginRequest() {
-        }
 
         // Parameterized constructor
         public LoginRequest(String username, String password) {
@@ -95,10 +92,6 @@ public class LoginController {
     public static class LoginResponse {
         private String accessToken;
         private Long  expiresIn;
-
-        // Default constructor
-        public LoginResponse() {
-        }
 
         // Parameterized constructor
         public LoginResponse(String accessToken, Long expiresIn) {

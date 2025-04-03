@@ -1,26 +1,34 @@
 package precious_weight.controllers;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.server.ResponseStatusException;
+import precious_weight.interfaces.iScaleLog;
 import precious_weight.models.ScaleLogModel;
-import precious_weight.services.ScaleLogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import precious_weight.models.ScaleModel;
 
 import java.util.List;
 
+import static precious_weight.config.constants.ScaleLogsControllerName;
+import static precious_weight.config.constants.ControllerName_List;
+import static precious_weight.config.constants.ControllerName_Save;
+
 @RestController
-@RequestMapping("/log-balancas")
+@RequestMapping(ScaleLogsControllerName)
 public class ScaleLogController {
 
     @Autowired
-    private ScaleLogService scaleLogService;
+    private iScaleLog scaleLogRepository;
 
-    @GetMapping
-    public List<ScaleLogModel> listarTodos() {
-        return scaleLogService.listarTodos();
-    }
+    @PreAuthorize("isAuthenticated()")
+    @PostMapping(ControllerName_List)
+    public List<ScaleLogModel> listAll() { return scaleLogRepository.findAll(); }
 
-    @PostMapping
-    public ScaleLogModel salvar(@RequestBody ScaleLogModel scaleLogModel) {
-        return scaleLogService.salvar(scaleLogModel);
+    @PreAuthorize("isAuthenticated()")
+    @PostMapping(ControllerName_Save)
+    public ScaleLogModel save(@RequestBody ScaleLogModel scaleLogModel) {
+        return scaleLogRepository.save(scaleLogModel);
     }
 }

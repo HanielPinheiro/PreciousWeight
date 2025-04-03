@@ -2,15 +2,20 @@ package precious_weight.models;
 
 import jakarta.persistence.*;
 
+import static precious_weight.config.constants.RoleTableName;
+import static precious_weight.config.constants.RoleTableFieldName_Id;
+import static precious_weight.config.constants.RoleTableFieldName_Name;
+
 @Entity
-@Table(name = "roles")
+@Table(name = RoleTableName)
 public class RoleModel {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "role_id")
+    @Column(name = RoleTableFieldName_Id)
     private Long roleId;
 
+    @Column(name = RoleTableFieldName_Name)
     private String name;
 
     public Long getRoleId() {

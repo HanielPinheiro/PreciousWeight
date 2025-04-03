@@ -7,5 +7,4 @@ import java.util.Optional;
 
 @Repository
 public interface iBabyLog extends JpaRepository<BabyLogModel, Integer> {
-    Optional<BabyLogModel> findTopByPacienteIdPacienteOrderByDataLogDesc(Integer idPaciente);
 }

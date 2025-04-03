@@ -1,13 +1,14 @@
 package precious_weight.services;
 
 import precious_weight.models.BabyModel;
-import precious_weight.models.ScaleModel;
 import precious_weight.models.BabyLogModel;
 import precious_weight.interfaces.iBaby;
 import precious_weight.interfaces.iScale;
 import precious_weight.interfaces.iBabyLog;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,65 +24,39 @@ public class BabyService {
     @Autowired
     private iScale iScale;
 
-    public List<BabyModel> listarTodos() {
+    public List<BabyModel> listAll() {
         return iBaby.findAll();
     }
 
-    public Optional<BabyModel> buscarPorId(Integer id) {
+    public Optional<BabyModel> searchById(Integer id) {
         return iBaby.findById(id);
     }
 
-    public BabyModel salvar(BabyModel babyModel, Integer idBalancaNova) {
-        
-        if (babyModel.getIdPaciente() != null) {
-            Optional<BabyModel> pacienteExistente = iBaby.findById(babyModel.getIdPaciente());
-            if (pacienteExistente.isPresent()) {
-                Integer idBalancaAnterior = buscarUltimaBalancaDoPaciente(babyModel.getIdPaciente());
-                
-                if (idBalancaNova != null && !idBalancaNova.equals(idBalancaAnterior)) {
-                    registrarLogPaciente(babyModel.getIdPaciente(), idBalancaAnterior, idBalancaNova);
-                }
+    public BabyModel save(BabyModel babyModel, Integer newScaleId) {
+        if (babyModel.getBabyId() != null) {
+            Optional<BabyModel> optionalBaby = iBaby.findById(babyModel.getBabyId());
+            if (optionalBaby.isPresent()) {
+                Integer lastScaleId = searchLastScaleFrom(babyModel.getBabyId());
+                if (newScaleId != null && !newScaleId.equals(lastScaleId)) setBabyLog(babyModel.getBabyId(), lastScaleId, newScaleId);
             }
         }
-        
         return iBaby.save(babyModel);
     }
 
-    private Integer buscarUltimaBalancaDoPaciente(Integer idPaciente) {
-        return iBabyLog.findTopByPacienteIdPacienteOrderByDataLogDesc(idPaciente)
-                .map(BabyLogModel::getNewScaleId)
-                .orElse(null);
+    private Integer searchLastScaleFrom(Integer babyId) {
+        return iBabyLog.findById(babyId).map(BabyLogModel::getNewScaleId).orElse(null);
     }
 
-    private void registrarLogPaciente(Integer idPaciente, Integer idBalancaAnterior, Integer idBalancaNova) {
+    private void setBabyLog(Integer babyId, Integer lastScaleId, Integer newScaleId) {
         BabyLogModel log = new BabyLogModel();
-        log.setDataLog(java.time.LocalDateTime.now());
-
-        
-        BabyModel babyModel = iBaby.findById(idPaciente)
-                .orElseThrow(() -> new RuntimeException("Paciente não encontrado"));
-        log.setPaciente(babyModel);
-
-        
-        if (idBalancaAnterior != null && idBalancaAnterior > 0) {
-            Optional<ScaleModel> optBalanca = iScale.findById(idBalancaAnterior);
-            if (optBalanca.isPresent()) {
-                log.setBalanca(optBalanca.get());
-            } else {
-                
-                System.err.println("Aviso: Balança com ID " + idBalancaAnterior + " não encontrada. Salvando log sem balança.");
-                log.setBalanca(null);
-            }
-        } else {
-            log.setBalanca(null);
-        }
-
-        log.setNewScaleId(idBalancaNova);
-
+        log.setLogDate(LocalDateTime.now());
+        log.setBabyId(babyId);
+        log.setScaleId(lastScaleId);
+        log.setNewScaleId(newScaleId);
         iBabyLog.save(log);
     }
 
-    public void deletar(Integer id) {
+    public void delete(Integer id) {
         iBaby.deleteById(id);
     }
 }

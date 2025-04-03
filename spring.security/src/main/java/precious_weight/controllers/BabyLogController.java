@@ -1,26 +1,32 @@
 package precious_weight.controllers;
 
+import org.springframework.security.access.prepost.PreAuthorize;
+import precious_weight.interfaces.iBabyLog;
 import precious_weight.models.BabyLogModel;
-import precious_weight.services.BabyLogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+import static precious_weight.config.constants.BabyLogsControllerName;
+import static precious_weight.config.constants.ControllerName_List;
+import static precious_weight.config.constants.ControllerName_Save;
+
 @RestController
-@RequestMapping("/log-pacientes")
+@RequestMapping(BabyLogsControllerName)
 public class BabyLogController {
-
     @Autowired
-    private BabyLogService babyLogService;
+    private iBabyLog iBabyLog;
 
-    @GetMapping
-    public List<BabyLogModel> listarTodos() {
-        return babyLogService.listarTodos();
+    @PreAuthorize("isAuthenticated()")
+    @PostMapping(ControllerName_List)
+    public List<BabyLogModel> listAll() {
+        return iBabyLog.findAll();
     }
 
-    @PostMapping
-    public BabyLogModel salvar(@RequestBody BabyLogModel babyLogModel) {
-        return babyLogService.salvar(babyLogModel);
+    @PreAuthorize("isAuthenticated()")
+    @PostMapping(ControllerName_Save)
+    public BabyLogModel save(@RequestBody BabyLogModel babyLogModel) {
+        return iBabyLog.save(babyLogModel);
     }
 }

@@ -1,67 +1,70 @@
 package precious_weight.models;
 
 import jakarta.persistence.*;
+
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
+import static precious_weight.config.constants.*;
+
 @Entity
-@Table(name = "log_balanca")
+@Table(name = ScaleLogsTableName)
 public class ScaleLogModel implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer idLog;
+    @Column(name = LogsFieldName_Id, nullable = false)
+    private Integer logId;
 
-    @Column(nullable = false)
-    private LocalDateTime dataLog;
+    @Column(name = LogsFieldName_Date, nullable = false, unique = true)
+    private LocalDateTime logDate;
 
-    @ManyToOne
-    @JoinColumn(name = "id_balanca", nullable = false)
-    private ScaleModel scaleModel;
+    @Column(name = ScaleTableFieldName_Id, nullable = false)
+    private Integer scaleId;
 
-    @Column(nullable = false)
-    private Integer estadoBalanca;
+    @Column(name = ScaleTableFieldName_State, nullable = false)
+    private Integer scaleState;
 
-    @Column(nullable = false)
-    private Integer novoEstadoBalanca;
+    @Column(name = ScaleFieldName_NewState, nullable = false)
+    private Integer newScaleState;
 
-    public Integer getIdLog() {
-        return idLog;
+    public Integer getLogId() {
+        return logId;
     }
 
-    public void setIdLog(Integer idLog) {
-        this.idLog = idLog;
+    public void setLogId(Integer logId) {
+        this.logId = logId;
     }
 
-    public LocalDateTime getDataLog() {
-        return dataLog;
+    public LocalDateTime getLogDate() {
+        return logDate;
     }
 
-    public void setDataLog(LocalDateTime dataLog) {
-        this.dataLog = dataLog;
+    public void setLogDate(LocalDateTime logDate) {
+        this.logDate = logDate;
     }
 
-    public ScaleModel getBalanca() {
-        return scaleModel;
+    public Integer getScaleId() {
+        return scaleId;
     }
 
-    public void setBalanca(ScaleModel scaleModel) {
-        this.scaleModel = scaleModel;
+    public void setScaleId(Integer scaleId) {
+        this.scaleId = scaleId;
     }
 
-    public Integer getEstadoBalanca() {
-        return estadoBalanca;
+    public Integer getScaleState() {
+        return scaleState;
     }
 
-    public void setEstadoBalanca(Integer estadoBalanca) {
-        this.estadoBalanca = estadoBalanca;
+    public void setScaleState(Integer scaleState) {
+        this.scaleState = scaleState;
     }
 
-    public Integer getNovoEstadoBalanca() {
-        return novoEstadoBalanca;
+    public Integer getNewScaleState() {
+        return newScaleState;
     }
 
-    public void setNovoEstadoBalanca(Integer novoEstadoBalanca) {
-        this.novoEstadoBalanca = novoEstadoBalanca;
+    public void setNewScaleState(Integer newScaleState) {
+        this.newScaleState = newScaleState;
     }
 }

@@ -1,68 +1,65 @@
 package precious_weight.models;
 
 import jakarta.persistence.*;
+
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
+import static precious_weight.config.constants.*;
+
 @Entity
-@Table(name = "peso")
+@Table(name = WeightTableName)
 public class WeightModel implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer idPeso;
+    @Column(name = WeightTableFieldName_Id, nullable = false)
+    private Integer weightId;
 
-    @Column(nullable = false)
-    private LocalDateTime dataPeso;
+    @Column(name = WeightTableFieldName_Date, nullable = false)
+    private LocalDateTime weightDate;
 
-    @ManyToOne
-    @JoinColumn(name = "id_balanca", nullable = false)
-    private ScaleModel scaleModel;
+    @Column(name = ScaleTableFieldName_Id, nullable = false)
+    private Integer scaleId;
 
-    @ManyToOne
-    @JoinColumn(name = "id_paciente", nullable = false)
-    private BabyModel babyModel;
+    @Column(name = BabyTableFieldName_Id, nullable = false)
+    private Integer babyId;
 
-    @Column(nullable = false)
-    private Integer peso;
+    @Column(name = WeightTableFieldName_Value, nullable = false)
+    private Integer weightValue;
 
-    public Integer getIdPeso() {
-        return idPeso;
+    public Integer getWeightId() {
+        return weightId;
+    }
+    public void setWeightId(Integer weightId) {
+        this.weightId = weightId;
     }
 
-    public void setIdPeso(Integer idPeso) {
-        this.idPeso = idPeso;
+    public LocalDateTime getWeightDate() {
+        return weightDate;
+    }
+    public void setWeightDate(LocalDateTime weightDate) {
+        this.weightDate = weightDate;
     }
 
-    public LocalDateTime getDataPeso() {
-        return dataPeso;
+    public Integer getBabyId() {
+        return babyId;
+    }
+    public void setBabyId(Integer babyId) {
+        this.babyId = babyId;
     }
 
-    public void setDataPeso(LocalDateTime dataPeso) {
-        this.dataPeso = dataPeso;
+    public Integer getScaleId() {
+        return scaleId;
+    }
+    public void setScaleId(Integer scaleId) {
+        this.scaleId = scaleId;
     }
 
-    public ScaleModel getBalanca() {
-        return scaleModel;
+    public Integer getWeightValue() {
+        return weightValue;
     }
-
-    public void setBalanca(ScaleModel scaleModel) {
-        this.scaleModel = scaleModel;
-    }
-
-    public BabyModel getPaciente() {
-        return babyModel;
-    }
-
-    public void setPaciente(BabyModel babyModel) {
-        this.babyModel = babyModel;
-    }
-
-    public Integer getPeso() {
-        return peso;
-    }
-
-    public void setPeso(Integer peso) {
-        this.peso = peso;
+    public void setWeightValue(Integer weightValue) {
+        this.weightValue = weightValue;
     }
 }

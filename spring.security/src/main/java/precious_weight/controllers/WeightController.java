@@ -1,76 +1,86 @@
 package precious_weight.controllers;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
+import precious_weight.interfaces.iBaby;
+import precious_weight.interfaces.iScale;
+import precious_weight.interfaces.iWeight;
+import precious_weight.models.BabyModel;
+import precious_weight.models.ScaleLogModel;
+import precious_weight.models.ScaleModel;
 import precious_weight.models.WeightModel;
-import precious_weight.services.WeightService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Optional;
+
+import static precious_weight.config.constants.WeightControllerName;
+import static precious_weight.config.constants.ControllerName_List;
+import static precious_weight.config.constants.ControllerName_Save;
 
 @RestController
-@RequestMapping("/pesos")
+@RequestMapping(WeightControllerName)
 public class WeightController {
 
     @Autowired
-    private WeightService weightService;
+    private iWeight iWeight;
 
-    @GetMapping
-    public List<WeightModel> listarTodos() {
-        return weightService.listarTodos();
+    @Autowired
+    private iScale iScale;
+
+    @Autowired
+    private iBaby iBaby;
+
+    @PostMapping(ControllerName_List)
+    public List<WeightModel> listAll() {
+        return iWeight.findAll();
     }
 
-    @PostMapping
-    public WeightModel salvar(@RequestBody PesoRequest request) {
+    @PostMapping(ControllerName_Save)
+    public WeightModel save(@RequestBody WeightRequestModel request) {
         WeightModel weightModel = new WeightModel();
-
-        // Converter a String "dataPeso" para LocalDateTime
-        DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME;
-        LocalDateTime dataPesoFormatada = LocalDateTime.parse(request.getDataPeso(), formatter);
-
-        weightModel.setDataPeso(dataPesoFormatada);
-        weightModel.setPeso(request.getPeso());
-
-        return weightService.salvar(weightModel, request.getIdBalanca(), request.getIdPaciente());
+        weightModel.setWeightDate(LocalDateTime.now());
+        weightModel.setWeightValue(request.getWeightValue());
+        weightModel.setScaleId(request.getScaleId());
+        weightModel.setBabyId(request.getBabyId());
+        return iWeight.save(weightModel);
     }
 
-    public static class PesoRequest {
-        private String dataPeso;
-        private Integer idBalanca;
-        private Integer idPaciente;
-        private Integer peso;
+    public static class WeightRequestModel {
+        private String weightDate;
+        private Integer scaleId;
+        private Integer babyId;
+        private Integer weightValue;
 
-        public String getDataPeso() {
-            return dataPeso;
+        public String getWeightDate() {
+            return weightDate;
+        }
+        public void setWeightDate(String weightDate) {
+            this.weightDate = weightDate;
         }
 
-        public void setDataPeso(String dataPeso) {
-            this.dataPeso = dataPeso;
+        public Integer getScaleId() {
+            return scaleId;
+        }
+        public void setScaleId(Integer scaleId) {
+            this.scaleId = scaleId;
         }
 
-        public Integer getIdBalanca() {
-            return idBalanca;
+        public Integer getBabyId() {
+            return babyId;
+        }
+        public void setBabyId(Integer babyId) {
+            this.babyId = babyId;
         }
 
-        public void setIdBalanca(Integer idBalanca) {
-            this.idBalanca = idBalanca;
+        public Integer getWeightValue() {
+            return weightValue;
         }
-
-        public Integer getIdPaciente() {
-            return idPaciente;
-        }
-
-        public void setIdPaciente(Integer idPaciente) {
-            this.idPaciente = idPaciente;
-        }
-
-        public Integer getPeso() {
-            return peso;
-        }
-
-        public void setPeso(Integer peso) {
-            this.peso = peso;
+        public void setWeightValue(Integer weightValue) {
+            this.weightValue = weightValue;
         }
     }
 }

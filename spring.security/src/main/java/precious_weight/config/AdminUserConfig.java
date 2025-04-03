@@ -35,7 +35,7 @@ public class AdminUserConfig implements CommandLineRunner {
         var roleAdmin = iRole.findByName(RoleModel.Values.ADMIN.name());
         roleAdmin.ifPresentOrElse(
                 role -> {
-                    System.out.println("nothing happen");
+                    /*Ignore*/
                 },
                 () -> {
                     // Create and save roles
@@ -50,11 +50,10 @@ public class AdminUserConfig implements CommandLineRunner {
         );
 
         var userAdmin = iUser.findByEmail("admin@precious_weight.com");
-        var roleOfAdmin = iRole.findByName(RoleModel.Values.ADMIN.name())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST));
+        var roleOfAdmin = iRole.findByName(RoleModel.Values.ADMIN.name()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST));
         userAdmin.ifPresentOrElse(
                 userModel -> {
-                    System.out.println("nothing happen");
+                    /*Ignore*/
                 },
                 () -> {
                     var user = new UserModel();

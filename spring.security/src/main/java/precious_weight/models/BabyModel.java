@@ -1,32 +1,48 @@
 package precious_weight.models;
 
 import jakarta.persistence.*;
+
 import java.io.Serializable;
+import java.sql.Blob;
+
+import static precious_weight.config.constants.*;
 
 @Entity
-@Table(name = "paciente")
+@Table(name = BabyTableName)
 public class BabyModel implements Serializable {
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer idPaciente;
+    @Column(name = BabyTableFieldName_Id)
+    private Integer babyId;
 
-    @Column(nullable = false, length = 255)
-    private String hashPaciente;
+    @Column(name = BabyTableFieldName_Hash, nullable = false, length = 255, unique = true)
+    private String babyHash;
 
-    public Integer getIdPaciente() {
-        return idPaciente;
+    @Column(name = BabyTableFieldName_Image, nullable = true, unique = true)
+    private Blob babyImage;
+
+    public Integer getBabyId() {
+        return babyId;
     }
 
-    public void setIdPaciente(Integer idPaciente) {
-        this.idPaciente = idPaciente;
+    public void setBabyId(Integer babyId) {
+        this.babyId = babyId;
     }
 
-    public String getHashPaciente() {
-        return hashPaciente;
+    public String getBabyHash() {
+        return babyHash;
     }
 
-    public void setHashPaciente(String hashPaciente) {
-        this.hashPaciente = hashPaciente;
+    public void setBabyHash(String babyHash) {
+        this.babyHash = babyHash;
+    }
+
+    public Blob getBabyImage() {
+        return babyImage;
+    }
+
+    public void setBabyImage(Blob babyImage) {
+        this.babyImage = babyImage;
     }
 }
