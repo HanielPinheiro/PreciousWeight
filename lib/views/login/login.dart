@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:precious_weight/models/auth/user.dart';
+import 'package:precious_weight/provider/user_api.dart';
 import '../../repository/design/fonts.dart';
+import '../../repository/services/mqtt_service.dart';
 import '../../repository/widgets/menu.dart';
 
 class LoginPage extends StatefulWidget {
@@ -12,6 +15,14 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
+  // final mqtt = new MqttService()
+  final _user_api = new UserApi();
+
+  @override
+  void initState() {
+    super.initState();
+    // mqtt.start();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -86,11 +97,16 @@ class _LoginPageState extends State<LoginPage> {
               ElevatedButton.icon(
                 icon: Icon(Icons.login, color: Colors.black),
                 label: Text('ENTRAR', style: headlineSmall.copyWith(color: Colors.black)),
-                onPressed: () {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => MenuManager()),
-                  );
+                onPressed: () async {
+                  final token = await _user_api.getToken(_usernameController.text,_passwordController.text);
+                  if(token != null)
+                   {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => MenuManager()),
+                    );
+                  }
+                  else showDialog(context: context, builder: (context) => AlertDialog(title: Text("Error"), content: Text("Invalid username or password")));
                 },
                 style: ElevatedButton.styleFrom(
                   foregroundColor: Theme.of(context).colorScheme.surface,
@@ -106,3 +122,5 @@ class _LoginPageState extends State<LoginPage> {
     ])));
   }
 }
+
+

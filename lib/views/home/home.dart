@@ -2,11 +2,11 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import '../../repository/design/fonts.dart';
 import '../../repository/widgets/elements.dart';
-import 'qrcode.dart';
+import '../../repository/services/qrcode_service.dart';
 
 class HomePage extends StatelessWidget {
   Future<void> ReadQr(BuildContext context) async {
-    final result = await Navigator.push(context, MaterialPageRoute(builder: (context) => ScanQr()));
+    final result = await Navigator.push(context, MaterialPageRoute(builder: (context) => ScanQrCode()));
     if (result != null) {
       String scannedText = result['text'];
       Uint8List scannedImage = result['image'];

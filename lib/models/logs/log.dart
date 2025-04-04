@@ -36,15 +36,15 @@ class LogModel {
   }
 
   static LogModel fromJson(Map<String, dynamic> json) {
-    final logType = json[logs_type] == LogType.scale ? LogType.scale : LogType.patient;
+    final logType = json[logs_type] == LogType.scale ? LogType.scale : LogType.baby;
 
     return LogModel(
       id: json[logs_id] as int,
       date: DateTime.parse(json[logs_date] as String),
       logType: logType,
-      patientId: logType == LogType.patient ? json[patient_id] as int? : null,
+      patientId: logType == LogType.baby ? json[patient_id] as int? : null,
       scaleId: json[scales_id] as int,
-      newScaleId: logType == LogType.patient ? json[logs_newScaleId] as int? : null,
+      newScaleId: logType == LogType.baby ? json[logs_newScaleId] as int? : null,
       prevState: logType == LogType.scale ? json[scales_state] as int? : null,
       newState: logType == LogType.scale ? json[logs_newState] as int? : null,
     );
@@ -55,10 +55,10 @@ class LogModel {
     return {
       logs_id: id,
       logs_date: date.toIso8601String(),
-      logs_type: logType == LogType.scale ? LogType.scale : LogType.patient,
-      if (logType == LogType.patient) patient_id: patientId,
+      logs_type: logType == LogType.scale ? LogType.scale : LogType.baby,
+      if (logType == LogType.baby) patient_id: patientId,
       scales_id: scaleId,
-      if (logType == LogType.patient) logs_newScaleId: newScaleId,
+      if (logType == LogType.baby) logs_newScaleId: newScaleId,
       if (logType == LogType.scale) scales_state: prevState,
       if (logType == LogType.scale) logs_newState: newState,
     };
