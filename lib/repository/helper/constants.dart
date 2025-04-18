@@ -15,6 +15,8 @@ const lbl_logs = 'Registers';
 const lbl_connect_scale_to_network = 'Connect Scale to WiFi';
 
 const address_api = 'http://localhost:8080';
+const address_localhost = 'http://10.0.2.2:8080'; //No android localhost é isso, e não Localhost ou 127.0.0.1
 const api_user_login = '/login';
+const api_user_logout= '/logout';
 const api_user_new = '/users/new';
 const api_user_list = '/users/list';

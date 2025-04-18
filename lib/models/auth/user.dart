@@ -1,61 +1,37 @@
 import 'dart:convert';
 
 User userFromJson(String str) => User.fromJson(json.decode(str));
-
 String userToJson(User data) => json.encode(data.toJson());
 
 List<User> usersFromJson(String str) => List<User>.from(json.decode(str).map((x) => User.fromJson(x)));
-
 String usersToJson(List<User> data) => json.encode(List<dynamic>.from(data.map((x) => x.toJson())));
 
 class User {
   String organization;
   String userId;
   String email;
-  // Credentials credentials;
   Token token;
-  Role role;
+  List<Role> roles;
 
-  User({required this.organization, required this.userId, required this.email, /*required this.credentials,*/ required this.token, required this.role});
+  User({required this.organization, required this.userId, required this.email, required this.token, required this.roles});
 
   factory User.fromJson(Map<String, dynamic> json) => User(
-        organization: json["organization"],
-        userId: json["userId"],
-        email: json["email"],
-        // credentials: json["credentials"],
-        token: json["email"],
-        role: json["roles"].map((x) => Role.fromJson(x)),
+        organization: json["user"]["organization"],
+        userId: json["user"]["userId"],
+        email: json["user"]["email"],
+        token: Token(accessToken: json['accessToken'], expiresIn: json['expiresIn']),
+        roles: List<Role>.from((json["user"]["roles"]).map(
+                (roleJson) => Role.fromJson(roleJson as Map<String, dynamic>)
+        )),
       );
 
   Map<String, dynamic> toJson() => {
         "organization": organization,
         "userId": userId,
         "email": email,
-        "roles": role.toJson(),
+        'roles': roles.map((e) => e.toJson()).toList(),
       };
 }
-
-// Credentials credentialsFromJson(String str) => Credentials.fromJson(json.decode(str));
-// String credentialsToJson(Credentials data) => json.encode(data.toJson());
-//
-// class Credentials {
-//   String username;
-//   String password;
-//
-//   Credentials({
-//     required this.username,
-//     required this.password,
-//   });
-//
-//   factory Credentials.fromJson(Map<String, dynamic> json) => Credentials(
-//
-//       );
-//
-//   Map<String, dynamic> toJson() => {
-//         "username": username,
-//         "password": password,
-//       };
-// }
 
 Token tokenFromJson(String str) => Token.fromJson(json.decode(str));
 String tokenToJson(Token data) => json.encode(data.toJson());
@@ -90,8 +66,8 @@ class Role {
   });
 
   factory Role.fromJson(Map<String, dynamic> json) => Role(
-        roleId: json["roleId"],
-        name: json["name"],
+        roleId: json['roleId'] as int,  // Explicit cast to int
+        name: json['name'] as String,    // Explicit cast to String
       );
 
   Map<String, dynamic> toJson() => {

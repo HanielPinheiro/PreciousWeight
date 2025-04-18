@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../provider/user_api.dart';
 import '../../repository/design/fonts.dart';
 import '../../repository/widgets/menu.dart';
 
@@ -12,13 +13,11 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
-  // final mqtt = new MqttService();
-  // final _user_api = new UserApi();
+  final _user_api = new UserApi();
 
   @override
   void initState() {
     super.initState();
-    // mqtt.start();
   }
 
   @override
@@ -95,13 +94,21 @@ class _LoginPageState extends State<LoginPage> {
                 icon: Icon(Icons.login, color: Colors.black),
                 label: Text('ENTRAR', style: headlineSmall.copyWith(color: Colors.black)),
                 onPressed: () async {
-                  // final token = await _user_api.getToken(_usernameController.text,_passwordController.text);
-                  final token = "asd";
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => MenuManager()),
-                  );
-                                },
+                  try {
+                    await _user_api.Login(_usernameController.text, _passwordController.text);
+
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => MenuManager()),
+                    );
+                  }
+                  catch(error){
+                    showDialog(context: context,
+                        builder: (context) =>
+                            AlertDialog(title: Text("Erro de Login"), content: Text(error.toString()))
+                    );
+                  }
+                },
                 style: ElevatedButton.styleFrom(
                   foregroundColor: Theme.of(context).colorScheme.surface,
                   backgroundColor: Theme.of(context).colorScheme.onSecondary,

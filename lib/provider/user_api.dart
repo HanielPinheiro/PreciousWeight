@@ -4,46 +4,67 @@ import '../models/auth/user.dart';
 import '../repository/helper/constants.dart';
 
 class UserApi {
-  /*
-    final _userApi = UserApi();
-    Future<List<User>?> getAllCountries() async {
-      return _userApi.listUsers();
-    }
-      void initState() {
-      super.initState();
-      loadCountries();
-    }
-    Future<void> loadCountries() async {
-      final countryService = CountryService();
-      countries = await countryService.getAllCountries();
-      setState(() {
-        isLoaded = true;
-      });
-    }
-  */
+  User? _user;
 
-  Future<Token?> getToken(String username, String password) async {
-    var client = http.Client();
-    var uri = Uri.parse("http://10.0.2.2:8080${api_user_login}");
-    var response = await client.post(uri, body: jsonEncode({
-      'username': username,
-      'password': password,
-    }),headers:{'Content-Type': 'application/json'},
-    );
-    if (response.statusCode == 200) {
-      return tokenFromJson(const Utf8Decoder().convert(response.bodyBytes));
+  UserApi._internal(); // Private constructor
+  static final UserApi _instance = UserApi._internal();
+
+  factory UserApi() => _instance;
+
+  Token? get token => _user!.token;
+
+  User? get user => _user;
+
+  Future<void> Login(String username, String password) async {
+    try {
+      var client = http.Client();
+      var uri = Uri.parse("${address_localhost}${api_user_login}");
+      var response = await client.post(
+        uri,
+        body: jsonEncode({
+          'username': username,
+          'password': password,
+        }),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final _data = const Utf8Decoder().convert(response.bodyBytes);
+        _user = userFromJson(_data);
+      }
+
+      throw new Exception("${response.statusCode} - Erro ao tentar acessar");
+    } catch (error) {
+      throw error;
     }
-    return null;
   }
-
 
   Future<List<User>?> listUsers() async {
-    var client = http.Client();
-    var uri = Uri.parse("${address_api}${api_user_list}");
-    var response = await client.post(uri);
-    if (response.statusCode == 200) {
-      return usersFromJson(const Utf8Decoder().convert(response.bodyBytes));
+    try {
+      var client = http.Client();
+      var uri = Uri.parse("${address_api}${api_user_list}");
+      var response = await client.post(uri);
+      if (response.statusCode == 200) {
+        return usersFromJson(const Utf8Decoder().convert(response.bodyBytes));
+      }
+      throw new Exception("${response.statusCode} - Erro ao tentar acessar");
+    } catch (error) {
+      throw error;
     }
-    return null;
   }
+
+  Future<void> Logout() async {
+    try {
+      // var client = http.Client();
+      // var uri = Uri.parse("${address_api}${api_user_list}");
+      // var response = await client.post(uri);
+      // if (response.statusCode == 200)
+        _user = null;
+
+      // throw new Exception("${response.statusCode} - Erro ao tentar acessar");
+    } catch (error) {
+      throw error;
+    }
+  }
+
 }

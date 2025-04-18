@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:precious_weight/models/auth/user.dart';
+import 'package:precious_weight/provider/user_api.dart';
 import '../../repository/widgets/elements.dart';
 import '../../views/babies/babies.dart';
 import '../../views/home/home.dart';
@@ -20,10 +22,13 @@ class _MenuManagerState extends State<MenuManager> {
   Widget build(BuildContext context) {
     return SafeArea(
         child: Scaffold(
-      appBar: ElementsOfViews.MenuAppBar(context, 'Olá [Nome Usuario]', 'SAIR',
+      appBar: ElementsOfViews.MenuAppBar(context, "Olá ${UserApi().user!.organization}", 'SAIR',
           Icon(Icons.logout, semanticLabel: 'SAIR',
               color:Theme.of(context).brightness == Brightness.dark? Colors.white: Theme.of(context).colorScheme.onPrimary),
-              () {Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => LoginPage()));}),
+              () {
+                UserApi().Logout();
+                Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => LoginPage()));
+              }),
       body: <Widget>[HomePage(), BabiesPage(), ScalesPage(), LogsPage()][currentPageIndex],
       bottomNavigationBar:
     Container(
