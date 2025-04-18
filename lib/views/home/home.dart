@@ -1,5 +1,7 @@
 import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
+import 'package:precious_weight/repository/services/bluefi_service.dart';
 import '../../repository/design/fonts.dart';
 import '../../repository/widgets/elements.dart';
 import '../../repository/services/qrcode_service.dart';
@@ -17,6 +19,7 @@ class HomePage extends StatelessWidget {
               content: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [Text(scannedText), SizedBox(height: 10), Image.memory(scannedImage)])));
+      await Navigator.push(context, MaterialPageRoute(builder: (context) => BluefiService(scannedText)));
     }
   }
 

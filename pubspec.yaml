@@ -15,12 +15,11 @@ dependencies:
   fl_chart: ^0.70.2
   pretty_qr_code: ^3.3.0
   mobile_scanner: ^6.0.7
-  mqtt_client: ^10.8.0
-  flutter_blue_plus: ^1.35.3
   flutter_esp_ble_prov: ^0.1.7
 
   intl: any
   flutter_native_splash: ^2.4.5
+  http: any
 dev_dependencies:
   flutter_test:
     sdk: flutter
