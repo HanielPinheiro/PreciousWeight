@@ -3,8 +3,13 @@ package precious_weight.config;
 public class constants {
     public static final String BabyTableName = "babies";
     public static final String BabyTableFieldName_Id = "baby_id";
-    public static final String BabyTableFieldName_Hash = "baby_hash";
+    public static final String BabyTableFieldName_HospitalId = "baby_hospital_id";
     public static final String BabyTableFieldName_Image = "baby_image";
+    public static final String BabyTableFieldName_ImageText = "baby_image_text";
+    public static final String BabyTableFieldName_Name = "baby_name";
+    public static final String BabyTableFieldName_MotherName = "baby_mother_name";
+    public static final String BabyTableFieldName_BirthDate = "baby_birthdate";
+    public static final String BabyTableFieldName_State = "baby_state";
 
     public static final String ScaleTableName = "scales";
     public static final String ScaleTableFieldName_Id = "scale_id";
@@ -52,6 +57,12 @@ public class constants {
     public static final String BabyControllerName_Update = "/update/{id}";
 
     public static final String ScaleControllerName = "/scales";
+    public static final String ScaleControllerName_Save = "/save/{scaleHash}";
+    public static final String ScaleControllerName_Enable = "/enable/{id}";
+    public static final String ScaleControllerName_Disable = "/disable/{id}";
+    public static final String ScaleControllerName_Hash = "/update/{id}";
+    public static final String ScaleControllerName_SetBaby = "/baby/set";
+    public static final String ScaleControllerName_UnsetBaby = "/baby/unset";
 
     public static final String WeightControllerName = "/weight";
 

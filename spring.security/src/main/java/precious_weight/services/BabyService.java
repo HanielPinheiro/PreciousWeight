@@ -7,10 +7,14 @@ import precious_weight.interfaces.iScale;
 import precious_weight.interfaces.iBabyLog;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import precious_weight.models.ScaleModel;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 public class BabyService {
@@ -25,7 +29,18 @@ public class BabyService {
     private iScale iScale;
 
     public List<BabyModel> listAll() {
-        return iBaby.findAll();
+        List<BabyModel> babies = iBaby.findAll();
+        List<ScaleModel> assignedScales = iScale.findByBabyIdIsNotNull();
+
+        Map<Integer, ScaleModel> babyToScaleMap = assignedScales.stream()
+                .collect(Collectors.toMap(ScaleModel::getBabyId, Function.identity()));
+
+        babies.forEach(baby -> {
+            if (babyToScaleMap.containsKey(baby.getBabyId())) baby.setAssignedScale(babyToScaleMap.get(baby.getBabyId()));
+        });
+
+        return babies;
+
     }
 
     public Optional<BabyModel> searchById(Integer id) {

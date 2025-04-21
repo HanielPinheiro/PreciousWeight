@@ -1,9 +1,13 @@
 package precious_weight.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 import java.io.Serializable;
 import java.sql.Blob;
+import java.sql.Date;
+import java.sql.SQLException;
+import java.util.Base64;
 
 import static precious_weight.config.constants.*;
 
@@ -16,11 +20,45 @@ public class BabyModel implements Serializable {
     @Column(name = BabyTableFieldName_Id)
     private Integer babyId;
 
-    @Column(name = BabyTableFieldName_Hash, nullable = false, length = 255, unique = true)
-    private String babyHash;
+    @Column(name = BabyTableFieldName_Name)
+    private String babyName;
 
+    @Column(name = BabyTableFieldName_MotherName)
+    private String babyMotherName;
+
+    @Column(name = BabyTableFieldName_BirthDate)
+    private Date babyBirthDate;
+
+    @Column(name = BabyTableFieldName_State)
+    private Integer babyState;
+
+    @Column(name = BabyTableFieldName_HospitalId, nullable = false, length = 255, unique = true)
+    private String babyHospitalId;
+
+    @Column(name = BabyTableFieldName_ImageText)
+    private String babyImageText;
+
+    @JsonIgnore
     @Column(name = BabyTableFieldName_Image, nullable = true, unique = true)
     private Blob babyImage;
+
+    public String getBabyImageAs64() throws SQLException {
+        if (babyImage == null) return "";
+        int blobLength = (int) babyImage.length();
+        byte[] blobAsBytes = babyImage.getBytes(1, blobLength);
+        return Base64.getEncoder().encodeToString(blobAsBytes);
+    }
+
+    @Transient
+    private ScaleModel assignedScale;
+
+    public ScaleModel getAssignedScale() {
+        return assignedScale;
+    }
+
+    public void setAssignedScale(ScaleModel assignedScale) {
+        this.assignedScale = assignedScale;
+    }
 
     public Integer getBabyId() {
         return babyId;
@@ -30,12 +68,52 @@ public class BabyModel implements Serializable {
         this.babyId = babyId;
     }
 
-    public String getBabyHash() {
-        return babyHash;
+    public String getBabyName() {
+        return babyName;
     }
 
-    public void setBabyHash(String babyHash) {
-        this.babyHash = babyHash;
+    public void setBabyName(String name) {
+        this.babyName = name;
+    }
+
+    public String getBabyMotherName() {
+        return babyMotherName;
+    }
+
+    public void setBabyMotherName(String motherName) {
+        this.babyMotherName = motherName;
+    }
+
+    public Date getBabyBirthDate() {
+        return babyBirthDate;
+    }
+
+    public void setBabyBirthDate(Date birthDate) {
+        this.babyBirthDate = birthDate;
+    }
+
+    public String getBabyHospitalId() {
+        return babyHospitalId;
+    }
+
+    public void setBabyState(Integer state) {
+        this.babyState = state;
+    }
+
+    public Integer getBabyState() {
+        return babyState;
+    }
+
+    public void setBabyImageText(String imageText) {
+        this.babyImageText = imageText;
+    }
+
+    public String getBabyImageText() {
+        return babyImageText;
+    }
+
+    public void setBabyHospitalId(String babyHospitalId) {
+        this.babyHospitalId = babyHospitalId;
     }
 
     public Blob getBabyImage() {

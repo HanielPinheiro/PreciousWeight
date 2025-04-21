@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import precious_weight.models.RoleModel;
 import precious_weight.interfaces.iUser;
+import precious_weight.models.UserModel;
 
 import java.time.Instant;
 import java.util.stream.Collectors;
@@ -39,7 +40,6 @@ public class LoginController {
 
         if (user.isEmpty() || !user.get().isLoginCorrect(loginRequest, passwordEncoder)) throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
 
-
         var now = Instant.now();
         var expiresIn = 300L;
 
@@ -58,7 +58,7 @@ public class LoginController {
 
         var jwtValue = jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
 
-        return ResponseEntity.ok(new LoginResponse(jwtValue, expiresIn));
+        return ResponseEntity.ok(new LoginResponse(jwtValue, expiresIn, user.get()));
     }
 
     public static class LoginRequest {
@@ -92,11 +92,13 @@ public class LoginController {
     public static class LoginResponse {
         private String accessToken;
         private Long  expiresIn;
+        private UserModel user;
 
         // Parameterized constructor
-        public LoginResponse(String accessToken, Long expiresIn) {
+        public LoginResponse(String accessToken, Long expiresIn, UserModel user) {
             this.accessToken = accessToken;
             this.expiresIn = expiresIn;
+            this.user = user;
         }
 
         // Getters and setters
@@ -114,6 +116,14 @@ public class LoginController {
 
         public void setExpiresIn(Long expiresIn) {
             this.expiresIn = expiresIn;
+        }
+
+        public UserModel getUser() {
+            return user;
+        }
+
+        public void setUser(UserModel expiresIn) {
+            this.user = expiresIn;
         }
     }
 }

@@ -1,5 +1,6 @@
 package precious_weight.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import precious_weight.controllers.LoginController;
@@ -21,6 +22,7 @@ public class UserModel {
     private String email;
 
     @Column(name = UserTableFieldName_Password, nullable = false)
+    @JsonIgnore
     private String password;
 
     @Column(name = UserTableFieldName_Organization, nullable = false)

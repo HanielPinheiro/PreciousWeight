@@ -2,7 +2,6 @@ package precious_weight.models;
 
 import jakarta.persistence.*;
 import java.io.Serializable;
-import java.sql.Blob;
 
 import static precious_weight.config.constants.*;
 
@@ -20,10 +19,19 @@ public class ScaleModel implements Serializable {
     @Column(name = ScaleTableFieldName_State, nullable = false)
     private Integer scaleState;
 
-    @Column(name = ScaleTableFieldName_Image, nullable = true, unique = true)
-    private Blob scaleImage;
+    @Column(name = BabyTableFieldName_Id, nullable = true)
+    private Integer babyId;
 
+    @Transient
+    private BabyModel assignedBaby;
 
+    public BabyModel getAssignedBaby() {
+        return assignedBaby;
+    }
+
+    public void setAssignedBaby(BabyModel assignedBaby) {
+        this.assignedBaby = assignedBaby;
+    }
     public Integer getScaleId() {
         return scaleId;
     }
@@ -45,10 +53,13 @@ public class ScaleModel implements Serializable {
         this.scaleState = scaleState;
     }
 
-    public Blob getScaleImage() {
-        return scaleImage;
+    public Integer getBabyId() {
+        return babyId;
     }
-    public void setScaleImage(Blob scaleImage) {
-        this.scaleImage = scaleImage;
+    public void setBabyId(Integer id) {
+        this.babyId = id;
     }
+
 }
+
+
