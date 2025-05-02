@@ -15,7 +15,6 @@ public class constants {
     public static final String ScaleTableFieldName_Id = "scale_id";
     public static final String ScaleTableFieldName_Hash = "scale_hash";
     public static final String ScaleTableFieldName_State = "scale_state";
-    public static final String ScaleTableFieldName_Image = "scale_image";
 
     public static final String WeightTableName = "weights";
     public static final String WeightTableFieldName_Id = "weight_id";
@@ -34,42 +33,36 @@ public class constants {
 
     public static final String UserRoleRelationshipTableName = "user_roles_rel";
 
-    public static final String LogsFieldName_Id = "log_id";
-    public static final String LogsFieldName_Date = "log_date";
-
-    public static final String BabyLogsTableName = "baby_logs";
-    public static final String BabyLogsFieldName_NewId = "new_scale_id";
-
-    public static final String ScaleLogsTableName = "scale_logs";
-    public static final String ScaleFieldName_NewState = "new_scale_state";
-
     public static final String ControllerName_List = "/list";
     public static final String ControllerName_Save = "/save";
     public static final String ControllerName_Search = "/search/{id}";
-    public static final String ControllerName_Delete = "/delete/{id}";
     public static final String ControllerName_Image = "/image/{id}";
+    public static final String ControllerName_Enable= "/enable/{id}";
+    public static final String ControllerName_Disable = "/disable/{id}";
+    public static final String ControllerName_Update = "/update/{id}";
 
     public static final String LoginControllerName = "/login";
     public static final String LoginController_BackEndName = "precious_weight_backend";
     public static final String LoginController_Scope = "scope";
 
     public static final String BabyControllerName = "/babies";
-    public static final String BabyControllerName_Update = "/update/{id}";
 
     public static final String ScaleControllerName = "/scales";
     public static final String ScaleControllerName_Save = "/save/{scaleHash}";
-    public static final String ScaleControllerName_Enable = "/enable/{id}";
-    public static final String ScaleControllerName_Disable = "/disable/{id}";
-    public static final String ScaleControllerName_Hash = "/update/{id}";
+
     public static final String ScaleControllerName_SetBaby = "/baby/set";
     public static final String ScaleControllerName_UnsetBaby = "/baby/unset";
 
     public static final String WeightControllerName = "/weight";
+    public static final String WeightControllerName_Babies = "/babies/{babyId}";
+    public static final String WeightControllerName_Scales = "/scales/{scaleId}";
 
     public static final String UserControllerName = "/users";
     public static final String UserControllerName_New = "/new";
 
-    public static final String ScaleLogsControllerName = "/logs/scales";
-    public static final String BabyLogsControllerName = "/logs/babies";
+    public static final String AuditControllerName = "/audit";
+    public static final String AuditControllerName_Weights = "/weights/{babyId}";
+    public static final String AuditControllerName_Scales = "/scales/{scaleId}";
+    public static final String AuditControllerName_Babies = "/babies/{babyId}";
 
 }

@@ -1,11 +1,14 @@
 package precious_weight.models;
 
 import jakarta.persistence.*;
+import org.hibernate.envers.Audited;
+
 import java.io.Serializable;
 
 import static precious_weight.config.constants.*;
 
 @Entity
+@Audited
 @Table(name = ScaleTableName)
 public class ScaleModel implements Serializable {
     @Id
@@ -58,6 +61,10 @@ public class ScaleModel implements Serializable {
     }
     public void setBabyId(Integer id) {
         this.babyId = id;
+    }
+
+    public void FromJson(String mqttJson){
+
     }
 
 }

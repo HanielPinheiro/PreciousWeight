@@ -41,7 +41,7 @@ public class LoginController {
         if (user.isEmpty() || !user.get().isLoginCorrect(loginRequest, passwordEncoder)) throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
 
         var now = Instant.now();
-        var expiresIn = 300L;
+        var expiresIn = 3000L;
 
         var scopes = user.get().getRoles()
                 .stream()

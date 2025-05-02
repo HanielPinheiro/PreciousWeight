@@ -1,6 +1,8 @@
 package precious_weight.models;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
+import org.hibernate.envers.Audited;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -8,6 +10,7 @@ import java.time.LocalDateTime;
 import static precious_weight.config.constants.*;
 
 @Entity
+@Audited
 @Table(name = WeightTableName)
 public class WeightModel implements Serializable {
 
@@ -17,6 +20,7 @@ public class WeightModel implements Serializable {
     private Integer weightId;
 
     @Column(name = WeightTableFieldName_Date, nullable = false)
+    @JsonFormat(timezone = "America/Sao_Paulo")
     private LocalDateTime weightDate;
 
     @Column(name = ScaleTableFieldName_Id, nullable = false)

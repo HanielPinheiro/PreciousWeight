@@ -1,11 +1,8 @@
 package precious_weight.controllers;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.server.ResponseStatusException;
 
 import precious_weight.interfaces.iBaby;
-import precious_weight.interfaces.iBabyLog;
 import precious_weight.models.BabyModel;
 import precious_weight.models.ScaleModel;
 import precious_weight.interfaces.iScale;
@@ -13,7 +10,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.sql.SQLException;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -67,7 +63,7 @@ public class ScaleController {
      */
 
     @PreAuthorize("isAuthenticated()")
-    @PostMapping(ScaleControllerName_Hash)
+    @PostMapping(ControllerName_Update)
     public ResponseEntity<ScaleModel> updateHash(@PathVariable Integer id, @RequestBody ScaleModel model) {
         try {
             if (iScale.findById(id).isEmpty()) return ResponseEntity.badRequest().build();
@@ -86,7 +82,7 @@ public class ScaleController {
      * ===================================================================================
      */
     @PreAuthorize("isAuthenticated()")
-    @PostMapping(ScaleControllerName_Enable)
+    @PostMapping(ControllerName_Enable)
     public ResponseEntity<ScaleModel> enableScale(@PathVariable Integer id) {
         try {
             return enableOrDisable(id, true);
@@ -96,7 +92,7 @@ public class ScaleController {
     }
 
     @PreAuthorize("isAuthenticated()")
-    @PostMapping(ScaleControllerName_Disable)
+    @PostMapping(ControllerName_Disable)
     public ResponseEntity<ScaleModel> disableScale(@PathVariable Integer id) {
         try {
             return enableOrDisable(id, false);
@@ -156,7 +152,7 @@ public class ScaleController {
             if (BabyHasScale(babyId)) return ResponseEntity.badRequest().build();
 
             ScaleModel scale = iScale.getReferenceById(scaleId);
-            if(scale.getScaleState() == ScaleStates.nonOperant.value)
+            if (scale.getScaleState() == ScaleStates.nonOperant.value)
                 return ResponseEntity.badRequest().build();
 
             scale.setBabyId(babyId);

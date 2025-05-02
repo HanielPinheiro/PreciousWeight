@@ -1,17 +1,20 @@
 package precious_weight.models;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import org.hibernate.envers.Audited;
 
 import java.io.Serializable;
 import java.sql.Blob;
-import java.sql.Date;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.Base64;
 
 import static precious_weight.config.constants.*;
 
 @Entity
+@Audited
 @Table(name = BabyTableName)
 public class BabyModel implements Serializable {
 
@@ -26,8 +29,10 @@ public class BabyModel implements Serializable {
     @Column(name = BabyTableFieldName_MotherName)
     private String babyMotherName;
 
+
     @Column(name = BabyTableFieldName_BirthDate)
-    private Date babyBirthDate;
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "America/Sao_Paulo")
+    private LocalDate babyBirthDate;
 
     @Column(name = BabyTableFieldName_State)
     private Integer babyState;
@@ -84,11 +89,11 @@ public class BabyModel implements Serializable {
         this.babyMotherName = motherName;
     }
 
-    public Date getBabyBirthDate() {
+    public LocalDate getBabyBirthDate() {
         return babyBirthDate;
     }
 
-    public void setBabyBirthDate(Date birthDate) {
+    public void setBabyBirthDate(LocalDate birthDate) {
         this.babyBirthDate = birthDate;
     }
 
