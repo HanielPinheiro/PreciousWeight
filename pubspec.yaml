@@ -20,6 +20,9 @@ dependencies:
   intl: any
   flutter_native_splash: ^2.4.5
   http: any
+  path_provider: ^2.1.5
+  http_parser: any
+  provider: ^6.1.5
 dev_dependencies:
   flutter_test:
     sdk: flutter

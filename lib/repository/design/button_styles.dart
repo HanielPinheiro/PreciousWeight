@@ -23,3 +23,37 @@ class MyButtonStyles {
     );
   }
 }
+
+class MyDecorations {
+  InputDecoration GetInputDecoration(BuildContext context, [String? labelText, String? hintText, Widget? _icon = null]) {
+    return InputDecoration(
+        prefixIcon: _icon,
+        labelText: labelText,
+        labelStyle: TextStyle(color: Theme
+            .of(context)
+            .colorScheme
+            .primary),
+        hintText: hintText,
+        hintStyle: TextStyle(color: Theme
+            .of(context)
+            .colorScheme
+            .primary),
+        enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Theme
+            .of(context)
+            .colorScheme
+            .primary)),
+        focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Theme
+            .of(context)
+            .colorScheme
+            .secondary))
+    );
+  }
+
+  BoxDecoration GetBoxDecoration(BuildContext context) {
+    return BoxDecoration(
+      color: Theme.of(context).colorScheme.surface,
+      border: Border.all(color: Theme.of(context).colorScheme.primary),
+      borderRadius: BorderRadius.circular(15),
+    );
+  }
+}

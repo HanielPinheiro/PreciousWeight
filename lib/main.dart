@@ -1,8 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:precious_weight/repository/design/theme.dart';
+import 'package:provider/provider.dart';
+
+import 'repository/providers/baby_provider.dart';
+import 'repository/design/theme.dart';
 import 'views/login/login.dart';
 
-void main() => runApp(PreciousWeightApp());
+void main() => runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => BabyProvider()),
+      ],
+      child:PreciousWeightApp()
+    ),
+);
 
 class PreciousWeightApp extends StatelessWidget {
   @override
