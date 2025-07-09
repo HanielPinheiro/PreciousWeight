@@ -45,3 +45,10 @@ mosquitto_pub -h precious_weight -p 8883 --cafile 'C:/Program Files/mosquitto/ce
 
 mosquitto_sub -h precious_weight -p 8883 --cafile 'C:/Program Files/mosquitto/certs/ca.crt' --cert 'C:/Program Files/mosquitto/certs/client.crt' --key 'C:/Program Files/mosquitto/certs/client.key' -t test -d -i 'my_client_id'
 
+
+Coisas para melhorar na API:
+Parar de salvar na tabela hibernate de log de bebes a imagem do qr code do bebe toda vez que acontecer algum update. Só logar se trocar a imagem, ou seja, fizer uma alteração naquele campo específico
+
+Coisas para melhorar no MQTT:
+
+

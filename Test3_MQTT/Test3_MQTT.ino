@@ -3,7 +3,7 @@
 
 const char* ssid = "DR_LORDES_2.5";
 const char* password = "maya1609@@@";
-const char* mqtt_server = "192.168.0.8";
+const char* mqtt_server = "192.168.0.10";
 const int port = 5278;
 char* globalTopic = "test";
 long lastMsg;
@@ -13,8 +13,8 @@ PubSubClient client(espClient);
 
 void setup() {
   Serial.begin(115200);
-  
- WiFi.begin(ssid, password);
+
+  WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
@@ -29,12 +29,12 @@ void setup() {
 
 void callback(char* topic, byte* message, unsigned int length) {
   Serial.print("Message arrived on topic: ");
-  Serial.println(topic);  
+  Serial.println(topic);
 
   String messageTemp;
   for (int i = 0; i < length; i++) messageTemp += (char)message[i];
   Serial.print("Message: ");
-  Serial.println(messageTemp);  
+  Serial.println(messageTemp);
 }
 
 void loop() {
@@ -43,7 +43,7 @@ void loop() {
 
   long now = millis();
   if (now - lastMsg > 5000) {
-    lastMsg = now;    
+    lastMsg = now;
     client.publish(globalTopic, "xablau do esp32");
     delay(1000);
     client.publish(globalTopic, "Vai embrazando");
@@ -57,7 +57,7 @@ void reconnect() {
     // Attempt to connect
     if (client.connect("MyScale")) {
       client.subscribe(globalTopic);
-      Serial.println("connected");      
+      Serial.println("connected");
     } else {
       Serial.print("failed, rc = ");
       Serial.println(client.state());
