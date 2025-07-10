@@ -22,7 +22,7 @@ HX711 scale2;
 HX711 scale3;
 HX711 scale4;
 
-void setup() {  
+void setup() {
   pinMode(BUZZER_PINOUT, OUTPUT);
   Serial.begin(115200);
   Serial.println("Waking up");
@@ -38,28 +38,31 @@ void setup() {
 void loop() {
 
   if (scale1.is_ready()) {
-    Serial.print("reading 1:\t");
-    Serial.println(scale1.get_units(), 1);
+    Serial.print("reading 1:");
+    Serial.print(scale1.get_units(), 1);
+    Serial.print("\t");
   } else {
     Serial.println("scale 1 not found.");
   }
 
   if (scale2.is_ready()) {
-    Serial.print("reading 2:\t");
-    Serial.println(scale2.get_units(), 1);
+    Serial.print("reading 2:");
+    Serial.print(scale2.get_units(), 1);
+    Serial.print("\t");
   } else {
     Serial.println("scale 2 not found.");
   }
 
   if (scale3.is_ready()) {
-    Serial.print("reading 3:\t");
-    Serial.println(scale3.get_units(), 1);
+    Serial.print("reading 3:");
+    Serial.print(scale3.get_units(), 1);
+    Serial.print("\t");
   } else {
     Serial.println("scale 3 not found.");
   }
 
   if (scale4.is_ready()) {
-    Serial.print("reading 4:\t");
+    Serial.print("reading 4: ");
     Serial.println(scale4.get_units(), 1);
   } else {
     Serial.println("scale 4 not found.");

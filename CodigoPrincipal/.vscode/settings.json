@@ -1,0 +1,18 @@
+{
+  "C_Cpp.intelliSenseEngine": "default",
+  "files.associations": {
+    "*.embeddedhtml": "html",
+    "task.h": "c",
+    "gpio.h": "c",
+    "hx711.h": "c",
+    "stdio.h": "c",
+    "buzzer.h": "c",
+    "freertos.h": "c",
+    "netfwd": "c",
+    "sdspi_host.h": "c",
+    "esp_rom_sys.h": "c",
+    "libs.h": "c"
+  },
+  "idf.flashType": "UART",
+  "idf.portWin": "COM4"
+}
