@@ -1,19 +1,22 @@
 #include "buzzer.h"
 
-#define BUZZER_GPIO GPIO_NUM_18
-#define FAST_TIME 600
-#define SLOW_TIME 200
-
-void buzzer_fast_beep(void)
+void buzzer_init()
 {
-    gpio_set_level(BUZZER_GPIO, 1);
-    vTaskDelay(pdMS_TO_TICKS(FAST_TIME));
+    gpio_reset_pin(BUZZER_GPIO);
+    gpio_set_direction(BUZZER_GPIO, GPIO_MODE_OUTPUT);
     gpio_set_level(BUZZER_GPIO, 0);
 }
 
-void buzzer_slow_beep(void)
+void buzzer_short_beep()
 {
     gpio_set_level(BUZZER_GPIO, 1);
-    vTaskDelay(pdMS_TO_TICKS(SLOW_TIME));
+    vTaskDelay(pdMS_TO_TICKS(SHORT_TIME));
+    gpio_set_level(BUZZER_GPIO, 0);
+}
+
+void buzzer_long_beep()
+{
+    gpio_set_level(BUZZER_GPIO, 1);
+    vTaskDelay(pdMS_TO_TICKS(LONG_TIME));
     gpio_set_level(BUZZER_GPIO, 0);
 }

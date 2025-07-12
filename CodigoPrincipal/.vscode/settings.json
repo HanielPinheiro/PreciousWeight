@@ -11,13 +11,15 @@
     "netfwd": "c",
     "sdspi_host.h": "c",
     "esp_rom_sys.h": "c",
-    "libs.h": "c"
+    "libs.h": "c",
+    "shtc3.h": "c",
+    "sdmmc_host.h": "c",
+    "queue.h": "c",
+    "sdcard.h": "c"
   },
   "idf.flashType": "UART",
   "idf.portWin": "COM4",
-  "idf.openOcdConfigs": [
-    "board/esp32-wrover-kit-3.3v.cfg"
-  ],
+  "idf.openOcdConfigs": ["board/esp32-wrover-kit-3.3v.cfg"],
   "idf.espIdfPathWin": "c:\\Users\\Biruleibe\\EspressifVsCode\\v5.4.2\\esp-idf",
   "idf.toolsPathWin": "c:\\Users\\Biruleibe\\EspressifVsCode\\Tools",
   "idf.pythonInstallPath": "c:\\Users\\Biruleibe\\EspressifVsCode\\Tools\\tools\\idf-python\\3.11.2\\python.exe",

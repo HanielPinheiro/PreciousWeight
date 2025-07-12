@@ -1,10 +1,8 @@
 #pragma once
-
-#include "../buzzer/buzzer.h"
-#include "string.h"
-#include "stdio.h"
-#include "esp_log.h"
-#include "esp_rom_sys.h"
+#include "stdint.h"
+#include "driver/gpio.h"
+#include "freertos/FreeRTOS.h" // ← Needed for vTaskDelay()
+#include "freertos/task.h"     // ← Needed for pdMS_TO_TICKS()
 
 #define HX711_UNDEFINED (0x80000000)
 
@@ -17,10 +15,14 @@ typedef enum
 
 typedef struct
 {
-    gpio_num_t sck_pin;
     gpio_num_t dout_pin;
-    int clock_cycles;
+    gpio_num_t sck_pin;
+    int clock_cycles_from_mode;
+    int32_t offset;
+    float scale;
 } hx711_t;
 
 esp_err_t hx711_init(hx711_t *dev, gpio_num_t dout, gpio_num_t sck, hx711_mode_t mode);
-int32_t hx711_read(hx711_t *dev, TickType_t timeout_ticks);
+int32_t hx711_read_raw(hx711_t *dev);
+float hx711_read_weight(hx711_t *dev);
+void hx711_tare(hx711_t *dev, uint8_t samples);

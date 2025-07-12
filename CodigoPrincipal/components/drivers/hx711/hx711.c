@@ -1,15 +1,32 @@
 #include "hx711.h"
 
-static const char *TAG = "HX711";
+// static const char *TAG = "HX711";
+
+/**
+ * Esp32 PIN SCK = Output, HX711 PIN SCK = INPUT (Clock comes from uC)
+ * Esp32 PIN DOUT = INPUT, HX711 PIN DOUT = Output (Data processed from sensors)
+ */
 
 esp_err_t hx711_init(hx711_t *dev, gpio_num_t dout, gpio_num_t sck, hx711_mode_t mode)
 {
     if (!dev)
         return ESP_ERR_INVALID_ARG;
 
-    dev->sck_pin = sck;
     dev->dout_pin = dout;
-    dev->clock_cycles = (int)mode;
+    dev->sck_pin = sck;
+    dev->clock_cycles_from_mode = (int)mode;
+    dev->offset = 0;
+    dev->scale = 1.0f;
+
+    // Configure DOUT as input
+    gpio_config_t dout_conf = {
+        .pin_bit_mask = 1ULL << dout,
+        .mode = GPIO_MODE_INPUT,
+        .pull_up_en = GPIO_PULLUP_DISABLE,
+        .pull_down_en = GPIO_PULLDOWN_DISABLE,
+        .intr_type = GPIO_INTR_DISABLE,
+    };
+    ESP_ERROR_CHECK(gpio_config(&dout_conf));
 
     // Configure SCK as output
     gpio_config_t sck_conf = {
@@ -22,39 +39,24 @@ esp_err_t hx711_init(hx711_t *dev, gpio_num_t dout, gpio_num_t sck, hx711_mode_t
     ESP_ERROR_CHECK(gpio_config(&sck_conf));
     gpio_set_level(sck, 0); // idle low
 
-    // Configure DOUT as input
-    gpio_config_t dout_conf = {
-        .pin_bit_mask = 1ULL << dout,
-        .mode = GPIO_MODE_INPUT,
-        .pull_up_en = GPIO_PULLUP_DISABLE,
-        .pull_down_en = GPIO_PULLDOWN_DISABLE,
-        .intr_type = GPIO_INTR_DISABLE,
-    };
-    ESP_ERROR_CHECK(gpio_config(&dout_conf));
-
     // Dummy read to clear/reset
-    hx711_read(dev, pdMS_TO_TICKS(1000));
+    hx711_read_raw(dev);
 
     return ESP_OK;
 }
 
-int32_t hx711_read(hx711_t *dev, TickType_t timeout_ticks)
+int32_t hx711_read_raw(hx711_t *dev)
 {
-    int count = 0;
-    while (gpio_get_level(dev->dout_pin) == 1)
-    {
-        if (count++ > timeout_ticks)
-        {
-            ESP_LOGE(TAG, "Timeout waiting for DOUT to go LOW");
-            return HX711_UNDEFINED;
-        }
-        vTaskDelay(1);
-    }
-
-    esp_rom_delay_us(5);
+    /**
+    * Por que removi timeout_ticks?
+      Motivo: Essa mudança foi didática. Na prática:
+        Seu uso original (while (gpio_get_level() == 1)) pode travar o sistema se o sensor falhar.
+        Em dispositivos médicos, timeouts fixos são perigosos (ex.: se o bebê estiver na balança e o sensor travar, o sistema deve continuar operando).
+        Posteriormente, vamos substituir por filas (queues) e timeouts supervisionados pelo system manager.
+    */
 
     int32_t data = 0;
-    for (int i = 0; i < dev->clock_cycles; i++)
+    for (int i = 0; i < dev->clock_cycles_from_mode; i++)
     {
         gpio_set_level(dev->sck_pin, 1);
         esp_rom_delay_us(1);
@@ -79,4 +81,20 @@ int32_t hx711_read(hx711_t *dev, TickType_t timeout_ticks)
     }
 
     return data;
+}
+
+float hx711_read_weight(hx711_t *dev)
+{
+    return (hx711_read_raw(dev) - dev->offset) * dev->scale;
+}
+
+void hx711_tare(hx711_t *dev, uint8_t samples)
+{
+    int32_t sum = 0;
+    for (uint8_t i = 0; i < samples; i++)
+    {
+        sum += hx711_read_raw(dev);
+        vTaskDelay(pdMS_TO_TICKS(10));
+    }
+    dev->offset = sum / samples;
 }

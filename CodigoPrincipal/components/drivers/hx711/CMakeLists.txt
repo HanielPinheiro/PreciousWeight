@@ -1,5 +1,5 @@
 idf_component_register(
     SRCS "hx711.c"
     INCLUDE_DIRS "."
-    REQUIRES buzzer
+    REQUIRES esp_driver_gpio freertos
 )
