@@ -4,18 +4,8 @@
  */
 
 #include "sdcard.h"
-#include "esp_log.h"
-#include "esp_timer.h"
-#include "esp_vfs_fat.h"
-#include "sdmmc_cmd.h"
-#include "driver/sdmmc_host.h"
-#include "driver/spi_common.h"
-#include "esp_log.h"
-#include "esp_timer.h"
 
-static const char *ROTULO_LOCAL = "SD_CARD";
-static char log_buffer[LINES][MAX_LOG_LENGTH];
-static uint16_t log_count = 0;
+static const char *ROTULO_LOCAL = "SdCard";
 
 struct stat st;
 sdmmc_card_t *sdcard = NULL;
@@ -81,7 +71,7 @@ esp_err_t sdcard_init(void)
         }
         else
         {
-            ESP_LOGE(ROTULO_LOCAL, "Erro não tratado. Mensagem: {%s}. Checagem dos fios: {%d}.", esp_err_to_name(ret), check_sd_card_pins());
+            ESP_LOGE(ROTULO_LOCAL, "Erro não tratado. Mensagem: {%s}.", esp_err_to_name(ret));
         }
         return ESP_FAIL;
     }
@@ -90,13 +80,14 @@ esp_err_t sdcard_init(void)
 
     ESP_LOGI(ROTULO_LOCAL, "Sistema de arquivos montado. Driver inicializado com sucesso.");
     sdmmc_card_print_info(stdout, sdcard);
+    return ESP_OK;
 }
 
 esp_err_t sdcard_write_file(char *path, char *data)
 {
-    if (!sdcard_check_file_exists(path))
+    if (sdcard_check_file_exists(path) < 0)
     {
-        ESP_LOGI(ROTULO_LOCAL, "Criando arquivo {%s}", path);
+        ESP_LOGI(ROTULO_LOCAL, "Arquivo nao encontrado. Criando arquivo {%s}", path);
         esp_err_t resultado = sdcard_create_file(path);
         if (resultado != ESP_OK)
         {
@@ -128,16 +119,18 @@ esp_err_t sdcard_write_file(char *path, char *data)
     return ESP_OK;
 }
 
-#define EXAMPLE_MAX_READ_SIZE 64
-
 esp_err_t sdcard_create_file(char *path)
 {
-    return sdcard_write_file(path, "");
+    FILE *file = fopen(path, "ab+");
+    if (file)
+        return ESP_OK;
+    return ESP_FAIL;
 }
 
 int sdcard_check_file_exists(char *path)
 {
-    return stat(path, &st);
+    int result = stat(path, &st);
+    return result;
 }
 
 esp_err_t sdcard_delete_file(char *path)
@@ -166,6 +159,9 @@ esp_err_t sdcard_rename_file(char *actual_name, char *new_name)
         ESP_LOGE(ROTULO_LOCAL, "Falha ao renomear - arquivo como novo nome não localizado.");
         return ESP_FAIL;
     }
+
+    ESP_LOGI(ROTULO_LOCAL, "Arquivo renomeado com sucesso!");
+    return ESP_OK;
 }
 
 void sdcard_close()
@@ -184,49 +180,63 @@ esp_err_t sdcard_format()
         return ESP_FAIL;
     }
 
-    // if (stat(file_foo, &st) == 0)
-    // {
-    //     ESP_LOGI(ROTULO_LOCAL, "Erro ao formatar, arquivos ainda existem!");
-    //     return ESP_FAIL;
-    // }
-
     ESP_LOGI(ROTULO_LOCAL, "Nenhum arquivo existente, formatação concluída");
     return ESP_OK;
 }
 
-esp_err_t sdcard_read_file(char *path)
+esp_err_t sdcard_log(log_type_t log_type, char *message)
 {
-    if (!sdcard_check_file_exists(path))
-    {
-        ESP_LOGE(ROTULO_LOCAL, "Arquivo não existe {%s}", path);
+    //+8 = (+5 da palavra referente ao log, +1 do espaço em branco, +2 das '[]')
+    size_t len = strlen(message) + 8;
+    char *log_entry = malloc(len);
+    if (!log_entry)
         return ESP_FAIL;
-    }
-
-    ESP_LOGI(ROTULO_LOCAL, "Lendo arquivo %s", path);
-    FILE *file = fopen(path, "r");
-
-    if (file == NULL)
+    switch (log_type)
     {
-        ESP_LOGE(ROTULO_LOCAL, "Failed to open file for reading at path {%s}", path);
-        return ESP_FAIL;
+    case LOG_INFO:
+        snprintf(log_entry, len, "[INFOS] %s", message);
+        break;
+    case LOG_WARN:
+        snprintf(log_entry, len, "[WARNS] %s", message);
+        break;
+    case LOG_ERROR:
+        snprintf(log_entry, len, "[ERROR] %s", message);
+        break;
+    default:
+        snprintf(log_entry, len, "[INFOS] %s", message);
+        break;
     }
 
-    char line[EXAMPLE_MAX_READ_SIZE];
-    fgets(line, sizeof(line), file);
-    fclose(file);
-
-    // strip newline
-    char *pos = strchr(line, '\n');
-    if (pos)
-    {
-        *pos = '\0';
-    }
-    ESP_LOGI(ROTULO_LOCAL, "Read from file: '%s'", line);
-
-    return ESP_OK;
+    return sdcard_write_file(LOG_FILE, log_entry);
 }
 
+// esp_err_t sdcard_read_file(char *path)
+// {
+//     //Precisa ser melhorada
+//     if (!sdcard_check_file_exists(path))
+//     {
+//         ESP_LOGE(ROTULO_LOCAL, "Arquivo não existe {%s}", path);
+//         return ESP_FAIL;
+//     }
 
+//     ESP_LOGI(ROTULO_LOCAL, "Lendo arquivo %s", path);
+//     FILE *file = fopen(path, "r");
+
+//     if (file == NULL)
+//     {
+//         ESP_LOGE(ROTULO_LOCAL, "Failed to open file for reading at path {%s}", path);
+//         return ESP_FAIL;
+//     }
+
+//     char line[64]; // from original example
+//     fgets(line, sizeof(line), file);
+//     fclose(file);
+
+//     return ESP_OK;
+// }
+
+// static char log_buffer[LINES][MAX_LOG_LENGTH];
+// static uint16_t log_count = 0;
 
 // static const char *TAG = "SD_CARD";
 // sdmmc_card_t *sdcard = NULL;

@@ -45,17 +45,38 @@ static bool init_queue(void)
 #define LED_GPIO GPIO_NUM_2
 
 hx711_t scale1, scale2, scale3, scale4;
+#define MODO_DEBUG true
 
 void system_manager_start()
 {
     // 1. Hardware básico
-    gpio_reset_pin(LED_GPIO);
-    gpio_set_direction(LED_GPIO, GPIO_MODE_OUTPUT);
-    gpio_set_level(LED_GPIO, 1);
+    if (MODO_DEBUG)
+    {
+        gpio_reset_pin(LED_GPIO);
+        gpio_set_direction(LED_GPIO, GPIO_MODE_OUTPUT);
+        gpio_set_level(LED_GPIO, 1);
+    }
 
     buzzer_init();
     buzzer_long_beep(); // Ligando
-    ESP_LOGI(TAG, "Iniciando");
+
+    // SD Card (com tratamento de erro)
+    if (sdcard_init() != ESP_OK)
+    {
+        if (MODO_DEBUG)
+            ESP_LOGE(TAG, "Falha no SD Card");
+        buzzer_short_alert(); // Função personalizada para alertas
+        return;
+    }
+
+    if (sdcard_log(LOG_INFO, "Iniciando ") != ESP_OK)
+    {
+        ESP_LOGE(TAG, "PROBLEMA COM LOGS!!");
+        return;
+    }
+
+    if (MODO_DEBUG)
+        ESP_LOGI(TAG, "Iniciando");
 
     // 2. Sensores
     scale1.sensor_id = 1;
@@ -74,29 +95,27 @@ void system_manager_start()
     hx711_init(&scale4, SCALE4_DOUT, SCALE4_SCK, HX711_CHANNEL_A_128);
     hx711_tare(&scale4, 10);
 
-    ESP_LOGI(TAG, "Sensores iniciados");
-
-    // 3. SD Card (com tratamento de erro)
-    if (sdcard_init() != ESP_OK)
-    {
-        ESP_LOGE(TAG, "Falha no SD Card");
-        buzzer_short_alert(); // Função personalizada para alertas
-        vTaskDelay(pdMS_TO_TICKS(1000));
-    }
-    sdcard_log(TAG, "TESTE", true);
+    sdcard_log(LOG_INFO, "Sensores iniciados");
+    if (MODO_DEBUG)
+        ESP_LOGI(TAG, "Sensores iniciados");
 
     // 4. Fila e tarefas
     if (!init_queue())
     {
-        ESP_LOGE(TAG, "Abortando inicialização");
+        sdcard_log(LOG_ERROR, "Abortando inicialização");
+        if (MODO_DEBUG)
+            ESP_LOGE(TAG, "Abortando inicialização");
         return;
     }
 
-    xTaskCreatePinnedToCore(task_sensor, "Sensor", 2048, &scale1, // Passa o sensor como parâmetro
-                            TASK_PRIORITY_SENSOR, NULL, 1);       // Fixa no core 1 (evita conflitos com WiFi/BT)
+    // Fixados no core 1 (evita conflitos com WiFi/BT) Passa o sensor como parâmetro
+    xTaskCreatePinnedToCore(task_sensor, "Sensor1", 2048, &scale1, TASK_PRIORITY_SENSOR, NULL, 1);
+    xTaskCreatePinnedToCore(task_sensor, "Sensor2", 2048, &scale2, TASK_PRIORITY_SENSOR, NULL, 1);
+    xTaskCreatePinnedToCore(task_sensor, "Sensor3", 2048, &scale3, TASK_PRIORITY_SENSOR, NULL, 1);
+    xTaskCreatePinnedToCore(task_sensor, "Sensor4", 2048, &scale4, TASK_PRIORITY_SENSOR, NULL, 1);
 
-    // xTaskCreate(task_sensor, "Sensor", 1024, &scale1, TASK_PRIORITY_SD, NULL);
     xTaskCreate(task_sd, "SD", 4096, NULL, TASK_PRIORITY_SD, NULL);
+
     xTaskCreate(task_monitor, "Monitor", 2048, NULL, TASK_PRIORITY_MONITOR, NULL);
 }
 
@@ -119,14 +138,19 @@ static void task_sensor(void *pv_params)
 
     while (1)
     {
-        data.weight = hx711_read_weight(scale);
-        data.timestamp = xTaskGetTickCount();
-        data.sensor_id = scale->sensor_id;
-        ESP_LOGI(TAG_SENSOR, "Lendo task sensor: %d %.2f", scale->sensor_id, data.weight);
+        if (MODO_DEBUG)
+        {
+            data.weight = hx711_read_weight(scale);
+            data.timestamp = xTaskGetTickCount();
+            data.sensor_id = scale->sensor_id;
+            ESP_LOGI(TAG_SENSOR, "Lendo task sensor: %d {%.2f}", scale->sensor_id, data.weight);
+        }
 
         if (!system_manager_send_data(&data))
         {
-            ESP_LOGW(TAG_SENSOR, "Fila cheia - dado descartado");
+            sdcard_log(LOG_WARN, "Fila cheia - dado descartado");
+            if (MODO_DEBUG)
+                ESP_LOGW(TAG_SENSOR, "Fila cheia - dado descartado");
         }
 
         vTaskDelay(pdMS_TO_TICKS(2000)); // Intervalo fixo
@@ -136,21 +160,28 @@ static void task_sensor(void *pv_params)
 static void task_sd(void *pv_params)
 {
     UBaseType_t stack_high_water = uxTaskGetStackHighWaterMark(NULL);
-    ESP_LOGI("SD", "Stack livre inicial: %u bytes", stack_high_water * sizeof(StackType_t));
+    sdcard_log(LOG_INFO, "Stack livre inicial: %u bytes");
+    if (MODO_DEBUG)
+        ESP_LOGI("SD", "Stack livre inicial: %u bytes", stack_high_water * sizeof(StackType_t));
 
     sensor_data_t data;
 
     while (1)
     {
-        ESP_LOGI(TAG_SD, "Lendo task sd");
+        if (MODO_DEBUG)
+            ESP_LOGI(TAG_SD, "Lendo task sd");
+
         if (system_manager_receive_data(&data, portMAX_DELAY))
         {
-            char log_msg[64];
+            char log_msg[80];
             snprintf(log_msg, sizeof(log_msg), "Sensor %u: %.2fg @ %lu", data.sensor_id, data.weight, data.timestamp);
 
-            if (sdcard_log("WEIGHT", log_msg, false) != ESP_OK)
+            if (sdcard_write_file(WEIGHT_FILE, log_msg) != ESP_OK)
             {
-                ESP_LOGE(TAG_SD, "Falha ao escrever no SD");
+                snprintf(log_msg, sizeof(log_msg), "Falha ao escrever no SD: {Sensor %u: %.2fg @ %lu}", data.sensor_id, data.weight, data.timestamp);
+                sdcard_log(LOG_INFO, log_msg);
+                if (MODO_DEBUG)
+                    ESP_LOGE(TAG_SD, "%s", log_msg);
             }
         }
 
@@ -174,7 +205,7 @@ static void task_monitor(void *pv_params)
 
     while (1)
     {
-        ESP_LOGI("MEM", "Free Heap: %ld | Min Free: %ld", esp_get_free_heap_size(), esp_get_minimum_free_heap_size());
+        // ESP_LOGI("MEM", "Free Heap: %ld | Min Free: %ld", esp_get_free_heap_size(), esp_get_minimum_free_heap_size());
         UBaseType_t items = uxQueueMessagesWaiting(sensor_queue);
         ESP_LOGI(TAG, "Uso da fila: %u/%u", items, queue_config.size);
         vTaskDelay(pdMS_TO_TICKS(5000)); // A cada 5 segundos

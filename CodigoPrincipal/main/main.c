@@ -26,11 +26,11 @@ Exemplo prático:
     Imagine uma fábrica com 3 funcionários:
         Funcionário 1 (SensorTask): Só mede pesos e coloca em uma caixa (fila).
         Funcionário 2 (SDTask): Só pega os pesos da caixa e anota em um livro (SD Card).
-        Funcionário 3 (MonitorTask): Verifica se a caixa não está muito cheia ou vazia.    
+        Funcionário 3 (MonitorTask): Verifica se a caixa não está muito cheia ou vazia.
 
     O Que São Filas (Queues) no FreeRTOS?
         Um canal de comunicação entre tarefas, garantindo que os dados sejam passados de forma segura e ordenada.
-        Exemplo: A caixa onde o Funcionário 1 coloca os pesos e o Funcionário 2 pega. Se a caixa estiver cheia, 
+        Exemplo: A caixa onde o Funcionário 1 coloca os pesos e o Funcionário 2 pega. Se a caixa estiver cheia,
                  o Funcionário 1 espera; se estiver vazia, o Funcionário 2 espera.
         Estrutura FIFO: Primeiro a entrar, primeiro a sair.
         Thread-safe: Seguro para comunicação entre tarefas.
