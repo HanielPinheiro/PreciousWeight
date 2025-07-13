@@ -20,3 +20,22 @@ void buzzer_long_beep()
     vTaskDelay(pdMS_TO_TICKS(LONG_TIME));
     gpio_set_level(BUZZER_GPIO, 0);
 }
+
+void buzzer_short_alert()
+{
+    for (int i = 0; i < 3; i++)
+    {
+        buzzer_short_beep();
+        vTaskDelay(pdMS_TO_TICKS(SHORT_TIME));
+    }
+}
+
+
+void buzzer_long_alert()
+{
+    for (int i = 0; i < 3; i++)
+    {
+        buzzer_short_beep();
+        vTaskDelay(pdMS_TO_TICKS(SHORT_TIME));
+    }
+}

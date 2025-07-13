@@ -11,7 +11,6 @@ set(EXTRA_COMPONENT_DIRS
     "${CMAKE_CURRENT_SOURCE_DIR}/components/drivers/buzzer"
     "${CMAKE_CURRENT_SOURCE_DIR}/components/drivers/hx711"
     "${CMAKE_CURRENT_SOURCE_DIR}/components/drivers/sdcard"
-    "${CMAKE_CURRENT_SOURCE_DIR}/components/drivers/sdcard_v2"
 
     "${CMAKE_CURRENT_SOURCE_DIR}/components/core/system_manager"
 

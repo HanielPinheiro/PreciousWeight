@@ -4,8 +4,6 @@
 #include "freertos/FreeRTOS.h" // ← Needed for vTaskDelay()
 #include "freertos/task.h"     // ← Needed for pdMS_TO_TICKS()
 
-#define HX711_UNDEFINED (0x80000000)
-
 typedef enum
 {
     HX711_CHANNEL_A_128 = 25,
@@ -20,6 +18,7 @@ typedef struct
     int clock_cycles_from_mode;
     int32_t offset;
     float scale;
+    uint8_t sensor_id;
 } hx711_t;
 
 esp_err_t hx711_init(hx711_t *dev, gpio_num_t dout, gpio_num_t sck, hx711_mode_t mode);
