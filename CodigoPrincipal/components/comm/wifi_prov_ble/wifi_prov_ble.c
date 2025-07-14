@@ -128,13 +128,6 @@ static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_
     }
 }
 
-static void wifi_init_sta(void)
-{
-    /* Start Wi-Fi in station mode */
-    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
-    ESP_ERROR_CHECK(esp_wifi_start());
-}
-
 static void get_device_service_name(char *service_name, size_t max)
 {
     uint8_t eth_mac[6];
@@ -165,8 +158,10 @@ static esp_err_t custom_prov_data_handler(uint32_t session_id, const uint8_t *in
     return ESP_OK;
 }
 
-void wifi_prov_init(void)
+void wifi_init_all(void)
 {
+    ESP_LOGI(ROTULO_LOCAL, "Inicializando sistema de rede e eventos...");
+
     /* Initialize NVS partition */
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND)
@@ -175,11 +170,9 @@ void wifi_prov_init(void)
         ESP_ERROR_CHECK(nvs_flash_init());  /* Retry nvs_flash_init */
     }
 
-    /* Initialize TCP/IP */
-    ESP_ERROR_CHECK(esp_netif_init());
+    ESP_ERROR_CHECK(esp_netif_init());                /* Initialize TCP/IP */
+    ESP_ERROR_CHECK(esp_event_loop_create_default()); /* Initialize the event loop */
 
-    /* Initialize the event loop */
-    ESP_ERROR_CHECK(esp_event_loop_create_default());
     wifi_event_group = xEventGroupCreate();
 
     /* Register our event handler for Wi-Fi, IP and Provisioning related events */
@@ -193,6 +186,20 @@ void wifi_prov_init(void)
 
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
+}
+
+void start_wifi_sta(void) // Conectar usando dados salvos(modo STA)
+{
+    ESP_LOGI(ROTULO_LOCAL, "Iniciando Wi-Fi STA com credenciais salvas...");
+    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL));
+    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
+    ESP_ERROR_CHECK(esp_wifi_start());
+    xEventGroupWaitBits(wifi_event_group, BIT0, true, true, portMAX_DELAY);
+}
+
+void start_ble_provisioning(void)
+{ // Provisionamento via BLE pela primeira vez
+    ESP_LOGI(ROTULO_LOCAL, "Iniciando provisioning BLE...");
 
     /* Configuration for the provisioning manager */
     wifi_prov_mgr_config_t config = {
@@ -204,80 +211,56 @@ void wifi_prov_init(void)
 
     /* Initialize provisioning manager with the configuration parameters set above */
     ESP_ERROR_CHECK(wifi_prov_mgr_init(config));
+    // wifi_prov_mgr_disable_auto_stop(10); // mantem ativo até você decidir parar
+    wifi_prov_scheme_ble_set_service_uuid(custom_service_uuid);
+    wifi_prov_mgr_endpoint_create("PW_PROVISION_DATA");
 
-    /* Let's find out if the device is provisioned */
+    char service_name[12];
+    get_device_service_name(service_name, sizeof(service_name));
+    const char *service_key = NULL;
+    const char *pop = "abcd1234";
+    wifi_prov_security_t security = WIFI_PROV_SECURITY_1;
+
+    ESP_ERROR_CHECK(wifi_prov_mgr_start_provisioning(security, (const void *)pop, service_name, service_key));
+    wifi_prov_mgr_endpoint_register("custom-data", custom_prov_data_handler, NULL);
+    xEventGroupWaitBits(wifi_event_group, BIT0, true, true, portMAX_DELAY);
+}
+
+// void force_reprovision(void)
+// { // Reprovisionar manualmente (via comando/app)
+//     ESP_LOGW(ROTULO_LOCAL, "Forçando reprovisionamento manual via comando!");
+//     ESP_ERROR_CHECK(wifi_prov_mgr_reset_sm_state_for_reprovision());
+
+//     char service_name[12];
+//     get_device_service_name(service_name, sizeof(service_name));
+//     const char *service_key = NULL;
+//     const char *pop = "abcd1234";
+//     wifi_prov_security_t security = WIFI_PROV_SECURITY_1;
+
+//     ESP_ERROR_CHECK(wifi_prov_mgr_start_provisioning(security, (const void *)pop, service_name, service_key));
+//     // handler opcional
+//     wifi_prov_mgr_endpoint_register("custom-data", custom_prov_data_handler, NULL);
+//     xEventGroupWaitBits(wifi_event_group, BIT0, true, true, portMAX_DELAY);
+// }
+
+void wifi_setup(void)
+{
+    wifi_init_all();
+
     bool provisioned = false;
     ESP_ERROR_CHECK(wifi_prov_mgr_is_provisioned(&provisioned));
 
-    char service_name[12];
-    get_device_service_name(service_name, sizeof(service_name)); // device name when scheme is wifi_prov_scheme_ble
-    const char *service_key = NULL;                              // ignored when scheme is wifi_prov_scheme_ble
-    const char *username = NULL;
-    const char *pop = "abcd1234";
-    wifi_prov_security_t security = WIFI_PROV_SECURITY_1;
-    wifi_prov_security1_params_t *sec_params = pop;
-
-    /* If device is not yet provisioned start provisioning service */
-    if (!provisioned)
+    if (provisioned)
     {
-        ESP_LOGI(ROTULO_LOCAL, "Starting provisioning");
-
-        /* If your build fails with linker errors at this point, then you may have forgotten to enable the BT stack or BTDM BLE settings in the SDK (e.g. see the sdkconfig.defaults in the example project) */
-        wifi_prov_scheme_ble_set_service_uuid(custom_service_uuid);
-
-        /* An optional endpoint that applications can create if they expect to get some additional custom data during provisioning workflow.
-         * The endpoint name can be anything of your choice. This call must be made before starting the provisioning. */
-        wifi_prov_mgr_endpoint_create("PW_PROVISION_DATA");
-
-        /* Do not stop and de-init provisioning even after success, so that we can restart it later. */
-        wifi_prov_mgr_disable_auto_stop(1000); // Reprovisioning
-
-        /* Start provisioning service */
-        ESP_ERROR_CHECK(wifi_prov_mgr_start_provisioning(security, (const void *)sec_params, service_name, service_key));
-
-        /* The handler for the optional endpoint created above. This call must be made after starting the provisioning, and only if the endpoint has already been created above. */
-        wifi_prov_mgr_endpoint_register("custom-data", custom_prov_data_handler, NULL);
+        ESP_LOGI(ROTULO_LOCAL, "Dispositivo já provisionado. Conectando...");
+        start_wifi_sta();
+        ESP_LOGI(ROTULO_LOCAL, "Conectado");
     }
     else
     {
-        ESP_LOGI(ROTULO_LOCAL, "Already provisioned, starting Wi-Fi STA");
-
-        /* We don't need the manager as device is already provisioned, so let's release it's resources */
-        // wifi_prov_mgr_deinit();
-
-        ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL));
-        /* Start Wi-Fi station */
-        wifi_init_sta();
-    }
-
-    /* Wait for Wi-Fi connection */
-    xEventGroupWaitBits(wifi_event_group, BIT0, true, true, portMAX_DELAY);
-
-    while (1)
-    {
-        for (int i = 0; i < 2; i++)
-        {
-            ESP_LOGI(ROTULO_LOCAL, "Hello World!");
-            vTaskDelay(1000 / portTICK_PERIOD_MS);
-        }
-
-        /* Resetting provisioning state machine to enable re-provisioning */
-        wifi_prov_mgr_disable_auto_stop(100);
-        wifi_prov_mgr_reset_sm_state_for_reprovision();
-
-        ESP_LOGI(ROTULO_LOCAL, "Reabrindo BLE para reprovisionamento...");
-
-        wifi_prov_security_t security = WIFI_PROV_SECURITY_1;
-        const char *pop = "abcd1234"; // ou NULL se for security 0
-        const char *service_key = NULL;
-        char service_name[12];
-        get_device_service_name(service_name, sizeof(service_name));
-        // ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL));
-
-        wifi_prov_mgr_start_provisioning(security, pop, service_name, service_key);
-
-        /* Wait for Wi-Fi connection */
-        xEventGroupWaitBits(wifi_event_group, BIT0, true, true, portMAX_DELAY);
+        ESP_LOGW(ROTULO_LOCAL, "Dispositivo novo. Iniciando provisioning...");
+        start_ble_provisioning();
+        ESP_LOGI(ROTULO_LOCAL, "Provisionado");
     }
 }
 

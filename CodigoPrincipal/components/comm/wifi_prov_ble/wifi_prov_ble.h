@@ -13,7 +13,8 @@
 #include "wifi_provisioning/manager.h"
 #include "wifi_provisioning/scheme_ble.h"
 
-void wifi_prov_init(void);
+void start_ble_provisioning(void);
+void wifi_setup(void);
 
 // #include "stdio.h"
 // #include "string.h"

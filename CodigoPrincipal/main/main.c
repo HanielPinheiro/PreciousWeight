@@ -4,7 +4,23 @@
 void app_main()
 {
     // system_manager_start();
-    wifi_prov_init();
+    wifi_setup();
+
+    for (int i = 0; i < 2; i++)
+    {
+        // ESP_LOGI(ROTULO_LOCAL, "Hello World!");
+        vTaskDelay(pdMS_TO_TICKS(2000));
+    }
+
+    start_ble_provisioning();
+
+    for (int i = 0; i < 2; i++)
+    {
+        // ESP_LOGI(ROTULO_LOCAL, "Hello World!");
+        vTaskDelay(pdMS_TO_TICKS(10000));
+    }
+
+    start_ble_provisioning();
 }
 
 // vTaskDelay(): Pausa a tarefa sem bloquear o processador

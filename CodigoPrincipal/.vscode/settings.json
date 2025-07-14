@@ -38,7 +38,8 @@
     "cstdlib": "c",
     "esp_wifi.h": "c",
     "scheme_softap.h": "c",
-    "wifi_prov_ble.h": "c"
+    "wifi_prov_ble.h": "c",
+    "scheme_ble.h": "c"
   },
   "idf.flashType": "UART",
   "idf.portWin": "COM4",
