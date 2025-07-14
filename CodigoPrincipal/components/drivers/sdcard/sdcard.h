@@ -41,6 +41,6 @@ esp_err_t sdcard_delete_file(char *path);
 
 esp_err_t sdcard_log(log_type_t log_type, char *message);
 
-// esp_err_t sdcard_log(const char *tag, const char *message, bool flush_immediately);
+// esp_err_t sdcard_log(const char *ROTULO_LOCAL, const char *message, bool flush_immediately);
 // esp_err_t sdcard_flush(void); // Manual flush for critical data
 // void sdcard_cleanup(bool power_down_spi);

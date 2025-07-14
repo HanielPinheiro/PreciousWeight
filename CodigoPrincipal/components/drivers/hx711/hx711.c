@@ -1,6 +1,6 @@
 #include "hx711.h"
 
-// static const char *TAG = "HX711";
+// static const char *ROTULO_LOCAL = "HX711";
 
 /**
  * Esp32 PIN SCK = Output, HX711 PIN SCK = INPUT (Clock comes from uC)

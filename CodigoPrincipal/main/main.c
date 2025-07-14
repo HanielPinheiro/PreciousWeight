@@ -1,8 +1,10 @@
-#include "system_manager.h"
+// #include "system_manager.h"
+#include "wifi_prov_ble.h"
 
 void app_main()
 {
-    system_manager_start();
+    // system_manager_start();
+    wifi_prov_init();
 }
 
 // vTaskDelay(): Pausa a tarefa sem bloquear o processador

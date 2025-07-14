@@ -13,7 +13,7 @@ sdmmc_host_t host = SDSPI_HOST_DEFAULT(); // Define que estou usando o modulo sd
 
 esp_err_t sdcard_init(void)
 {
-    // Montagem remete a criação virtual (dentro do sofware) do driver de comunicação
+    // MonROTULO_LOCALem remete a criação virtual (dentro do sofware) do driver de comunicação
     esp_vfs_fat_sdmmc_mount_config_t mount_config = {
         .format_if_mount_failed = false,
         .max_files = 3,                    // Número máximo de arquivos abertos simultaneamente.(Cada arquivo aberto consome ~20 bytes de RAM). RAM_consumida = max_files * sizeof(FILE) + buffers  // ~100-200 bytes no total
@@ -67,7 +67,7 @@ esp_err_t sdcard_init(void)
     {
         if (ret == ESP_FAIL)
         {
-            ESP_LOGE(ROTULO_LOCAL, "Falha na montagem do sistema de arquivos. Se desejar formatar, use a função sdcard_format.");
+            ESP_LOGE(ROTULO_LOCAL, "Falha na monROTULO_LOCALem do sistema de arquivos. Se desejar formatar, use a função sdcard_format.");
         }
         else
         {
@@ -238,7 +238,7 @@ esp_err_t sdcard_log(log_type_t log_type, char *message)
 // static char log_buffer[LINES][MAX_LOG_LENGTH];
 // static uint16_t log_count = 0;
 
-// static const char *TAG = "SD_CARD";
+// static const char *ROTULO_LOCAL = "SD_CARD";
 // sdmmc_card_t *sdcard = NULL;
 // static char log_buffer[MAX_LOG_ENTRIES][MAX_LOG_LENGTH];
 // static uint16_t log_count = 0;
@@ -270,7 +270,7 @@ esp_err_t sdcard_log(log_type_t log_type, char *message)
 //     slot_config.gpio_cs = GPIO_NUM_5;
 //     slot_config.host_id = host.slot;
 
-//     // Montagem remete a criação virtual (dentro do sofware) do driver de comunicação
+//     // MonROTULO_LOCALem remete a criação virtual (dentro do sofware) do driver de comunicação
 //     esp_vfs_fat_sdmmc_mount_config_t mount_config = {
 //         .format_if_mount_failed = false,
 //         .max_files = 3,                    // Número máximo de arquivos abertos simultaneamente.(Cada arquivo aberto consome ~20 bytes de RAM). RAM_consumida = max_files * sizeof(FILE) + buffers  // ~100-200 bytes no total
@@ -286,22 +286,22 @@ esp_err_t sdcard_log(log_type_t log_type, char *message)
 
 //     if (ret != ESP_OK)
 //     {
-//         ESP_LOGE(TAG, "Mount failed: %s", esp_err_to_name(ret));
+//         ESP_LOGE(ROTULO_LOCAL, "Mount failed: %s", esp_err_to_name(ret));
 //         spi_bus_free(host.slot);
 //         return ret;
 //     }
 
-//     // Corrigi a frequencia de comunicação, em SPI o teto é 20000 kHz = 20 MHz. Deve iniciar com valor perto de 4000 (4 MHz) se não, ocorre erro de montagem.
+//     // Corrigi a frequencia de comunicação, em SPI o teto é 20000 kHz = 20 MHz. Deve iniciar com valor perto de 4000 (4 MHz) se não, ocorre erro de monROTULO_LOCALem.
 //     // host.max_freq_khz = 8000;
 //     return ESP_OK;
 // }
 
 // // Buffered Logging (Power-Aware)
-// esp_err_t sdcard_log(const char *tag, const char *message, bool flush_immediately)
+// esp_err_t sdcard_log(const char *ROTULO_LOCAL, const char *message, bool flush_immediately)
 // {
 //     /*
 //     Exemplo de uso:
-//         sdcard_log("TAG", "Mensagem", false); // Armazena no buffer
+//         sdcard_log("ROTULO_LOCAL", "Mensagem", false); // Armazena no buffer
 //         sdcard_log(NULL, NULL, true); // Força escrita no SD Card
 //     Quando Usar o Buffer (Escrita em Memória RAM):
 //         Dados não críticos: Logs de debug, telemetria periódica.
@@ -332,7 +332,7 @@ esp_err_t sdcard_log(log_type_t log_type, char *message)
 //     // 3. Armazena a mensagem no buffer
 //     if (log_count < MAX_LOG_ENTRIES)
 //     {
-//         snprintf(log_buffer[log_count], MAX_LOG_LENGTH, "[%s] %lld %s", tag, esp_timer_get_time(), message);
+//         snprintf(log_buffer[log_count], MAX_LOG_LENGTH, "[%s] %lld %s", ROTULO_LOCAL, esp_timer_get_time(), message);
 //         log_count++;
 //         return ESP_OK;
 //     }
@@ -346,15 +346,15 @@ esp_err_t sdcard_log(log_type_t log_type, char *message)
 // {
 //     if (sdcard == NULL)
 //     {
-//         ESP_LOGE(TAG, "SD Card não inicializado");
+//         ESP_LOGE(ROTULO_LOCAL, "SD Card não inicializado");
 //         return ESP_FAIL;
 //     }
 //     // MEXER AQUI AAAAAAAAAAAAAAAAAAAAAAAAA
-//     // 2. Tenta abrir o arquivo (verificação implícita de montagem)
+//     // 2. Tenta abrir o arquivo (verificação implícita de monROTULO_LOCALem)
 //     FILE *file = fopen(LOG_FILE, "a");
 //     if (file == NULL)
 //     {
-//         ESP_LOGE(TAG, "Falha ao abrir arquivo (SD Card desmontado?)");
+//         ESP_LOGE(ROTULO_LOCAL, "Falha ao abrir arquivo (SD Card desmontado?)");
 //         return ESP_FAIL;
 //     }
 
@@ -364,14 +364,14 @@ esp_err_t sdcard_log(log_type_t log_type, char *message)
 //         if (fprintf(file, "%s\n", log_buffer[i]) < 0)
 //         {
 //             fclose(file);
-//             ESP_LOGE(TAG, "Falha na escrita");
+//             ESP_LOGE(ROTULO_LOCAL, "Falha na escrita");
 //             return ESP_FAIL;
 //         }
 //     }
 
 //     fclose(file);
 //     log_count = 0; // Zera somente após escrita bem-sucedida
-//     ESP_LOGI(TAG, "Tudo ok, escreveu");
+//     ESP_LOGI(ROTULO_LOCAL, "Tudo ok, escreveu");
 //     return ESP_OK;
 // }
 

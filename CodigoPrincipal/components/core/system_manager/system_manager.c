@@ -1,9 +1,9 @@
 #include "system_manager.h"
 
-// Tags para logging
-static const char *TAG = "SystemManager";
-static const char *TAG_SENSOR = "SensorTask";
-static const char *TAG_SD = "SDTask";
+// ROTULO_LOCALs para logging
+static const char *ROTULO_LOCAL = "SystemManager";
+static const char *ROTULO_LOCAL_SENSOR = "SensorTask";
+static const char *ROTULO_LOCAL_SD = "SDTask";
 
 // Handles globais (static para encapsulamento)
 static QueueHandle_t sensor_queue = NULL;
@@ -23,7 +23,7 @@ static bool init_queue(void)
     sensor_queue = xQueueCreate(queue_config.size, sizeof(sensor_data_t));
     if (sensor_queue == NULL)
     {
-        ESP_LOGE(TAG, "Falha ao criar fila");
+        ESP_LOGE(ROTULO_LOCAL, "Falha ao criar fila");
         return false;
     }
     return true;
@@ -64,19 +64,19 @@ void system_manager_start()
     if (sdcard_init() != ESP_OK)
     {
         if (MODO_DEBUG)
-            ESP_LOGE(TAG, "Falha no SD Card");
+            ESP_LOGE(ROTULO_LOCAL, "Falha no SD Card");
         buzzer_short_alert(); // Função personalizada para alertas
         return;
     }
 
     if (sdcard_log(LOG_INFO, "Iniciando ") != ESP_OK)
     {
-        ESP_LOGE(TAG, "PROBLEMA COM LOGS!!");
+        ESP_LOGE(ROTULO_LOCAL, "PROBLEMA COM LOGS!!");
         return;
     }
 
     if (MODO_DEBUG)
-        ESP_LOGI(TAG, "Iniciando");
+        ESP_LOGI(ROTULO_LOCAL, "Iniciando");
 
     // 2. Sensores
     scale1.sensor_id = 1;
@@ -97,14 +97,14 @@ void system_manager_start()
 
     sdcard_log(LOG_INFO, "Sensores iniciados");
     if (MODO_DEBUG)
-        ESP_LOGI(TAG, "Sensores iniciados");
+        ESP_LOGI(ROTULO_LOCAL, "Sensores iniciados");
 
     // 4. Fila e tarefas
     if (!init_queue())
     {
         sdcard_log(LOG_ERROR, "Abortando inicialização");
         if (MODO_DEBUG)
-            ESP_LOGE(TAG, "Abortando inicialização");
+            ESP_LOGE(ROTULO_LOCAL, "Abortando inicialização");
         return;
     }
 
@@ -143,14 +143,14 @@ static void task_sensor(void *pv_params)
             data.weight = hx711_read_weight(scale);
             data.timestamp = xTaskGetTickCount();
             data.sensor_id = scale->sensor_id;
-            ESP_LOGI(TAG_SENSOR, "Lendo task sensor: %d {%.2f}", scale->sensor_id, data.weight);
+            ESP_LOGI(ROTULO_LOCAL_SENSOR, "Lendo task sensor: %d {%.2f}", scale->sensor_id, data.weight);
         }
 
         if (!system_manager_send_data(&data))
         {
             sdcard_log(LOG_WARN, "Fila cheia - dado descartado");
             if (MODO_DEBUG)
-                ESP_LOGW(TAG_SENSOR, "Fila cheia - dado descartado");
+                ESP_LOGW(ROTULO_LOCAL_SENSOR, "Fila cheia - dado descartado");
         }
 
         vTaskDelay(pdMS_TO_TICKS(2000)); // Intervalo fixo
@@ -169,7 +169,7 @@ static void task_sd(void *pv_params)
     while (1)
     {
         if (MODO_DEBUG)
-            ESP_LOGI(TAG_SD, "Lendo task sd");
+            ESP_LOGI(ROTULO_LOCAL_SD, "Lendo task sd");
 
         if (system_manager_receive_data(&data, portMAX_DELAY))
         {
@@ -181,7 +181,7 @@ static void task_sd(void *pv_params)
                 snprintf(log_msg, sizeof(log_msg), "Falha ao escrever no SD: {Sensor %u: %.2fg @ %lu}", data.sensor_id, data.weight, data.timestamp);
                 sdcard_log(LOG_INFO, log_msg);
                 if (MODO_DEBUG)
-                    ESP_LOGE(TAG_SD, "%s", log_msg);
+                    ESP_LOGE(ROTULO_LOCAL_SD, "%s", log_msg);
             }
         }
 
@@ -207,7 +207,7 @@ static void task_monitor(void *pv_params)
     {
         // ESP_LOGI("MEM", "Free Heap: %ld | Min Free: %ld", esp_get_free_heap_size(), esp_get_minimum_free_heap_size());
         UBaseType_t items = uxQueueMessagesWaiting(sensor_queue);
-        ESP_LOGI(TAG, "Uso da fila: %u/%u", items, queue_config.size);
+        ESP_LOGI(ROTULO_LOCAL, "Uso da fila: %u/%u", items, queue_config.size);
         vTaskDelay(pdMS_TO_TICKS(5000)); // A cada 5 segundos
     }
 }
