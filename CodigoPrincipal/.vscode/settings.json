@@ -39,7 +39,14 @@
     "esp_wifi.h": "c",
     "scheme_softap.h": "c",
     "wifi_prov_ble.h": "c",
-    "scheme_ble.h": "c"
+    "scheme_ble.h": "c",
+    "future": "c",
+    "system_error": "c",
+    "regex": "c",
+    "cstdint": "c",
+    "mqtt.h": "c",
+    "netdb.h": "c",
+    "mqtt3.h": "c"
   },
   "idf.flashType": "UART",
   "idf.portWin": "COM4",

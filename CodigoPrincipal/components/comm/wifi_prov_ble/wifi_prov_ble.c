@@ -12,8 +12,9 @@ static const char *ROTULO_LOCAL = "wifi_prov_ble";
  * This will set a custom 128 bit UUID which will be included in the BLE advertisement and will correspond to the primary GATT service that provides provisioning endpoints as GATT characteristics.
  * Each GATT characteristic will be formed using the primary service UUID as base, with different auto assigned 12th and 13th bytes (assume counting starts from 0th byte).
  * The client side applications must identify the endpoints by reading the User Characteristic Description descriptor (0x2901) for each characteristic, which contains the endpoint name of the characteristic.
- * LSB <------------------------------------------------------------------------------> MSB */
-static uint8_t custom_service_uuid[] = {
+ * LSB <------------------------------------------------------------------------------> MSB
+ * Ex: 550e8400-e29b-41d4-a716-446655440000 -> 550e8400e29b41d4a716446655440000 -> Split into byte pairs (in reverse order for little-endian systems)*/
+static uint8_t my_bluetooth_uuid[] = {
     0xb4,
     0xdf,
     0x5a,
@@ -31,6 +32,15 @@ static uint8_t custom_service_uuid[] = {
     0x1a,
     0x02,
 };
+static char my_pop[] = "abcd1234";
+// static char my_mac_str[] = "D0:EF:76:59:0B:7C";
+
+void print_efuse_mac(void)
+{ // também é encontrado nessa linha ao ligar a máquina no wifi -> wifi:mode : sta (d0:ef:76:59:0b:7c)
+    uint8_t base_mac[6] = {0};
+    ESP_ERROR_CHECK(esp_efuse_mac_get_default(base_mac));
+    printf("Factory eFuse MAC: %02X:%02X:%02X:%02X:%02X:%02X\n", base_mac[0], base_mac[1], base_mac[2], base_mac[3], base_mac[4], base_mac[5]);
+}
 
 /* Event handler for catching system events */
 static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
@@ -208,25 +218,23 @@ void start_ble_provisioning(void)
     /* Configuration for the provisioning manager */
     wifi_prov_mgr_config_t config = {
         .wifi_prov_conn_cfg = {
-            .wifi_conn_attempts = CONFIG_EXAMPLE_PROV_MGR_CONNECTION_CNT,
+            .wifi_conn_attempts = 3,
         },
         .scheme = wifi_prov_scheme_ble,
         .scheme_event_handler = WIFI_PROV_SCHEME_BLE_EVENT_HANDLER_FREE_BTDM};
 
     /* Initialize provisioning manager with the configuration parameters set above */
     ESP_ERROR_CHECK(wifi_prov_mgr_init(config));
-    // wifi_prov_mgr_disable_auto_stop(10); // mantem ativo até você decidir parar
-    wifi_prov_scheme_ble_set_service_uuid(custom_service_uuid);
-    wifi_prov_mgr_endpoint_create("PW_PROVISION_DATA");
+    ESP_ERROR_CHECK(wifi_prov_scheme_ble_set_service_uuid(my_bluetooth_uuid));
+    ESP_ERROR_CHECK(wifi_prov_mgr_endpoint_create("PW_PROVISION_DATA"));
 
     char service_name[12];
     get_device_service_name(service_name, sizeof(service_name));
     const char *service_key = NULL;
-    const char *pop = "abcd1234";
     wifi_prov_security_t security = WIFI_PROV_SECURITY_1;
 
-    ESP_ERROR_CHECK(wifi_prov_mgr_start_provisioning(security, (const void *)pop, service_name, service_key));
-    wifi_prov_mgr_endpoint_register("custom-data", custom_prov_data_handler, NULL);
+    ESP_ERROR_CHECK(wifi_prov_mgr_start_provisioning(security, (const void *)my_pop, service_name, service_key));
+    ESP_ERROR_CHECK(wifi_prov_mgr_endpoint_register("custom-data", custom_prov_data_handler, NULL));
     xEventGroupWaitBits(wifi_event_group, BIT0, true, true, portMAX_DELAY);
 }
 

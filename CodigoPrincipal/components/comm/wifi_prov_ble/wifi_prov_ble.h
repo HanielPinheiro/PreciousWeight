@@ -1,3 +1,5 @@
+#pragma once
+
 #include "stdio.h"
 #include "string.h"
 
@@ -12,7 +14,9 @@
 
 #include "wifi_provisioning/manager.h"
 #include "wifi_provisioning/scheme_ble.h"
+#include "esp_mac.h"
 
 void start_ble_provisioning(void);
 void wifi_setup(void);
 void reset_wifi(void);
+void print_efuse_mac(void);

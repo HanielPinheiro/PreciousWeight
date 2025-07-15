@@ -1,4 +1,4 @@
-mosquitto_passwd -c C:\Program Files\mosquitto\passwd MqttMaster
+mosquitto_passwd -c C:/Program Files/mosquitto/passwd MqttMaster
 password A~{wV$Nk"U1)4"13
 mosquitto_sub -h localhost -t test -u MqttMaster -P 'A~{wV$Nk"U1)4"13'
 mosquitto_pub -h localhost -t test -m "hello world" -u MqttMaster -P A~{wV$Nk"U1)4"13
@@ -18,9 +18,9 @@ openssl x509 -req -in client.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out c
 
 In Mosquitto conf:
 listener 8883 precious_weight
-cafile C:\Program Files\mosquitto\certs\ca.crt
-certfile C:\Program Files\mosquitto\certs\server.crt
-keyfile C:\Program Files\mosquitto\certs\server.key
+cafile C:/Program Files/mosquitto/certs/ca.crt
+certfile C:/Program Files/mosquitto/certs/server.crt
+keyfile C:/Program Files/mosquitto/certs/server.key
 require_certificate true
 use_identity_as_username true
 
@@ -28,7 +28,7 @@ Add precious_weight to the hosts File
 
     *Edit the hosts file to map precious_weight to Windows Pc Local Ip (192.168.0.8):
        - Open Notepad as Administrator.
-       - Open the file C:\Windows\System32\drivers\etc\hosts.
+       - Open the file C:/Windows/System32/drivers/etc/hosts.
        - Add the following line:
        - 127.0.0.1   precious_weight
        - Save the file.
@@ -39,16 +39,21 @@ Add precious_weight to the hosts File
    *Restart Mosquitto
 
 restart mosquitto and test:
-mosquitto -c 'C:\Program Files\mosquitto\mosquitto.conf'
+mosquitto -c 'C:/Program Files/mosquitto/mosquitto.conf'
 
 mosquitto_pub -h precious_weight -p 8883 --cafile 'C:/Program Files/mosquitto/certs/ca.crt' --cert 'C:/Program Files/mosquitto/certs/client.crt' --key 'C:/Program Files/mosquitto/certs/client.key' -t test -m "hello tls" -d -i 'my_publisher_id'
 
 mosquitto_sub -h precious_weight -p 8883 --cafile 'C:/Program Files/mosquitto/certs/ca.crt' --cert 'C:/Program Files/mosquitto/certs/client.crt' --key 'C:/Program Files/mosquitto/certs/client.key' -t test -d -i 'my_client_id'
 
-
+In the esp-idf:
+ Generate the generate CA.crt and Generate Client Certificate (signed by your CA):
+        openssl genrsa -out client.key 2048
+        openssl req -new -key client.key -out client.csr
+        openssl x509 -req -in client.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out client.crt -days 365
+		Put the three files in the esp-idf folder:
+			client.crt → client_cert_pem_start
+			client.key → client_key_pem_start
+			ca.crt → cacert_pem_start
+			
 Coisas para melhorar na API:
 Parar de salvar na tabela hibernate de log de bebes a imagem do qr code do bebe toda vez que acontecer algum update. Só logar se trocar a imagem, ou seja, fizer uma alteração naquele campo específico
-
-Coisas para melhorar no MQTT:
-
-
