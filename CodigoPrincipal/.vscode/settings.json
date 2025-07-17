@@ -46,7 +46,17 @@
     "cstdint": "c",
     "mqtt.h": "c",
     "netdb.h": "c",
-    "mqtt3.h": "c"
+    "mqtt3.h": "c",
+    "tasks.h": "c",
+    "system_core.h": "c",
+    "semphr.h": "c",
+    "queues.h": "c",
+    "random": "c",
+    "stdint.h": "c",
+    "mqtt_client.h": "c",
+    "esp_timer.h": "c",
+    "esp_event.h": "c",
+    "bios.h": "c"
   },
   "idf.flashType": "UART",
   "idf.portWin": "COM4",

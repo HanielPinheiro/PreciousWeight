@@ -65,9 +65,7 @@ int32_t hx711_read_raw(hx711_t *dev)
         {
             data = data << 1;
             if (gpio_get_level(dev->dout_pin))
-            {
                 data++;
-            }
         }
 
         gpio_set_level(dev->sck_pin, 0);
@@ -75,10 +73,9 @@ int32_t hx711_read_raw(hx711_t *dev)
     }
 
     // Convert from 24-bit signed to 32-bit signed
-    if (data & 0x800000)
-    {
+    if (data & 0x800000)    
         data |= 0xFF000000;
-    }
+    
 
     return data;
 }

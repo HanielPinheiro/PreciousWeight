@@ -136,4 +136,12 @@ Sensor enviando dados
                 Reduce message overhead by assigning short aliases to long topic names.
                 Saves bandwidth in high-frequency telemetry.
 
-\*/
+Para um dispositivo médico, considere também:
+Certificação de software médico (IEC 62304)
+Testes de validação rigorosos
+Registro de todas as operações para auditoria
+Mecanismos de recall/update seguro
+
+[BOOT] → [INITIALIZING] → [PROVISIONING?] → [CONNECTING] → [OPERATIONAL]
+↓ ↓ ↓ ↓
+[ERROR] ←──────[RECOVERY] ←──────[DISCONNECTED] ←──[ERROR]

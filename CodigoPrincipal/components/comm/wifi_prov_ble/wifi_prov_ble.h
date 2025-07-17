@@ -16,7 +16,10 @@
 #include "wifi_provisioning/scheme_ble.h"
 #include "esp_mac.h"
 
-void start_ble_provisioning(void);
-void wifi_setup(void);
-void reset_wifi(void);
-void print_efuse_mac(void);
+#define SERVICE_NAME "PW_D0EF76590B7C"
+
+void start_ble_provisioning();
+void reset_wifi();
+void wifi_init();
+void print_efuse_mac();
+bool is_wifi_connected();

@@ -30,12 +30,20 @@ void buzzer_short_alert()
     }
 }
 
-
 void buzzer_long_alert()
 {
     for (int i = 0; i < 3; i++)
     {
-        buzzer_short_beep();
+        buzzer_long_beep();
         vTaskDelay(pdMS_TO_TICKS(SHORT_TIME));
+    }
+}
+
+void buzzer_critical_alert()
+{
+    while (1)
+    {
+        vTaskDelay(pdMS_TO_TICKS(3000));
+        buzzer_long_alert();
     }
 }

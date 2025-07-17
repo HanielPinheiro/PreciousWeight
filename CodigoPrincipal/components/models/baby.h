@@ -11,4 +11,4 @@ typedef struct
 } baby_info_t;
 
 esp_err_t baby_load_current(baby_info_t *baby);
-esp_err_t baby_save_measurement(const baby_info_t *baby, float weight);
+esp_err_t baby_save_measurement(const baby_info_t *baby, float weight_in_gr);

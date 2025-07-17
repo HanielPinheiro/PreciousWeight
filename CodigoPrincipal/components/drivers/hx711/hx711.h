@@ -5,6 +5,19 @@
 #include "freertos/FreeRTOS.h" // ← Needed for vTaskDelay()
 #include "freertos/task.h"     // ← Needed for pdMS_TO_TICKS()
 
+#define QTDE_SENSORES 4
+#define SCALE1_DOUT GPIO_NUM_13
+#define SCALE1_SCK GPIO_NUM_14
+
+#define SCALE2_DOUT GPIO_NUM_16
+#define SCALE2_SCK GPIO_NUM_17
+
+#define SCALE3_DOUT GPIO_NUM_32
+#define SCALE3_SCK GPIO_NUM_33
+
+#define SCALE4_DOUT GPIO_NUM_25
+#define SCALE4_SCK GPIO_NUM_26
+
 typedef enum
 {
     HX711_CHANNEL_A_128 = 25,

@@ -6,7 +6,7 @@
 #include "wifi_prov_ble.h"
 
 static EventGroupHandle_t wifi_event_group;
-static const char *ROTULO_LOCAL = "wifi_prov_ble";
+static const char *ROTULO_LOCAL = "WIFI";
 
 /* This step is only useful when scheme is wifi_prov_scheme_ble.
  * This will set a custom 128 bit UUID which will be included in the BLE advertisement and will correspond to the primary GATT service that provides provisioning endpoints as GATT characteristics.
@@ -34,13 +34,6 @@ static uint8_t my_bluetooth_uuid[] = {
 };
 static char my_pop[] = "abcd1234";
 // static char my_mac_str[] = "D0:EF:76:59:0B:7C";
-
-void print_efuse_mac(void)
-{ // também é encontrado nessa linha ao ligar a máquina no wifi -> wifi:mode : sta (d0:ef:76:59:0b:7c)
-    uint8_t base_mac[6] = {0};
-    ESP_ERROR_CHECK(esp_efuse_mac_get_default(base_mac));
-    printf("Factory eFuse MAC: %02X:%02X:%02X:%02X:%02X:%02X\n", base_mac[0], base_mac[1], base_mac[2], base_mac[3], base_mac[4], base_mac[5]);
-}
 
 /* Event handler for catching system events */
 static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
@@ -136,14 +129,14 @@ static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_
     }
 }
 
-static void get_device_service_name(char *service_name, size_t max)
-{
-    uint8_t eth_mac[6];
-    const char *ssid_prefix = "PROV_";
-    esp_wifi_get_mac(WIFI_IF_STA, eth_mac);
-    snprintf(service_name, max, "%s%02X%02X%02X",
-             ssid_prefix, eth_mac[3], eth_mac[4], eth_mac[5]);
-}
+// static void get_device_service_name(char *service_name, size_t max)
+// {
+//     uint8_t eth_mac[6];
+//     const char *ssid_prefix = "PW_";
+//     esp_wifi_get_mac(WIFI_IF_STA, eth_mac);
+//     snprintf(service_name, max, "%s%02X%02X%02X",
+//              ssid_prefix, eth_mac[3], eth_mac[4], eth_mac[5]);
+// }
 
 /* Handler for the optional provisioning endpoint registered by the application. The data format can be chosen by applications. Here, we are using plain ascii text.
  * Applications can choose to use other formats like protobuf, JSON, XML, etc.
@@ -166,13 +159,7 @@ static esp_err_t custom_prov_data_handler(uint32_t session_id, const uint8_t *in
     return ESP_OK;
 }
 
-void reset_wifi(void)
-{
-    ESP_ERROR_CHECK(nvs_flash_erase());
-    ESP_ERROR_CHECK(nvs_flash_init());
-}
-
-void wifi_init_all(void)
+static void wifi_init_all()
 {
     ESP_LOGI(ROTULO_LOCAL, "Inicializando sistema de rede e eventos...");
 
@@ -202,7 +189,13 @@ void wifi_init_all(void)
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
 }
 
-void start_wifi_sta(void) // Conectar usando dados salvos(modo STA)
+void reset_wifi()
+{
+    ESP_ERROR_CHECK(nvs_flash_erase());
+    ESP_ERROR_CHECK(nvs_flash_init());
+}
+
+static void start_wifi_sta() // Conectar usando dados salvos(modo STA)
 {
     ESP_LOGI(ROTULO_LOCAL, "Iniciando Wi-Fi STA com credenciais salvas...");
     ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL));
@@ -211,7 +204,7 @@ void start_wifi_sta(void) // Conectar usando dados salvos(modo STA)
     xEventGroupWaitBits(wifi_event_group, BIT0, true, true, portMAX_DELAY);
 }
 
-void start_ble_provisioning(void)
+void start_ble_provisioning()
 { // Provisionamento via BLE pela primeira vez
     ESP_LOGI(ROTULO_LOCAL, "Iniciando provisioning BLE...");
 
@@ -227,18 +220,13 @@ void start_ble_provisioning(void)
     ESP_ERROR_CHECK(wifi_prov_mgr_init(config));
     ESP_ERROR_CHECK(wifi_prov_scheme_ble_set_service_uuid(my_bluetooth_uuid));
     ESP_ERROR_CHECK(wifi_prov_mgr_endpoint_create("PW_PROVISION_DATA"));
-
-    char service_name[12];
-    get_device_service_name(service_name, sizeof(service_name));
-    const char *service_key = NULL;
-    wifi_prov_security_t security = WIFI_PROV_SECURITY_1;
-
-    ESP_ERROR_CHECK(wifi_prov_mgr_start_provisioning(security, (const void *)my_pop, service_name, service_key));
+    ESP_ERROR_CHECK(wifi_prov_mgr_start_provisioning(WIFI_PROV_SECURITY_1, (const void *)my_pop, SERVICE_NAME, NULL));
     ESP_ERROR_CHECK(wifi_prov_mgr_endpoint_register("custom-data", custom_prov_data_handler, NULL));
+
     xEventGroupWaitBits(wifi_event_group, BIT0, true, true, portMAX_DELAY);
 }
 
-void wifi_setup(void)
+void wifi_init()
 {
     wifi_init_all();
 
@@ -256,5 +244,34 @@ void wifi_setup(void)
         ESP_LOGW(ROTULO_LOCAL, "Dispositivo novo. Iniciando provisioning...");
         start_ble_provisioning();
         ESP_LOGI(ROTULO_LOCAL, "Provisionado");
+    }
+}
+
+void print_efuse_mac()
+{ // também é encontrado nessa linha ao ligar a máquina no wifi -> wifi:mode : sta (d0:ef:76:59:0b:7c)
+    uint8_t base_mac[6] = {0};
+    ESP_ERROR_CHECK(esp_efuse_mac_get_default(base_mac));
+    printf("Factory eFuse MAC: %02X:%02X:%02X:%02X:%02X:%02X\n", base_mac[0], base_mac[1], base_mac[2], base_mac[3], base_mac[4], base_mac[5]);
+}
+
+bool is_wifi_connected()
+{
+    wifi_ap_record_t ap_info;
+    esp_err_t err = esp_wifi_sta_get_ap_info(&ap_info);
+
+    if (err == ESP_OK)
+    {
+        ESP_LOGI(ROTULO_LOCAL, "WiFi is connected to SSID: %s", ap_info.ssid);
+        return true;
+    }
+    else if (err == ESP_ERR_WIFI_NOT_CONNECT)
+    {
+        ESP_LOGI(ROTULO_LOCAL, "WiFi is not connected");
+        return false;
+    }
+    else
+    {
+        ESP_LOGE(ROTULO_LOCAL, "Failed to get WiFi connection status: %s", esp_err_to_name(err));
+        return false;
     }
 }
