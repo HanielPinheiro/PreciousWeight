@@ -9,6 +9,46 @@
 #include "mqtt3.h"
 #include "wifi_prov_ble.h"
 
+// static TaskHandle_t sd_manager_task_handle = NULL;
+// static SemaphoreHandle_t sd_restart_sem = NULL;
+// static void sd_manager_task(void *pvParameters)
+// {
+//     while (1)
+//     {
+//         // Wait for restart signal or periodic check
+//         if (xSemaphoreTake(sd_restart_sem, pdMS_TO_TICKS(10000)))
+//         {
+//             ESP_LOGW("SD_MANAGER", "Reiniciando Cartão SD");
+
+//             if (sdcard)
+//             {
+//                 sdcard_deinit();
+//                 vTaskDelay(pdMS_TO_TICKS(1000)); // Espera curta
+
+//                 esp_err_t res = sdcard_init();
+//                 if (res == ESP_OK)
+//                     ESP_LOGW("SD_MANAGER", "Cartão SD reinicializado com sucesso.");
+//                 else
+//                     ESP_LOGE("SD_MANAGER", "Falha ao reinicializar o cartão SD: %s", esp_err_to_name(res));
+//             }
+//             else
+//             {
+//                 esp_err_t res = sdcard_init();
+//                 if (res == ESP_OK)
+//                     ESP_LOGW("SD_MANAGER", "Cartão SD reinicializado com sucesso.");
+//                 else
+//                     ESP_LOGE("SD_MANAGER", "Falha ao reinicializar o cartão SD: %s", esp_err_to_name(res));
+//             }
+//         }
+//     }
+// }
+
+// static void sd_connection_status_callback(bool has_failure)
+// {
+//     if (has_failure)
+//         xSemaphoreGive(sd_restart_sem);
+// }
+
 #pragma region MQTT
 
 static TaskHandle_t mqtt_manager_task_handle = NULL;
@@ -72,13 +112,18 @@ void app_main()
     init_hardware();
     sdcard_log(LOG_INFO, "Rotina da BIOS executada com sucesso.", ROTULO_LOCAL);
 
+    // sd_restart_sem = xSemaphoreCreateBinary();
+    // xTaskCreate(sd_manager_task, "sd_manager", 4096, NULL, 5, &sd_manager_task_handle);
+    // sdcard_set_callback(sd_connection_status_callback);
+    // sdcard_log(LOG_INFO, "Task SD Manager com Callback inicializada com sucesso. \r\n ", ROTULO_LOCAL);
+
     wifi_init();
     sdcard_log(LOG_INFO, "Wi-Fi inicializado com sucesso. Inicializando MQTT.", ROTULO_LOCAL);
 
     mqtt_restart_sem = xSemaphoreCreateBinary();
     xTaskCreate(mqtt_manager_task, "mqtt_manager", 4096, NULL, 5, &mqtt_manager_task_handle);
     mqtt_init(mqtt_connection_status_callback);
-    sdcard_log(LOG_INFO, "Task MQTT inicializada com sucesso. \r\n ", ROTULO_LOCAL);
+    sdcard_log(LOG_INFO, "Task MQTT Manager com Callback inicializada com sucesso. \r\n ", ROTULO_LOCAL);
 
     if (tasks_init(sensores, NUM_SENSORES_PESO) != ESP_OK)
     {

@@ -4,7 +4,6 @@ static const char *ROTULO_LOCAL = "TASKS";
 
 static QueueHandle_t sensor_data_queue = NULL;
 
-// Task de leitura dos sensores
 static void sensor_reader_task(void *pv_params)
 {
     hx711_t *sensor = (hx711_t *)pv_params;
@@ -35,7 +34,7 @@ static void data_processor_task(void *pv_params)
         {
             snprintf(log_msg, sizeof(log_msg), "Dados do sensor: Sensor{%d} - Raw{%ld} - Weight{%.2f}", data.sensor_id, data.raw, data.weight);
             sdcard_log(LOG_INFO, log_msg, ROTULO_LOCAL);
-            
+
             char topic[50];
             snprintf(topic, sizeof(topic), "sensor/%d/weight", data.sensor_id);
 
@@ -47,7 +46,19 @@ static void data_processor_task(void *pv_params)
     }
 }
 
-// Funções públicas
+static void sd_writer_task(void *pv_params)
+{
+    log_entry_t entry;
+
+    while (1)
+    {
+        if (xQueueReceive(sdcard_log_queue, &entry, portMAX_DELAY))
+        {
+            sdcard_write_file(LOG_FILE, entry.message); // já com mutex lá dentro
+        }
+    }
+}
+
 bool send_sensor_data_to_queue(const sensor_data_t *data)
 {
     if (!data || !sensor_data_queue)
@@ -64,6 +75,8 @@ bool receive_sensor_data_from_queue(sensor_data_t *data, TickType_t timeout)
 
 esp_err_t tasks_init(hx711_t *sensores, uint8_t num_sensores)
 {
+#pragma region sensor_data
+
     sensor_data_queue = xQueueCreate(20, sizeof(sensor_data_t));
     if (!sensor_data_queue)
     {
@@ -86,6 +99,25 @@ esp_err_t tasks_init(hx711_t *sensores, uint8_t num_sensores)
             return ESP_FAIL;
         }
     }
+
+#pragma endregion
+
+#pragma region sdcard_log
+
+    sdcard_log_queue = xQueueCreate(5, sizeof(log_entry_t));
+    if (!sdcard_log_queue)
+    {
+        ESP_LOGE(ROTULO_LOCAL, "Falha ao criar fila de log");
+        return ESP_FAIL;
+    }
+
+    if (xTaskCreate(sd_writer_task, "gravar_logs_sd", 4096, NULL, TASK_PRIORITY_MEDIUM, NULL) != pdPASS)
+    {
+        ESP_LOGE(ROTULO_LOCAL, "Falha ao criar task de gravação de logs");
+        return ESP_FAIL;
+    }
+
+#pragma endregion
 
     return ESP_OK;
 }

@@ -8,8 +8,57 @@
 static const char *ROTULO_LOCAL = "SD_CARD";
 
 struct stat st;
+static sdmmc_host_t host = SDSPI_HOST_DEFAULT(); // Define que estou usando o modulo sd na configuração de conexão (pinos)   SPI
+static SemaphoreHandle_t sd_mutex;               // semaphore to protect open the file that is already open by other task
+// static sd_connection_callback_t has_failure = NULL;
+
 sdmmc_card_t *sdcard = NULL;
-sdmmc_host_t host = SDSPI_HOST_DEFAULT(); // Define que estou usando o modulo sd na configuração de conexão (pinos)   SPI
+QueueHandle_t sdcard_log_queue = NULL;
+
+// void sdcard_set_callback(sd_connection_callback_t ext_has_failure)
+// {
+//     has_failure = ext_has_failure;
+// }
+
+// void sdcard_deinit()
+// {
+//     if (!sdcard)
+//         return;
+//     if (sd_mutex && xSemaphoreTake(sd_mutex, portMAX_DELAY) == pdTRUE)
+//     {
+//         // First, ensure all SPI transactions are complete
+//         vTaskDelay(pdMS_TO_TICKS(2000)); // Allow time for pending operations
+
+//         gpio_reset_pin(GPIO_NUM_5);
+//         gpio_reset_pin(GPIO_NUM_19);
+//         ESP_LOGW("SD_MANAGER", "a");
+
+//         esp_err_t err = esp_vfs_fat_sdcard_unmount(MOUNT_POINT, sdcard);
+//         if (err != ESP_OK)
+//         {
+//             ESP_LOGE(ROTULO_LOCAL, "Falha ao desmontar cartão SD: %s", esp_err_to_name(err));
+//             return;
+//         }
+
+//         ESP_LOGW("SD_MANAGER", "b");
+//         sdspi_host_deinit();
+
+//         ESP_LOGW("SD_MANAGER", "c");
+//         err = spi_bus_free(host.slot);
+//         if (err != ESP_OK)
+//         {
+//             ESP_LOGE(ROTULO_LOCAL, "Failed to free SPI bus: %s", esp_err_to_name(err));
+//             return;
+//         }
+
+//         ESP_LOGW("SD_MANAGER", "d");
+//         sdcard = NULL;
+//         xSemaphoreGive(sd_mutex);
+//         ESP_LOGI(ROTULO_LOCAL, "Cartão desmontado");
+//     }
+//     else
+//         ESP_LOGE(ROTULO_LOCAL, "Failed to acquire SD mutex for deinit");
+// }
 
 esp_err_t sdcard_init(void)
 {
@@ -73,13 +122,14 @@ esp_err_t sdcard_init(void)
     // host.max_freq_khz = 10000; // Aumento a velocidade do Bus - Opcional
 
     ESP_LOGI(ROTULO_LOCAL, "Sistema de arquivos montado. Driver inicializado com sucesso.");
+    sd_mutex = xSemaphoreCreateMutex();
     // sdmmc_card_print_info(stdout, sdcard);
     return ESP_OK;
 }
 
 esp_err_t sdcard_write_file(char *path, char *data)
 {
-    if (sdcard_check_file_exists(path) < 0)
+    if (stat(path, &st) < 0)
     {
         ESP_LOGI(ROTULO_LOCAL, "Arquivo nao encontrado. Criando arquivo {%s}", path);
         esp_err_t resultado = sdcard_create_file(path);
@@ -93,26 +143,35 @@ esp_err_t sdcard_write_file(char *path, char *data)
     if (MORE_LOGS)
         ESP_LOGI(ROTULO_LOCAL, "Abrindo arquivo {%s}", path);
 
-    FILE *file = fopen(path, "w");
-    if (file == NULL)
+    if (xSemaphoreTake(sd_mutex, pdMS_TO_TICKS(100)) == pdTRUE)
     {
-        ESP_LOGE(ROTULO_LOCAL, "Falha ao abrir o arquivo {%s} para escrita.", path);
+        FILE *file = fopen(path, "w");
+        if (file == NULL)
+        {
+            ESP_LOGE(ROTULO_LOCAL, "Falha ao abrir o arquivo {%s} para escrita.", path);
+            return ESP_FAIL;
+        }
+
+        int result = fprintf(file, data);
+        fclose(file);
+        xSemaphoreGive(sd_mutex);
+
+        if (result < 0)
+        {
+            ESP_LOGE(ROTULO_LOCAL, "Erro ao tentar escrever os dados {%s} no arquivo, no caminho {%s}.", data, path);
+            return ESP_FAIL;
+        }
+
+        if (MORE_LOGS)
+            ESP_LOGI(ROTULO_LOCAL, "Arquivo escrito com sucesso.");
+
+        return ESP_OK;
+    }
+    else
+    {
+        ESP_LOGE(ROTULO_LOCAL, "Falha ao obter o semáforo para escrita no arquivo.");
         return ESP_FAIL;
     }
-
-    int result = fprintf(file, data);
-    fclose(file);
-
-    if (result < 0)
-    {
-        ESP_LOGE(ROTULO_LOCAL, "Erro ao tentar escrever os dados {%s} no arquivo, no caminho {%s}.", data, path);
-        return ESP_FAIL;
-    }
-
-    if (MORE_LOGS)
-        ESP_LOGI(ROTULO_LOCAL, "Arquivo escrito com sucesso.");
-
-    return ESP_OK;
 }
 
 esp_err_t sdcard_create_file(char *path)
@@ -123,89 +182,30 @@ esp_err_t sdcard_create_file(char *path)
     return ESP_FAIL;
 }
 
-int sdcard_check_file_exists(char *path)
-{
-    int result = stat(path, &st);
-    return result;
-}
-
-esp_err_t sdcard_delete_file(char *path)
-{
-    if (sdcard_check_file_exists(path))
-    {
-        unlink(path);
-        return ESP_OK;
-    }
-    else
-        return ESP_FAIL;
-}
-
-esp_err_t sdcard_rename_file(char *actual_name, char *new_name)
-{
-    ESP_LOGI(ROTULO_LOCAL, "Renomeando arquivo {%s} para {%s}", actual_name, new_name);
-    if (rename(actual_name, new_name) != 0)
-    {
-        ESP_LOGE(ROTULO_LOCAL, "Falha ao renomear.");
-        return ESP_FAIL;
-    }
-
-    esp_err_t ret = sdcard_check_file_exists(new_name);
-    if (ret != ESP_OK)
-    {
-        ESP_LOGE(ROTULO_LOCAL, "Falha ao renomear - arquivo como novo nome não localizado.");
-        return ESP_FAIL;
-    }
-
-    ESP_LOGI(ROTULO_LOCAL, "Arquivo renomeado com sucesso!");
-    return ESP_OK;
-}
-
-void sdcard_close()
-{
-    esp_vfs_fat_sdcard_unmount(MOUNT_POINT, sdcard); // All done, unmount partition and disable SPI peripheral
-    spi_bus_free(host.slot);                         // turn off spi bus
-    ESP_LOGI(ROTULO_LOCAL, "Cartão pode ser removido");
-}
-
-esp_err_t sdcard_format()
-{
-    esp_err_t ret = esp_vfs_fat_sdcard_format(MOUNT_POINT, sdcard);
-    if (ret != ESP_OK)
-    {
-        ESP_LOGE(ROTULO_LOCAL, "Falha ao formatar no sistema de arquivo FAT (%s)", esp_err_to_name(ret));
-        return ESP_FAIL;
-    }
-
-    ESP_LOGI(ROTULO_LOCAL, "Nenhum arquivo existente, formatação concluída");
-    return ESP_OK;
-}
-
 esp_err_t sdcard_log(log_type_t log_type, char *message, const char *trace)
 {
-    //+8 = (+5 da palavra referente ao log, +1 do espaço em branco, +2 das '[]')
-    size_t len = strlen(message) + 8;
-    char *log_entry = malloc(len);
-    if (!log_entry)
-        return ESP_FAIL;
-    switch (log_type)
-    {
-    case LOG_INFO:
-        snprintf(log_entry, len, "[INFOS] %s", message);
-        break;
-    case LOG_WARN:
-        snprintf(log_entry, len, "[WARNS] %s", message);
-        break;
-    case LOG_ERROR:
-        snprintf(log_entry, len, "[ERROR] %s", message);
-        break;
-    default:
-        snprintf(log_entry, len, "[INFOS] %s", message);
-        break;
-    }
-
     notify_uart(trace, message);
 
-    return sdcard_write_file(LOG_FILE, log_entry);
+    log_entry_t entry;
+    snprintf(entry.message, sizeof(entry.message), "[%s] %s",
+             log_type == LOG_WARN ? "WARNS" : log_type == LOG_ERROR ? "ERROR"
+                                                                    : "INFOS",
+             message);
+
+    if (sdcard_log_queue)
+    {
+        if (xQueueSend(sdcard_log_queue, &entry, pdMS_TO_TICKS(100)) != pdTRUE)
+        {
+            ESP_LOGW(ROTULO_LOCAL, "Fila de log cheia. Log descartado.");
+            // if (has_failure)
+            //     has_failure(true);
+            return ESP_FAIL;
+        }
+        // else if (has_failure)
+        //     has_failure(false);
+    }
+
+    return ESP_OK;
 }
 
 void notify_uart(const char *stack_trace, char *message)
@@ -214,3 +214,18 @@ void notify_uart(const char *stack_trace, char *message)
         return;
     ESP_LOGI(stack_trace, "%s", message);
 }
+
+// Sem uso por enquanto
+
+// esp_err_t sdcard_format()
+// {
+//     esp_err_t ret = esp_vfs_fat_sdcard_format(MOUNT_POINT, sdcard);
+//     if (ret != ESP_OK)
+//     {
+//         ESP_LOGE(ROTULO_LOCAL, "Falha ao formatar no sistema de arquivo FAT (%s)", esp_err_to_name(ret));
+//         return ESP_FAIL;
+//     }
+
+//     ESP_LOGI(ROTULO_LOCAL, "Nenhum arquivo existente, formatação concluída");
+//     return ESP_OK;
+// }
