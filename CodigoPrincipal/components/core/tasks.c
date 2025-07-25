@@ -3,6 +3,8 @@
 static const char *ROTULO_LOCAL = "TASKS";
 
 static QueueHandle_t sensor_data_queue = NULL;
+static uint8_t sd_failure_counter = 0;
+static TaskHandle_t sd_task_handler = NULL;
 
 static void sensor_reader_task(void *pv_params)
 {
@@ -52,9 +54,18 @@ static void sd_writer_task(void *pv_params)
 
     while (1)
     {
-        if (xQueueReceive(sdcard_log_queue, &entry, portMAX_DELAY))
+        if (xQueueReceive(sdcard_log_queue, &entry, pdMS_TO_TICKS(100)))
         {
-            sdcard_write_file(LOG_FILE, entry.message); // já com mutex lá dentro
+            esp_err_t ret = sdcard_write_file(LOG_FILE, entry.message); // já com mutex lá dentro
+            if (ret != ESP_OK)
+            {
+                vTaskDelay(pdMS_TO_TICKS(1000));
+                sd_failure_counter++;
+                if (sd_failure_counter == 5)
+                {
+                    vTaskSuspend(sd_task_handler);
+                }
+            }
         }
     }
 }
@@ -111,7 +122,7 @@ esp_err_t tasks_init(hx711_t *sensores, uint8_t num_sensores)
         return ESP_FAIL;
     }
 
-    if (xTaskCreate(sd_writer_task, "gravar_logs_sd", 4096, NULL, TASK_PRIORITY_MEDIUM, NULL) != pdPASS)
+    if (xTaskCreate(sd_writer_task, "gravar_logs_sd", 4096, NULL, TASK_PRIORITY_MEDIUM, &sd_task_handler) != pdPASS)
     {
         ESP_LOGE(ROTULO_LOCAL, "Falha ao criar task de gravação de logs");
         return ESP_FAIL;

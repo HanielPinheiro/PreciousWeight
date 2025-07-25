@@ -66,11 +66,42 @@ static void mqtt_connection_status_callback(mqtt_state_t connected)
 
 #pragma endregion
 
+static char *get_reset_reason_string(esp_reset_reason_t reason)
+{
+    switch (reason)
+    {
+    case ESP_RST_POWERON:
+        return "Razão do último reset: Power-On Reset";
+    case ESP_RST_SW:
+        return "Razão do último reset: Software Reset (esp_restart)";
+    case ESP_RST_PANIC:
+        return "Razão do último reset: Panic/Crash Reset";
+    case ESP_RST_INT_WDT:
+        return "Razão do último reset: Interrupt Watchdog Reset";
+    case ESP_RST_TASK_WDT:
+        return "Razão do último reset: Task Watchdog Reset";
+    case ESP_RST_WDT:
+        return "Razão do último reset: Other Watchdog Reset";
+    case ESP_RST_DEEPSLEEP:
+        return "Razão do último reset: Deep Sleep Wakeup";
+    case ESP_RST_BROWNOUT:
+        return "Razão do último reset: Brownout Reset";
+    case ESP_RST_SDIO:
+        return "Razão do último reset: SDIO Reset";
+    default:
+        return "Razão do último reset: Unknown Reset Reason";
+    }
+}
+
 void app_main()
 {
-    const char *ROTULO_LOCAL = "MAIN";
+    esp_reset_reason_t reason = esp_reset_reason();
+    char *reason_str = get_reset_reason_string(reason);
+    char *ROTULO_LOCAL = "MAIN";
+
     init_hardware();
     sdcard_log(LOG_INFO, "Rotina da BIOS executada com sucesso.", ROTULO_LOCAL);
+    sdcard_log(LOG_INFO, reason_str, ROTULO_LOCAL);
 
     wifi_init();
     sdcard_log(LOG_INFO, "Wi-Fi inicializado com sucesso. Inicializando MQTT.", ROTULO_LOCAL);

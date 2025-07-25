@@ -99,7 +99,7 @@ esp_err_t sdcard_write_file(char *path, char *data)
     if (MORE_LOGS)
         ESP_LOGI(ROTULO_LOCAL, "Abrindo arquivo {%s}", path);
 
-    if (xSemaphoreTake(sd_mutex, pdMS_TO_TICKS(100)) == pdTRUE)
+    if (xSemaphoreTake(sd_mutex, pdMS_TO_TICKS(300)) == pdTRUE)
     {
         FILE *file = fopen(path, "a");
         if (file == NULL)
@@ -152,10 +152,13 @@ esp_err_t sdcard_log(log_type_t log_type, char *message, const char *trace)
     {
         if (xQueueSend(sdcard_log_queue, &entry, pdMS_TO_TICKS(100)) != pdTRUE)
         {
+            // The queue will be reade (xqueuereceive) in task.c
             ESP_LOGW(ROTULO_LOCAL, "Fila de log cheia. Log descartado.");
             return ESP_FAIL;
         }
     }
+    else // task_init não executada no main.c
+        sdcard_write_file(LOG_FILE, entry.message);
 
     return ESP_OK;
 }
