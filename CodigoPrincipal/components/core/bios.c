@@ -80,7 +80,6 @@ static esp_err_t initialize_weight_sensors()
         return ESP_FAIL;
 
     // Aqui pode ter algum algoritmo pra validar a pesagem dos sensores
-
     sensores[0] = scale1;
     sensores[1] = scale2;
     sensores[2] = scale3;

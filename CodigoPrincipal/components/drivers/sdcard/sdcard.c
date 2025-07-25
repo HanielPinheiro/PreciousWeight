@@ -10,55 +10,9 @@ static const char *ROTULO_LOCAL = "SD_CARD";
 struct stat st;
 static sdmmc_host_t host = SDSPI_HOST_DEFAULT(); // Define que estou usando o modulo sd na configuração de conexão (pinos)   SPI
 static SemaphoreHandle_t sd_mutex;               // semaphore to protect open the file that is already open by other task
-// static sd_connection_callback_t has_failure = NULL;
 
 sdmmc_card_t *sdcard = NULL;
 QueueHandle_t sdcard_log_queue = NULL;
-
-// void sdcard_set_callback(sd_connection_callback_t ext_has_failure)
-// {
-//     has_failure = ext_has_failure;
-// }
-
-// void sdcard_deinit()
-// {
-//     if (!sdcard)
-//         return;
-//     if (sd_mutex && xSemaphoreTake(sd_mutex, portMAX_DELAY) == pdTRUE)
-//     {
-//         // First, ensure all SPI transactions are complete
-//         vTaskDelay(pdMS_TO_TICKS(2000)); // Allow time for pending operations
-
-//         gpio_reset_pin(GPIO_NUM_5);
-//         gpio_reset_pin(GPIO_NUM_19);
-//         ESP_LOGW("SD_MANAGER", "a");
-
-//         esp_err_t err = esp_vfs_fat_sdcard_unmount(MOUNT_POINT, sdcard);
-//         if (err != ESP_OK)
-//         {
-//             ESP_LOGE(ROTULO_LOCAL, "Falha ao desmontar cartão SD: %s", esp_err_to_name(err));
-//             return;
-//         }
-
-//         ESP_LOGW("SD_MANAGER", "b");
-//         sdspi_host_deinit();
-
-//         ESP_LOGW("SD_MANAGER", "c");
-//         err = spi_bus_free(host.slot);
-//         if (err != ESP_OK)
-//         {
-//             ESP_LOGE(ROTULO_LOCAL, "Failed to free SPI bus: %s", esp_err_to_name(err));
-//             return;
-//         }
-
-//         ESP_LOGW("SD_MANAGER", "d");
-//         sdcard = NULL;
-//         xSemaphoreGive(sd_mutex);
-//         ESP_LOGI(ROTULO_LOCAL, "Cartão desmontado");
-//     }
-//     else
-//         ESP_LOGE(ROTULO_LOCAL, "Failed to acquire SD mutex for deinit");
-// }
 
 esp_err_t sdcard_init(void)
 {
@@ -123,12 +77,14 @@ esp_err_t sdcard_init(void)
 
     ESP_LOGI(ROTULO_LOCAL, "Sistema de arquivos montado. Driver inicializado com sucesso.");
     sd_mutex = xSemaphoreCreateMutex();
-    // sdmmc_card_print_info(stdout, sdcard);
     return ESP_OK;
 }
 
 esp_err_t sdcard_write_file(char *path, char *data)
 {
+    if (MORE_LOGS)
+        ESP_LOGI(ROTULO_LOCAL, "Executando sdcard_write_file para salvar mensagem de log");
+
     if (stat(path, &st) < 0)
     {
         ESP_LOGI(ROTULO_LOCAL, "Arquivo nao encontrado. Criando arquivo {%s}", path);
@@ -145,14 +101,14 @@ esp_err_t sdcard_write_file(char *path, char *data)
 
     if (xSemaphoreTake(sd_mutex, pdMS_TO_TICKS(100)) == pdTRUE)
     {
-        FILE *file = fopen(path, "w");
+        FILE *file = fopen(path, "a");
         if (file == NULL)
         {
             ESP_LOGE(ROTULO_LOCAL, "Falha ao abrir o arquivo {%s} para escrita.", path);
             return ESP_FAIL;
         }
 
-        int result = fprintf(file, data);
+        int result = fprintf(file, "%s\n", data);
         fclose(file);
         xSemaphoreGive(sd_mutex);
 
@@ -197,12 +153,8 @@ esp_err_t sdcard_log(log_type_t log_type, char *message, const char *trace)
         if (xQueueSend(sdcard_log_queue, &entry, pdMS_TO_TICKS(100)) != pdTRUE)
         {
             ESP_LOGW(ROTULO_LOCAL, "Fila de log cheia. Log descartado.");
-            // if (has_failure)
-            //     has_failure(true);
             return ESP_FAIL;
         }
-        // else if (has_failure)
-        //     has_failure(false);
     }
 
     return ESP_OK;

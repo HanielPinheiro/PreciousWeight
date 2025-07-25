@@ -1,5 +1,5 @@
 idf_component_register(SRCS "mqtt3.c"
-                        REQUIRES nvs_flash esp_netif esp_wifi esp_partition app_update esp-mqtt buzzer
+                     REQUIRES esp-mqtt buzzer comm
                         INCLUDE_DIRS ".")
 
 target_add_binary_data(${COMPONENT_TARGET} "certs/client.crt" TEXT)

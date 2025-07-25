@@ -32,7 +32,7 @@ static uint8_t my_bluetooth_uuid[] = {
     0x1a,
     0x02,
 };
-static char my_pop[] = "abcd1234";
+// static char my_pop[] = "abcd1234";
 // static char my_mac_str[] = "D0:EF:76:59:0B:7C";
 
 /* Event handler for catching system events */
@@ -220,7 +220,7 @@ void start_ble_provisioning()
     ESP_ERROR_CHECK(wifi_prov_mgr_init(config));
     ESP_ERROR_CHECK(wifi_prov_scheme_ble_set_service_uuid(my_bluetooth_uuid));
     ESP_ERROR_CHECK(wifi_prov_mgr_endpoint_create("PW_PROVISION_DATA"));
-    ESP_ERROR_CHECK(wifi_prov_mgr_start_provisioning(WIFI_PROV_SECURITY_1, (const void *)my_pop, SERVICE_NAME, NULL));
+    ESP_ERROR_CHECK(wifi_prov_mgr_start_provisioning(WIFI_PROV_SECURITY_1, MQTT_POP, MQTT_SERVICE_NAME, NULL));
     ESP_ERROR_CHECK(wifi_prov_mgr_endpoint_register("custom-data", custom_prov_data_handler, NULL));
 
     xEventGroupWaitBits(wifi_event_group, BIT0, true, true, portMAX_DELAY);

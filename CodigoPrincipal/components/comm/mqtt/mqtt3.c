@@ -18,16 +18,13 @@
 // EXPLICACAO
 /*  Na criptografia TLS, o cliente deve garantir que está falando com o servidor certo. Isso é feito comparando:
  *  Common Name (CN) ou Subject Alternative Name (SAN) DO certificado do servidor COM o nome do host no URI (broker.address.uri)
- *  Essa opção(.broker.verification.skip_cert_common_name_check = true) diz ao ESP32: Não se preocupe se o nome comum (CN) do certificado do servidor
- *  não bate com o hostname que estou usando no código.
- *  Se seu server.crt tem: CN = precious_weight E seu código usa: .broker.address.uri = "mqtts://192.168.0.10:8883"
- *  O ESP32 rejeita com mbedtls_ssl_handshake returned -0x2700
- *  Em ambiente de produção, o ideal é: 1. Usar nomes de domínio válidos (FQDN); 2. Certificados com CN = nome do domínio;
- *  3. E não usar .skip_cert_common_name_check = true para garantir segurança contra ataques man-in-the-middle (MITM)
- *  O esp nao comporta conexoes com CN=192.168.0.10 (CN = IP), portanto, testar usando .broker.verification.skip_cert_common_name_check = true e depois desativar em producao*/
+ *  Essa opção(.broker.verification.skip_cert_common_name_check = true) diz ao ESP32: Não se preocupe se o nome comum (CN) do certificado do servidor não bate com o hostname que estou usando no código.
+ *  Se seu server.crt tem: CN = precious_weight E seu código usa: .broker.address.uri = "mqtts://192.168.0.10:8883" o ESP32 rejeita o acesso e retorna o erro: mbedtls_ssl_handshake returned -0x2700
+ *  pois o esp nao comporta conexoes com CN=192.168.0.10 (CN = IP), portanto, deve-se testar usando .broker.verification.skip_cert_common_name_check = true e depois desativar em producao,
+ *  visto que será impossível satisfazer o CN do certificado = CN do servidor, pois o servidor tem dominio = IP e não DHCP
+ *  Em ambiente de produção, o ideal é: 1. Usar nomes de domínio válidos (FQDN); 2. Certificados com CN = nome do domínio; 3. E não usar .skip_cert_common_name_check = true para garantir segurança contra ataques man-in-the-middle (MITM) */
 
 #include "mqtt3.h"
-#include "buzzer.h"
 
 static const char *ROTULO_LOCAL = "MQTT";
 static mqtt_connection_callback_t connection_cb = NULL;
@@ -56,7 +53,7 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
             connection_cb(MQTT_STATE_CONNECTED);
         buzzer_short_beep();
         connected = true;
-        esp_mqtt_client_subscribe(client, "scales/1", 1);
+        esp_mqtt_client_subscribe(client, MQTT_TOPIC_CONNECTED, 1);
         break;
 
     case MQTT_EVENT_DISCONNECTED:
@@ -106,8 +103,8 @@ void mqtt_app_start(void)
                             .certificate = (const char *)client_cert_pem_start,
                             .key = (const char *)client_key_pem_start,
                         },
-                        .client_id = SERVICE_NAME},
-        .session = {.keepalive = MQTT_KEEPALIVE, .disable_clean_session = true, .last_will = {.topic = "/status", .msg = "device_disconnected", .qos = 1, .retain = true}},
+                        .client_id = MQTT_SERVICE_NAME},
+        .session = {.keepalive = MQTT_KEEPALIVE, .disable_clean_session = true, .last_will = {.topic = MQTT_TOPIC_DISCONNECTED, .msg = MQTT_SERVICE_NAME, .qos = 1, .retain = true}},
         .network = {.reconnect_timeout_ms = 10000, .disable_auto_reconnect = false}};
 
     client = esp_mqtt_client_init(&mqtt_cfg);

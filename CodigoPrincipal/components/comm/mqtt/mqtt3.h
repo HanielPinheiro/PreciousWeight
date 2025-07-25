@@ -1,32 +1,18 @@
 #pragma once
 
-#include "stdio.h"
-#include "stdint.h"
-#include "stddef.h"
-#include "string.h"
-#include "esp_system.h"
-#include "nvs_flash.h"
-#include "esp_event.h"
-#include "esp_netif.h"
-#include "esp_wifi.h"
-#include "esp_log.h"
-#include "esp_timer.h"
-
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "freertos/semphr.h"
-#include "freertos/queue.h"
-
-#include "lwip/sockets.h"
-#include "lwip/dns.h"
-#include "lwip/netdb.h"
-
+#include "system_core.h"
+#include "buzzer.h"
 #include "mqtt_client.h"
 
 #define MQTT_ADDRESS "mqtts://192.168.0.15:8883"
-#define SERVICE_NAME "PW_D0EF76590B7C"
+
 #define MQTT_RECONNECT_DELAY_MS 5000
 #define MQTT_KEEPALIVE 60
+#define MQTT_TOPIC_SUBSCRIBE "/scale/{id}"
+#define MQTT_TOPIC_PUB_PREFIX "/sensor"
+#define MQTT_TOPIC_PUB_SUFIX "weight"
+#define MQTT_TOPIC_CONNECTED "/status/on"
+#define MQTT_TOPIC_DISCONNECTED "/status/off"
 
 typedef enum
 {

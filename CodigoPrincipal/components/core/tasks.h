@@ -1,6 +1,8 @@
 #pragma once
-#include "system_core.h"
+
 #include "mqtt3.h"
+#include "sdcard.h"
+#include "hx711.h"
 
 // Tipos de dados
 typedef struct

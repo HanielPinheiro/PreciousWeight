@@ -1,6 +1,8 @@
 #pragma once
 
 #include "system_core.h"
+#include "hx711.h"
+
 
 #define LED_GPIO GPIO_NUM_2
 #define NUM_SENSORES_PESO 4

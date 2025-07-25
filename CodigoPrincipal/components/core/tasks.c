@@ -36,7 +36,7 @@ static void data_processor_task(void *pv_params)
             sdcard_log(LOG_INFO, log_msg, ROTULO_LOCAL);
 
             char topic[50];
-            snprintf(topic, sizeof(topic), "sensor/%d/weight", data.sensor_id);
+            snprintf(topic, sizeof(topic), "%s/%d/%s", MQTT_TOPIC_PUB_PREFIX, data.sensor_id, MQTT_TOPIC_PUB_SUFIX);
 
             char payload[50];
             snprintf(payload, sizeof(payload), "Raw{%ld}_Weight{%.2f}", data.raw, data.weight);

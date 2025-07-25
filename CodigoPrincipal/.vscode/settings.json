@@ -56,7 +56,8 @@
     "mqtt_client.h": "c",
     "esp_timer.h": "c",
     "esp_event.h": "c",
-    "bios.h": "c"
+    "bios.h": "c",
+    "sockets.h": "c"
   },
   "idf.flashType": "UART",
   "idf.portWin": "COM4",
