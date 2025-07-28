@@ -27,10 +27,11 @@
 #include "mqtt3.h"
 
 static const char *ROTULO_LOCAL = "MQTT";
-static mqtt_connection_callback_t connection_cb = NULL;
 static bool connected = false;
+static mqtt_connection_callback_t connection_cb = NULL;
 static esp_mqtt_client_handle_t client = NULL;
-static SemaphoreHandle_t mqtt_mutex;
+static SemaphoreHandle_t mqtt_mutex = NULL;
+esp_mqtt_event_handle_t event = NULL;
 
 extern const uint8_t client_cert_pem_start[] asm("_binary_client_crt_start");
 extern const uint8_t client_cert_pem_end[] asm("_binary_client_crt_end");
@@ -44,51 +45,40 @@ void mqtt_reset_client_handle() { client = NULL; }
 
 static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data)
 {
-    esp_mqtt_event_handle_t event = event_data;
+    esp_mqtt_event_id_t mqtt_event = (esp_mqtt_event_id_t)event_id;
 
-    switch ((esp_mqtt_event_id_t)event_id)
+    switch (mqtt_event)
     {
     case MQTT_EVENT_CONNECTED:
-        if (connection_cb)
-            connection_cb(MQTT_STATE_CONNECTED);
         buzzer_short_beep();
         connected = true;
-        esp_mqtt_client_subscribe(client, MQTT_TOPIC_CONNECTED, 1);
+
+        // AQUI SE INSCREVE NO CANAL DO MQTT PRA OUVIR EVENTOS!!!
+        esp_mqtt_client_subscribe(client, MQTT_TOPIC_SUBSCRIBE, 1);
         break;
 
     case MQTT_EVENT_DISCONNECTED:
-        if (connection_cb)
-            connection_cb(MQTT_STATE_DISCONNECTED);
         buzzer_short_alert();
         connected = false;
         break;
 
     case MQTT_EVENT_ERROR:
-        if (connection_cb)
-            connection_cb(MQTT_STATE_ERROR);
         connected = false;
         break;
 
     case MQTT_EVENT_DATA:
+        event = event_data;
         ESP_LOGW(ROTULO_LOCAL, "Received data on topic: %.*s", event->topic_len, event->topic);
         ESP_LOGW(ROTULO_LOCAL, "Data: %.*s", event->data_len, event->data);
-
-        // Exemplo de como tratar dado
-        //  if (strncmp(event->topic, "scales/1", event->topic_len) == 0)
-        //  {
-        //      char msg[event->data_len + 1];
-        //      memcpy(msg, event->data, event->data_len);
-        //      msg[event->data_len] = '\0';
-
-        //     ESP_LOGI(ROTULO_LOCAL, "Mensagem em scales/1: %s", msg);
-
-        //     // TODO: chamar função para tratar comando
-        // }
         break;
 
     default:
         break;
     }
+
+    // trigger callback in main.c
+    if (connection_cb)
+        connection_cb(mqtt_event);
 }
 
 void mqtt_app_start(void)
@@ -104,7 +94,7 @@ void mqtt_app_start(void)
                             .key = (const char *)client_key_pem_start,
                         },
                         .client_id = MQTT_SERVICE_NAME},
-        .session = {.keepalive = MQTT_KEEPALIVE, .disable_clean_session = true, .last_will = {.topic = MQTT_TOPIC_DISCONNECTED, .msg = MQTT_SERVICE_NAME, .qos = 1, .retain = true}},
+        .session = {.keepalive = MQTT_KEEPALIVE, .disable_clean_session = true, .last_will = {.topic = MQTT_TOPIC_CONN_DISCONN, .msg = "DISCONNECTED", .qos = 1, .retain = true}},
         .network = {.reconnect_timeout_ms = 10000, .disable_auto_reconnect = false}};
 
     client = esp_mqtt_client_init(&mqtt_cfg);

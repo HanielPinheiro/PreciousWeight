@@ -1,4 +1,6 @@
 #pragma once
+#ifndef COMM_LIBS_H
+#define COMM_LIBS_H
 
 #include "stdio.h"
 #include "stdint.h"
@@ -19,3 +21,5 @@
 
 #define MQTT_SERVICE_NAME "PW_D0EF76590B7C"
 #define MQTT_POP "KwS2@y6G"
+
+#endif // COMM_LIBS_H

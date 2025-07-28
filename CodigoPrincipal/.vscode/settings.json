@@ -57,7 +57,18 @@
     "esp_timer.h": "c",
     "esp_event.h": "c",
     "bios.h": "c",
-    "sockets.h": "c"
+    "sockets.h": "c",
+    "condition_variable": "c",
+    "manager.h": "c",
+    "bitset": "c",
+    "format": "c",
+    "initializer_list": "c",
+    "esp_netif_sntp.h": "c",
+    "sensors_task.h": "c",
+    "config_system.h": "c",
+    "comm_libs.h": "c",
+    "sdmmc_cmd.h": "c",
+    "sdcard_task.h": "c"
   },
   "idf.flashType": "UART",
   "idf.portWin": "COM4",
@@ -73,5 +84,10 @@
     "--background-index",
     "--query-driver=c:\\Users\\Biruleibe\\EspressifVsCode\\Tools\\tools\\xtensa-esp-elf\\esp-14.2.0_20241119\\xtensa-esp-elf\\bin\\xtensa-esp32-elf-gcc.exe",
     "--compile-commands-dir=e:\\Academico\\Mestrado\\UNIFESP\\LuizGalvao\\PreciousWeight\\Esp32_Codigo\\CodigoPrincipal\\build"
-  ]
+  ],
+  "esp-idf.enableErrorChecking": true,
+  "esp-idf.enableLinting": true,
+  "esp-idf.enableAdvancedHighlighting": true,
+  "C_Cpp.errorSquiggles": "Enabled",
+  "C_Cpp.intelliSenseEngine": "Default"
 }

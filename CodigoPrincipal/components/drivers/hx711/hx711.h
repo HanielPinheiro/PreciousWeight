@@ -1,4 +1,6 @@
 #pragma once
+#ifndef HX711_H
+#define HX711_H
 
 #include "stdint.h"
 #include "driver/gpio.h"
@@ -39,3 +41,5 @@ esp_err_t hx711_init(hx711_t *dev, gpio_num_t dout, gpio_num_t sck, hx711_mode_t
 int32_t hx711_read_raw(hx711_t *dev);
 float hx711_read_weight(hx711_t *dev);
 void hx711_tare(hx711_t *dev, uint8_t samples);
+
+#endif // HX711_H

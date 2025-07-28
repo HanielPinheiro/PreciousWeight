@@ -1,5 +1,5 @@
 #include "bios.h"
-#include "tasks.h"
+#include "sensors_task.h"
 
 static const char *ROTULO_LOCAL = "BIOS";
 
@@ -26,7 +26,7 @@ static esp_err_t initialize_sdcard()
     esp_err_t ret = ESP_FAIL;
     do
     {
-        notify_uart(ROTULO_LOCAL, "Loop While");
+        sdcard_notify_uart(ROTULO_LOCAL, "Loop While");
         ret = sdcard_init();
         if (ret == ESP_OK)
         {
@@ -34,14 +34,14 @@ static esp_err_t initialize_sdcard()
             if (ret == ESP_OK)
                 break;
 
-            notify_uart(ROTULO_LOCAL, "Problema ao escrever Logs!!");
+            sdcard_notify_uart(ROTULO_LOCAL, "Problema ao escrever Logs!!");
             buzzer_short_alert();
             vTaskDelay(pdMS_TO_TICKS(1000));
             retry_count++;
             continue;
         }
 
-        notify_uart(ROTULO_LOCAL, "Falha ao iniciar Cartao SD");
+        sdcard_notify_uart(ROTULO_LOCAL, "Falha ao iniciar Cartao SD");
         buzzer_short_alert();
         retry_count++;
         vTaskDelay(pdMS_TO_TICKS(1000));
@@ -91,7 +91,7 @@ static esp_err_t initialize_weight_sensors()
 void init_hardware()
 {
     initialize_buzzers();
-    notify_uart(ROTULO_LOCAL, "Buzzer inicializado. Inicializando Cartao SD.");
+    sdcard_notify_uart(ROTULO_LOCAL, "Buzzer inicializado. Inicializando Cartao SD.");
 
     esp_err_t ret = initialize_sdcard();
     if (ret != ESP_OK)

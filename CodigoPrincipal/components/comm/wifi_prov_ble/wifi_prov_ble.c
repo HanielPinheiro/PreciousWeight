@@ -5,6 +5,105 @@
 
 #include "wifi_prov_ble.h"
 
+#pragma region DATE_TIME
+
+#define STORAGE_NAMESPACE "storage"
+#define TIME_PERIOD (86400000000ULL)
+
+static void initialize_sntp(void)
+{
+    ESP_LOGI("DATE_TIME", "Initializing SNTP");
+    esp_sntp_config_t config = ESP_NETIF_SNTP_DEFAULT_CONFIG_MULTIPLE(2, ESP_SNTP_SERVER_LIST("a.st1.ntp.br", "b.st1.ntp.br"));
+    esp_netif_sntp_init(&config);
+}
+
+static esp_err_t obtain_time(void)
+{
+    int retry = 0;
+    const int retry_count = 10;
+
+    while (esp_netif_sntp_sync_wait(pdMS_TO_TICKS(2000)) != ESP_OK && ++retry < retry_count)
+        ESP_LOGI("DATE_TIME", "Waiting for system time to be set... (%d/%d)", retry, retry_count);
+
+    if (retry == retry_count)
+        return ESP_FAIL;
+
+    return ESP_OK;
+}
+
+static esp_err_t fetch_and_store_time_in_nvs(void *args)
+{
+    ESP_LOGI("DATE_TIME", "Iniciando fetch_and_store_time_in_nvs");
+    nvs_handle_t my_handle = 0;
+    esp_err_t err;
+
+    ESP_LOGI("DATE_TIME", "Inicializando SNTP");
+    initialize_sntp();
+
+    ESP_LOGI("DATE_TIME", "Obtendo tempo...");
+    if (obtain_time() != ESP_OK)
+    {
+        ESP_LOGE("DATE_TIME", "Falha ao obter tempo do NTP");
+        err = ESP_FAIL;
+        goto exit;
+    }
+
+    time_t now;
+    time(&now);
+    ESP_LOGI("DATE_TIME", "Tempo obtido: %lld", now);
+
+    // Open
+    err = nvs_open(STORAGE_NAMESPACE, NVS_READWRITE, &my_handle);
+    if (err != ESP_OK)
+    {
+        ESP_LOGE("DATE_TIME", "Erro abrindo NVS: %s", esp_err_to_name(err));
+        goto exit;
+    }
+
+    // Write
+    ESP_LOGI("DATE_TIME", "Armazenando timestamp no NVS");
+    err = nvs_set_i64(my_handle, "timestamp", now);
+    if (err != ESP_OK)
+    {
+        ESP_LOGE("DATE_TIME", "Erro escrevendo NVS: %s", esp_err_to_name(err));
+        goto exit;
+    }
+
+    err = nvs_commit(my_handle);
+    if (err != ESP_OK)
+        ESP_LOGE("DATE_TIME", "Erro commit NVS: %s", esp_err_to_name(err));
+
+exit:
+    if (my_handle != 0)
+        nvs_close(my_handle);
+
+    esp_netif_sntp_deinit();
+
+    ESP_LOGI("DATE_TIME", "fetch_and_store_time_in_nvs finalizado: %s", esp_err_to_name(err));
+    return err;
+}
+
+static void start_date_time()
+{
+    ESP_ERROR_CHECK(fetch_and_store_time_in_nvs(NULL)); // always update timestamp in NVS when wifi conn drops and restart
+
+    const esp_timer_create_args_t nvs_update_timer_args = {
+        .callback = (void *)&fetch_and_store_time_in_nvs,
+    };
+
+    esp_timer_handle_t nvs_update_timer;
+    ESP_ERROR_CHECK(esp_timer_create(&nvs_update_timer_args, &nvs_update_timer));
+    ESP_ERROR_CHECK(esp_timer_start_periodic(nvs_update_timer, TIME_PERIOD));
+}
+
+static void set_timezone_gmt3()
+{
+    setenv("TZ", "EST+3", 1);
+    tzset();
+}
+
+#pragma endregion
+
 static EventGroupHandle_t wifi_event_group;
 static const char *ROTULO_LOCAL = "WIFI";
 
@@ -32,8 +131,6 @@ static uint8_t my_bluetooth_uuid[] = {
     0x1a,
     0x02,
 };
-// static char my_pop[] = "abcd1234";
-// static char my_mac_str[] = "D0:EF:76:59:0B:7C";
 
 /* Event handler for catching system events */
 static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
@@ -82,8 +179,15 @@ static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_
         case WIFI_EVENT_STA_START:
             esp_wifi_connect();
             break;
+        case WIFI_EVENT_STA_CONNECTED:
+            ESP_LOGI(ROTULO_LOCAL, "Connected. Getting Date Time from SNTP");
+            start_date_time();
+            set_timezone_gmt3();
+            break;
+
         case WIFI_EVENT_STA_DISCONNECTED:
             ESP_LOGI(ROTULO_LOCAL, "Disconnected. Connecting to the AP again...");
+            esp_netif_sntp_deinit();
             esp_wifi_connect();
             break;
         default:
@@ -129,15 +233,6 @@ static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_
     }
 }
 
-// static void get_device_service_name(char *service_name, size_t max)
-// {
-//     uint8_t eth_mac[6];
-//     const char *ssid_prefix = "PW_";
-//     esp_wifi_get_mac(WIFI_IF_STA, eth_mac);
-//     snprintf(service_name, max, "%s%02X%02X%02X",
-//              ssid_prefix, eth_mac[3], eth_mac[4], eth_mac[5]);
-// }
-
 /* Handler for the optional provisioning endpoint registered by the application. The data format can be chosen by applications. Here, we are using plain ascii text.
  * Applications can choose to use other formats like protobuf, JSON, XML, etc.
  * Note that memory for the response buffer must be allocated using heap as this buffer gets freed by the protocomm layer once it has been sent by the transport layer. */
@@ -166,10 +261,7 @@ static void wifi_init_all()
     /* Initialize NVS partition */
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND)
-    {
-        ESP_ERROR_CHECK(nvs_flash_erase()); /* NVS partition was truncated and needs to be erased */
-        ESP_ERROR_CHECK(nvs_flash_init());  /* Retry nvs_flash_init */
-    }
+        reset_wifi();
 
     ESP_ERROR_CHECK(esp_netif_init());                /* Initialize TCP/IP */
     ESP_ERROR_CHECK(esp_event_loop_create_default()); /* Initialize the event loop */
@@ -189,12 +281,6 @@ static void wifi_init_all()
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
 }
 
-void reset_wifi()
-{
-    ESP_ERROR_CHECK(nvs_flash_erase());
-    ESP_ERROR_CHECK(nvs_flash_init());
-}
-
 static void start_wifi_sta() // Conectar usando dados salvos(modo STA)
 {
     ESP_LOGI(ROTULO_LOCAL, "Iniciando Wi-Fi STA com credenciais salvas...");
@@ -202,6 +288,12 @@ static void start_wifi_sta() // Conectar usando dados salvos(modo STA)
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     ESP_ERROR_CHECK(esp_wifi_start());
     xEventGroupWaitBits(wifi_event_group, BIT0, true, true, portMAX_DELAY);
+}
+
+void reset_wifi()
+{
+    ESP_ERROR_CHECK(nvs_flash_erase()); /* NVS partition was truncated and needs to be erased */
+    ESP_ERROR_CHECK(nvs_flash_init());  /* Retry nvs_flash_init */
 }
 
 void start_ble_provisioning()
@@ -226,7 +318,7 @@ void start_ble_provisioning()
     xEventGroupWaitBits(wifi_event_group, BIT0, true, true, portMAX_DELAY);
 }
 
-void wifi_init()
+void init_wifi()
 {
     wifi_init_all();
 
@@ -274,4 +366,14 @@ bool is_wifi_connected()
         ESP_LOGE(ROTULO_LOCAL, "Failed to get WiFi connection status: %s", esp_err_to_name(err));
         return false;
     }
+}
+
+char current_time[SIZE_TIME];
+void update_current_time()
+{
+    time_t now;
+    struct tm timeinfo;
+    time(&now);                                                        // Obtém o tempo atual
+    localtime_r(&now, &timeinfo);                                      // Converte para GMT-3
+    strftime(current_time, SIZE_TIME, "%d/%m/%Y %H:%M:%S", &timeinfo); // Formata a string (ex: "04/08/2025 14:30:45")
 }

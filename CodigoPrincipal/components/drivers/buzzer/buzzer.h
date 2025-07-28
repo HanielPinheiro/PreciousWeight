@@ -1,4 +1,6 @@
 #pragma once
+#ifndef BUZZER_H
+#define BUZZER_H
 
 #include "driver/gpio.h"
 #include "freertos/FreeRTOS.h" // ← Needed for vTaskDelay()
@@ -14,3 +16,5 @@ void buzzer_long_beep();
 void buzzer_short_alert();
 void buzzer_long_alert();
 void buzzer_critical_alert();
+
+#endif // BUZZER_H

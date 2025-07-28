@@ -1,6 +1,8 @@
 #pragma once
+#ifndef MQTT3_H
+#define MQTT3_H
 
-#include "system_core.h"
+#include "comm_libs.h"
 #include "buzzer.h"
 #include "mqtt_client.h"
 
@@ -8,24 +10,19 @@
 
 #define MQTT_RECONNECT_DELAY_MS 5000
 #define MQTT_KEEPALIVE 60
-#define MQTT_TOPIC_SUBSCRIBE "/scale/{id}"
-#define MQTT_TOPIC_PUB_PREFIX "/sensor"
-#define MQTT_TOPIC_PUB_SUFIX "weight"
-#define MQTT_TOPIC_CONNECTED "/status/on"
-#define MQTT_TOPIC_DISCONNECTED "/status/off"
 
-typedef enum
-{
-    MQTT_STATE_DISCONNECTED,
-    MQTT_STATE_CONNECTING,
-    MQTT_STATE_CONNECTED,
-    MQTT_STATE_ERROR
-} mqtt_state_t;
+#define MQTT_TOPIC_SUBSCRIBE "/scales/" MQTT_SERVICE_NAME
+#define MQTT_TOPIC_PUB_SENSOR "/sensors/" MQTT_SERVICE_NAME
+#define MQTT_TOPIC_PUB_WEIGHT "/weights/" MQTT_SERVICE_NAME
+#define MQTT_TOPIC_CONN_DISCONN "/status/" MQTT_SERVICE_NAME
 
-typedef void (*mqtt_connection_callback_t)(mqtt_state_t connected);
+typedef void (*mqtt_connection_callback_t)(esp_mqtt_event_id_t connected);
+extern esp_mqtt_event_handle_t event;
 
 void mqtt_app_start(void);
 void mqtt_init(mqtt_connection_callback_t ext_connection_cb);
 bool mqtt_publish(const char *topic, const char *data, int qos);
 esp_mqtt_client_handle_t mqtt_get_client_handle();
 void mqtt_reset_client_handle();
+
+#endif // MQTT3_H

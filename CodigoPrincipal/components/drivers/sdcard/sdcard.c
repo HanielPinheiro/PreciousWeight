@@ -4,6 +4,9 @@
  */
 
 #include "sdcard.h"
+#include <config_system.h>
+#include <sdcard_task.h>
+
 
 static const char *ROTULO_LOCAL = "SD_CARD";
 
@@ -12,7 +15,6 @@ static sdmmc_host_t host = SDSPI_HOST_DEFAULT(); // Define que estou usando o mo
 static SemaphoreHandle_t sd_mutex;               // semaphore to protect open the file that is already open by other task
 
 sdmmc_card_t *sdcard = NULL;
-QueueHandle_t sdcard_log_queue = NULL;
 
 esp_err_t sdcard_init(void)
 {
@@ -140,7 +142,7 @@ esp_err_t sdcard_create_file(char *path)
 
 esp_err_t sdcard_log(log_type_t log_type, char *message, const char *trace)
 {
-    notify_uart(trace, message);
+    sdcard_notify_uart(trace, message);
 
     log_entry_t entry;
     snprintf(entry.message, sizeof(entry.message), "[%s] %s",
@@ -163,7 +165,7 @@ esp_err_t sdcard_log(log_type_t log_type, char *message, const char *trace)
     return ESP_OK;
 }
 
-void notify_uart(const char *stack_trace, char *message)
+void sdcard_notify_uart(const char *stack_trace, char *message)
 {
     if (!MODO_DEBUG)
         return;
@@ -184,3 +186,61 @@ void notify_uart(const char *stack_trace, char *message)
 //     ESP_LOGI(ROTULO_LOCAL, "Nenhum arquivo existente, formatação concluída");
 //     return ESP_OK;
 // }
+
+esp_err_t sdcard_load_weight_times()
+{
+    if (stat(BABY_HOURS_FILE, &st) < 0)
+        return ESP_FAIL;
+
+    FILE *file = fopen(BABY_HOURS_FILE, "r");
+    if (file)
+    {
+        char line[20];
+        while (fgets(line, 20, file))
+        {
+            int hour, min, gmt;
+            if (sscanf(line, "%d:%d,%d", &hour, &min, &gmt) == 3)
+            {
+                if (number_times < MAX_WEIGHT_TIMES)
+                {
+                    weight_times[number_times].hora = hour;
+                    weight_times[number_times].minuto = min;
+                    weight_times[number_times].gmt = gmt;
+                    number_times++;
+                }
+            }
+        }
+        fclose(file);
+    }
+    return ESP_OK;
+}
+
+esp_err_t sdcard_save_weight_times()
+{
+    esp_err_t ret = ESP_OK;
+
+    char line[20];
+    for (int number_times = 0; number_times < MAX_WEIGHT_TIMES; number_times++)
+    {
+        snprintf(line, 20, "%d:%d,%d", weight_times[number_times].hora, weight_times[number_times].minuto, weight_times[number_times].gmt);
+        if (sdcard_write_file(BABY_HOURS_FILE, line) != ESP_OK)
+        {
+            ret = ESP_FAIL;
+            break;
+        }
+    }
+
+    return ret;
+}
+
+esp_err_t sdcard_clear_file(const char *filename)
+{
+    FILE *file = fopen(filename, "w"); // Modo "w" sobrescreve o arquivo
+    if (file != NULL)
+    {
+        fclose(file);
+        return ESP_OK;
+    }
+
+    return ESP_FAIL;
+}

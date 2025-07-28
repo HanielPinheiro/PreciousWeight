@@ -1,4 +1,6 @@
 #pragma once
+#ifndef SDCARD_H
+#define SDCARD_H
 
 #include "stdio.h"
 #include "sdmmc_cmd.h"
@@ -14,6 +16,7 @@
 #define MOUNT_POINT "/sdcard"
 #define LOG_FILE MOUNT_POINT "/logs.txt"
 #define WEIGHT_FILE MOUNT_POINT "/weights.txt"
+#define BABY_HOURS_FILE MOUNT_POINT "/baby_and_hours.txt"
 
 typedef struct
 {
@@ -27,11 +30,16 @@ typedef enum
     LOG_ERROR = 2
 } log_type_t;
 
-extern QueueHandle_t sdcard_log_queue;
 extern sdmmc_card_t *sdcard;
 
 esp_err_t sdcard_init(void);
 esp_err_t sdcard_write_file(char *path, char *data);
 esp_err_t sdcard_create_file(char *path);
 esp_err_t sdcard_log(log_type_t log_type, char *message, const char *trace);
-void notify_uart(const char *stack_trace, char *message);
+void sdcard_notify_uart(const char *stack_trace, char *message);
+
+esp_err_t sdcard_load_weight_times();
+esp_err_t sdcard_save_weight_times();
+esp_err_t sdcard_clear_file(const char *filename);
+
+#endif // SDCARD_H

@@ -11,9 +11,7 @@ set(EXTRA_COMPONENT_DIRS
     "${CMAKE_CURRENT_SOURCE_DIR}/components/drivers/hx711"
     "${CMAKE_CURRENT_SOURCE_DIR}/components/drivers/sdcard"
     
-    "${CMAKE_CURRENT_SOURCE_DIR}/components/models"
     "${CMAKE_CURRENT_SOURCE_DIR}/components/core"
-
     "${CMAKE_CURRENT_SOURCE_DIR}/components"    
 )
 
