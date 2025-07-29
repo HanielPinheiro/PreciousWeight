@@ -10,6 +10,7 @@ public class constants {
     public static final String BabyTableFieldName_MotherName = "baby_mother_name";
     public static final String BabyTableFieldName_BirthDate = "baby_birthdate";
     public static final String BabyTableFieldName_State = "baby_state";
+    public static final String BabyTableFieldName_WeightHour = "baby_weight_hour";
 
     public static final String ScaleTableName = "scales";
     public static final String ScaleTableFieldName_Id = "scale_id";
@@ -41,9 +42,10 @@ public class constants {
     public static final String ControllerName_Disable = "/disable/{id}";
     public static final String ControllerName_Update = "/update/{id}";
 
-    public static final String LoginControllerName = "/login";
     public static final String LoginController_BackEndName = "precious_weight_backend";
     public static final String LoginController_Scope = "scope";
+    public static final String LoginControllerName = "/login";
+    public static final String LoginControllerName_Reset = "/reset";
 
     public static final String BabyControllerName = "/babies";
 

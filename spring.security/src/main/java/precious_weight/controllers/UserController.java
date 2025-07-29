@@ -58,6 +58,8 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
+
+
     @PostMapping(ControllerName_List)
     @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
     public ResponseEntity<List<UserModel>> listUsers() {
@@ -103,5 +105,6 @@ public class UserController {
             this.organization = organization;
         }
     }
+
 }
 

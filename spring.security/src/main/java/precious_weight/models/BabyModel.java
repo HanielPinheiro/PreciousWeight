@@ -29,13 +29,15 @@ public class BabyModel implements Serializable {
     @Column(name = BabyTableFieldName_MotherName)
     private String babyMotherName;
 
-
     @Column(name = BabyTableFieldName_BirthDate)
     @JsonFormat(pattern = "yyyy-MM-dd", timezone = "America/Sao_Paulo")
     private LocalDate babyBirthDate;
 
     @Column(name = BabyTableFieldName_State)
     private Integer babyState;
+
+    @Column(name = BabyTableFieldName_WeightHour)
+    private String babyWeightHour;
 
     @Column(name = BabyTableFieldName_HospitalId, nullable = false, length = 255, unique = true)
     private String babyHospitalId;
@@ -73,9 +75,7 @@ public class BabyModel implements Serializable {
         this.babyId = babyId;
     }
 
-    public String getBabyName() {
-        return babyName;
-    }
+    public String getBabyName() { return babyName; }
 
     public void setBabyName(String name) {
         this.babyName = name;
@@ -89,9 +89,7 @@ public class BabyModel implements Serializable {
         this.babyMotherName = motherName;
     }
 
-    public LocalDate getBabyBirthDate() {
-        return babyBirthDate;
-    }
+    public LocalDate getBabyBirthDate() { return babyBirthDate; }
 
     public void setBabyBirthDate(LocalDate birthDate) {
         this.babyBirthDate = birthDate;
@@ -107,6 +105,14 @@ public class BabyModel implements Serializable {
 
     public Integer getBabyState() {
         return babyState;
+    }
+
+    public void setBabyWeightHour(String weightHour) {
+        this.babyWeightHour = weightHour;
+    }
+
+    public String getBabyWeightHour() {
+        return babyWeightHour;
     }
 
     public void setBabyImageText(String imageText) {

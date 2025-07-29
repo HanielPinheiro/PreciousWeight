@@ -23,6 +23,9 @@ import org.springframework.security.web.SecurityFilterChain;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 
+import static precious_weight.config.constants.LoginControllerName;
+import static precious_weight.config.constants.LoginControllerName_Reset;
+
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
@@ -38,8 +41,8 @@ public class SecurityConfig {
 
         http
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers(HttpMethod.POST, "/users").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, LoginControllerName).permitAll()
+                        .requestMatchers(HttpMethod.POST, LoginControllerName_Reset).permitAll()
                         .anyRequest().authenticated())
                 .csrf(csrf -> csrf.disable())
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))

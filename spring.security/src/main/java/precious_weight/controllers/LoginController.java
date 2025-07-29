@@ -10,14 +10,16 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+
+import static precious_weight.config.constants.*;
 import precious_weight.models.RoleModel;
 import precious_weight.interfaces.iUser;
 import precious_weight.models.UserModel;
+import precious_weight.requests.LoginRequest;
+import precious_weight.response.LoginResponse;
 
 import java.time.Instant;
 import java.util.stream.Collectors;
-
-import static precious_weight.config.constants.*;
 
 @RestController
 public class LoginController {
@@ -36,8 +38,7 @@ public class LoginController {
     @PostMapping(LoginControllerName)
     public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest loginRequest) {
 
-        var user = iUser.findByEmail(loginRequest.username);
-
+        var user = iUser.findByEmail(loginRequest.getUsername());
         if (user.isEmpty() || !user.get().isLoginCorrect(loginRequest, passwordEncoder)) throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
 
         var now = Instant.now();
@@ -61,69 +62,22 @@ public class LoginController {
         return ResponseEntity.ok(new LoginResponse(jwtValue, expiresIn, user.get()));
     }
 
-    public static class LoginRequest {
-        private String username;
-        private String password;
 
-        // Parameterized constructor
-        public LoginRequest(String username, String password) {
-            this.username = username;
-            this.password = password;
+    @PostMapping(LoginControllerName_Reset)
+    public ResponseEntity<Void> resetPassword(@RequestBody LoginRequest request) {
+
+        UserModel userFromDb;
+
+        try {
+            userFromDb = iUser.findByEmail(request.getUsername()).orElseThrow();
+        }
+        catch (Exception e){
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
 
-        // Getters and setters
-        public String getUsername() {
-            return username;
-        }
-
-        public void setUsername(String username) {
-            this.username = username;
-        }
-
-        public String getPassword() {
-            return password;
-        }
-
-        public void setPassword(String password) {
-            this.password = password;
-        }
+        userFromDb.setPassword(passwordEncoder.encode(request.getPassword()));
+        iUser.save(userFromDb);
+        return ResponseEntity.ok().build();
     }
 
-    public static class LoginResponse {
-        private String accessToken;
-        private Long  expiresIn;
-        private UserModel user;
-
-        // Parameterized constructor
-        public LoginResponse(String accessToken, Long expiresIn, UserModel user) {
-            this.accessToken = accessToken;
-            this.expiresIn = expiresIn;
-            this.user = user;
-        }
-
-        // Getters and setters
-        public String getAccessToken() {
-            return accessToken;
-        }
-
-        public void setAccessToken(String username) {
-            this.accessToken = username;
-        }
-
-        public Long getExpiresIn() {
-            return expiresIn;
-        }
-
-        public void setExpiresIn(Long expiresIn) {
-            this.expiresIn = expiresIn;
-        }
-
-        public UserModel getUser() {
-            return user;
-        }
-
-        public void setUser(UserModel expiresIn) {
-            this.user = expiresIn;
-        }
-    }
 }

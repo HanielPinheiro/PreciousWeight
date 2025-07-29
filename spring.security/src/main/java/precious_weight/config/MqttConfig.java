@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.util.UUID;
 
 @Configuration
@@ -16,28 +17,34 @@ public class MqttConfig {
 
     @Bean
     public IMqttAsyncClient mqttAsyncClient() throws MqttException {
-        IMqttAsyncClient client = new MqttAsyncClient(brokerUrl,"PW_API_" + UUID.randomUUID().toString());
-
+        IMqttAsyncClient client = new MqttAsyncClient(brokerUrl, "PW_API_SERVICE");
         client.setCallback(new MqttCallbackExtended() {
             @Override
+            public void connectionLost(Throwable throwable) {
+            }
+
+            @Override
+            public void messageArrived(String s, MqttMessage mqttMessage) throws Exception {
+            }
+
+            @Override
+            public void deliveryComplete(IMqttDeliveryToken iMqttDeliveryToken) {
+            }
+
+            @Override
             public void connectComplete(boolean reconnect, String serverURI) {
-                logger.info("Connected to MQTT broker. Reconnect: {}", reconnect);
-            }
+                logger.info("RECONNECTING to MQTT broker...");
 
-            @Override
-            public void connectionLost(Throwable cause) {
-                logger.error("Connection lost!", cause);
-            }
+                try {
+                    MqttMessage onlineMessage = new MqttMessage("RECONNECTED".getBytes());
+                    onlineMessage.setQos(2);
+                    onlineMessage.setRetained(true);
+                    client.publish("api/status", onlineMessage);
+                } catch (MqttException e) {
+                    logger.error("Failed to send RECONNECTED status", e);
+                }
 
-            @Override
-            public void messageArrived(String topic, MqttMessage message) {
-                logger.info("Message arrived - Topic: {} | Payload: {}", topic, new String(message.getPayload()));
-
-            }
-
-            @Override
-            public void deliveryComplete(IMqttDeliveryToken token) {
-                logger.debug("Delivery complete for message with ID: {}", token.getMessageId());
+                logger.info("RECONNECTED");
             }
         });
 
@@ -45,9 +52,25 @@ public class MqttConfig {
         options.setCleanSession(false); // Persistent session (QoS 2)
         options.setAutomaticReconnect(true);
         options.setConnectionTimeout(10);
-        options.setWill("api/status", "OFFLINE".getBytes(), 2, true); // LWT
 
         client.connect(options).waitForCompletion();
+        MqttMessage onlineMessage = new MqttMessage("ONLINE".getBytes());
+        onlineMessage.setQos(2);
+        onlineMessage.setRetained(true);
+        client.publish("api/status", onlineMessage);
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try {
+                MqttMessage message = new MqttMessage("OFFLINE".getBytes());
+                message.setQos(2);
+                message.setRetained(true);
+                client.publish("api/status", message);
+                client.disconnect();
+            } catch (MqttException e) {
+                logger.error("Failed to send offline status on shutdown", e);
+            }
+        }));
+
         return client;
     }
 }

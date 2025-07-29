@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import precious_weight.controllers.LoginController;
+import precious_weight.requests.LoginRequest;
 
 import java.util.Set;
 import java.util.UUID;
@@ -71,7 +72,7 @@ public class UserModel {
         this.roleModels = roleModels;
     }
 
-    public boolean isLoginCorrect(LoginController.LoginRequest loginRequest, PasswordEncoder passwordEncoder) {
+    public boolean isLoginCorrect(LoginRequest loginRequest, PasswordEncoder passwordEncoder) {
         return passwordEncoder.matches(loginRequest.getPassword(), this.password);
     }
 }

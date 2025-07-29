@@ -1,82 +1,73 @@
 package precious_weight.controllers;
 
-import precious_weight.interfaces.iBaby;
-import precious_weight.interfaces.iScale;
-import precious_weight.interfaces.iWeight;
+import static precious_weight.config.constants.*;
+
+import org.springframework.http.ResponseEntity;
 import precious_weight.models.WeightModel;
+import precious_weight.requests.WeightRequest;
+import precious_weight.services.WeightService;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
-import java.util.stream.Collectors;
-
-import static precious_weight.config.constants.*;
+import java.util.Map;
 
 @RestController
 @RequestMapping(WeightControllerName)
 public class WeightController {
 
     @Autowired
-    private iWeight iWeight;
-
-    @Autowired
-    private iScale iScale;
-
-    @Autowired
-    private iBaby iBaby;
+    WeightService weightService;
 
     @PostMapping(ControllerName_List)
-    public List<WeightModel> listAll() {
-        return iWeight.findAll();
+    public ResponseEntity<?> listAll() {
+        try {
+            return ResponseEntity.ok(weightService.listAll());
+        } catch (Exception ex) {
+            Map<String, String> error = new HashMap<String, String>() {{
+                put("error", ex.getMessage());
+            }};
+            return ResponseEntity.badRequest().body(error);
+        }
     }
 
     @PostMapping(ControllerName_Save)
-    public WeightModel save(@RequestBody WeightRequestModel request) {
-        WeightModel weightModel = new WeightModel();
-        weightModel.setWeightDate(LocalDateTime.now());
-        weightModel.setWeightValue(request.getWeightValue());
-        weightModel.setScaleId(request.getScaleId());
-        weightModel.setBabyId(request.getBabyId());
-        return iWeight.save(weightModel);
+    public ResponseEntity<?> save(@RequestBody WeightRequest request) {
+        try {
+            return ResponseEntity.ok(weightService.save(request));
+        } catch (Exception ex) {
+            Map<String, String> error = new HashMap<String, String>() {{
+                put("error", ex.getMessage());
+            }};
+            return ResponseEntity.badRequest().body(error);
+        }
     }
 
     @PostMapping(WeightControllerName_Babies)
-    public List<WeightModel> getBabyWeights(@PathVariable Integer babyId) {
-        List<WeightModel> weights =  iWeight.findAll();
-        return weights.stream().filter(p -> p.getBabyId().equals(babyId)).collect(Collectors.toList());
+    public ResponseEntity<?> getBabyWeights(@PathVariable Integer babyId) {
+        try {
+            return ResponseEntity.ok(weightService.getBabyWeights(babyId));
+        } catch (Exception ex) {
+            Map<String, String> error = new HashMap<String, String>() {{
+                put("error", ex.getMessage());
+            }};
+            return ResponseEntity.badRequest().body(error);
+        }
     }
 
     @PostMapping(WeightControllerName_Scales)
-    public List<WeightModel> getScaleWeights(@PathVariable Integer scaleId) {
-        List<WeightModel> weights =  iWeight.findAll();
-        return weights.stream().filter(p -> p.getScaleId().equals(scaleId)).toList();
-    }
-
-    public static class WeightRequestModel {
-        private Integer scaleId;
-        private Integer babyId;
-        private Integer weightValue;
-
-        public Integer getScaleId() {
-            return scaleId;
-        }
-        public void setScaleId(Integer scaleId) {
-            this.scaleId = scaleId;
-        }
-
-        public Integer getBabyId() {
-            return babyId;
-        }
-        public void setBabyId(Integer babyId) {
-            this.babyId = babyId;
-        }
-
-        public Integer getWeightValue() {
-            return weightValue;
-        }
-        public void setWeightValue(Integer weightValue) {
-            this.weightValue = weightValue;
+    public ResponseEntity<?> getScaleWeights(@PathVariable Integer scaleId) {
+        try {
+            return ResponseEntity.ok(weightService.getScaleWeights(scaleId));
+        } catch (Exception ex) {
+            Map<String, String> error = new HashMap<String, String>() {{
+                put("error", ex.getMessage());
+            }};
+            return ResponseEntity.badRequest().body(error);
         }
     }
+
+
 }

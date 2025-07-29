@@ -30,7 +30,7 @@ public class WeightModel implements Serializable {
     private Integer babyId;
 
     @Column(name = WeightTableFieldName_Value, nullable = false)
-    private Integer weightValue;
+    private Double weightValue;
 
     public Integer getWeightId() {
         return weightId;
@@ -60,10 +60,11 @@ public class WeightModel implements Serializable {
         this.scaleId = scaleId;
     }
 
-    public Integer getWeightValue() {
+    public Double getWeightValue() {
         return weightValue;
     }
-    public void setWeightValue(Integer weightValue) {
+    public void setWeightValue(Double weightValue) {
         this.weightValue = weightValue;
     }
 }
+

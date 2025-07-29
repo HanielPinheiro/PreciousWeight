@@ -20,18 +20,23 @@ public class MqttPublisherService {
         this.mqttClient = mqttClient;
     }
 
-    public void sendCriticalCommand(String esp32Id, String command) {
+    public void sendCriticalCommand(String scale_hash, String data_to_esp32) {
+        String topic = "scale/" + scale_hash;
+
         executor.submit(() -> {
             MqttMessage message = null;
             try {
-                message = new MqttMessage(command.getBytes());
-                message.setQos(2); // QoS 2 for medical commands
-                mqttClient.publish("incubator/" + esp32Id + "/command", message).waitForCompletion(); // Block until confirmed
-                logger.info("Sent QoS 2 command to ESP32 {}: {}", esp32Id, command);
+                message = new MqttMessage(data_to_esp32.getBytes());
+                message.setQos(2);
+
+                logger.info("Sending data to scale {}: {}", scale_hash, data_to_esp32);
+                mqttClient.publish(topic, message).waitForCompletion();
+                logger.info("Data sended!");
             } catch (MqttException e) {
-                logger.error("Failed to send command to ESP32 {}", esp32Id, e); // Error log
+                logger.error("Failed to send data to ESP32 {}", scale_hash, e); // Error log
+
                 try {
-                    this.retryPublish("asd", message, 100);
+                    this.retryPublish(topic, message, 100);
                 } catch (InterruptedException ex) {
                     logger.error("Critical Command Not Sent!", ex);
                 }
@@ -39,18 +44,20 @@ public class MqttPublisherService {
         });
     }
 
-    // In MqttPublisher, add retry logic:
+
     private void retryPublish(String topic, MqttMessage message, int attempts) throws InterruptedException {
         try {
+
             logger.info("Retrying to send data to broker. Try {}: {} - {}", attempts, topic, message.toString());
             mqttClient.publish(topic, message).waitForCompletion();
+
         } catch (MqttException e) {
             if (attempts > 0) {
+
                 Thread.sleep(1000);
                 retryPublish(topic, message, attempts - 1);
-            } else {
-                logger.error("Permanent failure after retries: {}", topic, e);
-            }
+
+            } else logger.error("Permanent failure after retries: {}", topic, e);
         }
     }
 }
