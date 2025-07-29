@@ -42,8 +42,8 @@ static void sensor_data_process_task(void *pv_params)
 {
     sensor_data_t data;
     char log_msg[150];
-    char topic[50];
-    char payload[50];
+    // char topic[50];
+    // char payload[50];
 
     while (1)
     {
@@ -55,7 +55,7 @@ static void sensor_data_process_task(void *pv_params)
                 weight_removed[data.sensor_id] = data.weight < 20 ? true : false;
                 if (weight_removed[0] && weight_removed[1] && weight_removed[2] && weight_removed[3])
                 {
-                    snprintf(log_msg, sizeof(log_msg), "CRITICAL_ALERT_WEIGHT_REMOVED[SENSORDATA_Id{}_Raw{%ld}_Weight{%.2f]]", data.sensor_id, data.raw, data.weight);
+                    snprintf(log_msg, sizeof(log_msg), "CRITICAL_ALERT_WEIGHT_REMOVED[SENSORDATA_Id{%d}_Raw{%ld}_Weight{%.2f]]", data.sensor_id, data.raw, data.weight);
                     sdcard_log(LOG_INFO, log_msg, ROTULO_LOCAL);
                     mqtt_publish(MQTT_TOPIC_PUB_SENSOR, log_msg, 2);
                 }

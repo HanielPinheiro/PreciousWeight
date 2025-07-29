@@ -43,6 +43,6 @@ void app_main()
 
     char m[90];
     update_current_time();
-    snprintf(m, "Sistema inicializado com sucesso em %s \r\n", current_time);
+    snprintf(m, 90, "Sistema inicializado com sucesso em %s \r\n", current_time);
     sdcard_log(LOG_INFO, m, ROTULO_LOCAL);
 }
