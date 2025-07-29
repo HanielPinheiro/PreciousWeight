@@ -3,6 +3,7 @@
 static const char *ROTULO_LOCAL = "SDCARD_TASK";
 static uint8_t sd_failure_counter = 0;
 static TaskHandle_t sd_task_handler = NULL;
+
 QueueHandle_t sdcard_log_queue = NULL;
 static void sdcard_writer_task(void *pv_params)
 {
@@ -12,7 +13,7 @@ static void sdcard_writer_task(void *pv_params)
     {
         if (xQueueReceive(sdcard_log_queue, &entry, pdMS_TO_TICKS(100)))
         {
-            esp_err_t ret = sdcard_write_file(LOG_FILE, entry.message); // já com mutex lá dentro
+            esp_err_t ret = sdcard_write_file(entry.path, entry.message); // já com mutex lá dentro
             if (ret != ESP_OK)
             {
                 vTaskDelay(pdMS_TO_TICKS(1000));

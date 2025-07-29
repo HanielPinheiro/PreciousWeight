@@ -66,20 +66,22 @@ static esp_err_t weight_sensors_routine(hx711_t *sensor, gpio_num_t dout, gpio_n
 static esp_err_t initialize_weight_sensors()
 {
     // 2. Inicializa Sensores
-    scale1.sensor_id = 1;
+    scale1.sensor_id = 0;
     if (weight_sensors_routine(&scale1, SCALE1_DOUT, SCALE1_SCK) != ESP_OK)
         return ESP_FAIL;
-    scale2.sensor_id = 2;
+
+    scale2.sensor_id = 1;
     if (weight_sensors_routine(&scale2, SCALE2_DOUT, SCALE2_SCK) != ESP_OK)
         return ESP_FAIL;
-    scale3.sensor_id = 3;
+
+    scale3.sensor_id = 2;
     if (weight_sensors_routine(&scale3, SCALE3_DOUT, SCALE3_SCK) != ESP_OK)
         return ESP_FAIL;
-    scale4.sensor_id = 4;
+
+    scale4.sensor_id = 3;
     if (weight_sensors_routine(&scale4, SCALE4_DOUT, SCALE4_SCK) != ESP_OK)
         return ESP_FAIL;
 
-    // Aqui pode ter algum algoritmo pra validar a pesagem dos sensores
     sensores[0] = scale1;
     sensores[1] = scale2;
     sensores[2] = scale3;

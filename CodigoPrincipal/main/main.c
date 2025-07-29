@@ -19,9 +19,6 @@ void app_main()
     sdcard_log(LOG_INFO, get_reset_reason_string(esp_reset_reason()), ROTULO_LOCAL);
     sdcard_log(LOG_INFO, "Rotina da BIOS executada com sucesso.", ROTULO_LOCAL);
 
-    update_current_time();
-    sdcard_log(LOG_INFO, current_time, ROTULO_LOCAL);
-
     init_wifi();
     sdcard_log(LOG_INFO, "Wi-Fi inicializado com sucesso. Inicializando MQTT.", ROTULO_LOCAL);
 
@@ -30,7 +27,7 @@ void app_main()
         sdcard_log(LOG_ERROR, "Falha ao inicializar init_mqtt_task", ROTULO_LOCAL);
         return;
     }
-    sdcard_log(LOG_INFO, "Task MQTT Manager com Callback inicializada com sucesso. \r\n ", ROTULO_LOCAL);
+    sdcard_log(LOG_INFO, "Task MQTT Manager com Callback inicializada com sucesso. Iniciando Taks", ROTULO_LOCAL);
 
     if (init_sdcard_task() != ESP_OK)
     {
@@ -38,18 +35,14 @@ void app_main()
         return;
     }
 
-    // if (init_sensors_task(sensores, NUM_SENSORES_PESO) != ESP_OK)
-    // {
-    //     sdcard_log(LOG_ERROR, "Falha ao inicializar init_sensors_task", ROTULO_LOCAL);
-    //     return;
-    // }
-
-    update_current_time();
-    sdcard_log(LOG_INFO, current_time, ROTULO_LOCAL);
-    sdcard_log(LOG_INFO, "ENTRANDO EM LOOP", ROTULO_LOCAL);
-
-    while (1)
+    if (init_sensors_task(sensores, NUM_SENSORES_PESO) != ESP_OK)
     {
-        vTaskDelay(pdMS_TO_TICKS(1000));
+        sdcard_log(LOG_ERROR, "Falha ao inicializar init_sensors_task", ROTULO_LOCAL);
+        return;
     }
+
+    char m[90];
+    update_current_time();
+    snprintf(m, "Sistema inicializado com sucesso em %s \r\n", current_time);
+    sdcard_log(LOG_INFO, m, ROTULO_LOCAL);
 }

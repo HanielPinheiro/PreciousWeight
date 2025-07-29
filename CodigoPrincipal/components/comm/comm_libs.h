@@ -19,6 +19,15 @@
 
 #include "nvs_flash.h"
 
+// Prioridades das tasks
+typedef enum
+{
+    TASK_PRIORITY_LOW = 1,
+    TASK_PRIORITY_MEDIUM = 2,
+    TASK_PRIORITY_HIGH = 3,
+    TASK_PRIORITY_CRITICAL = 4
+} task_priority_t;
+
 #define MQTT_SERVICE_NAME "PW_D0EF76590B7C"
 #define MQTT_POP "KwS2@y6G"
 

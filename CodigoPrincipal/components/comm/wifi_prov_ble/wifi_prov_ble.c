@@ -181,6 +181,8 @@ static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_
             break;
         case WIFI_EVENT_STA_CONNECTED:
             ESP_LOGI(ROTULO_LOCAL, "Connected. Getting Date Time from SNTP");
+
+            vTaskDelay(pdMS_TO_TICKS(5000));
             start_date_time();
             set_timezone_gmt3();
             break;

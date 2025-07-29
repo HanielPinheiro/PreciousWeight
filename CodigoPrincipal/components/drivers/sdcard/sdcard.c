@@ -4,9 +4,6 @@
  */
 
 #include "sdcard.h"
-#include <config_system.h>
-#include <sdcard_task.h>
-
 
 static const char *ROTULO_LOCAL = "SD_CARD";
 
@@ -15,6 +12,23 @@ static sdmmc_host_t host = SDSPI_HOST_DEFAULT(); // Define que estou usando o mo
 static SemaphoreHandle_t sd_mutex;               // semaphore to protect open the file that is already open by other task
 
 sdmmc_card_t *sdcard = NULL;
+
+// static esp_err_t sdcard_format()
+// {
+//     esp_err_t ret = esp_vfs_fat_sdcard_format(MOUNT_POINT, sdcard);
+//     if (ret != ESP_OK)
+//     {
+//         ESP_LOGE(ROTULO_LOCAL, "Falha ao formatar no sistema de arquivo FAT (%s)", esp_err_to_name(ret));
+//         return ESP_FAIL;
+//     }
+//     ESP_LOGI(ROTULO_LOCAL, "Nenhum arquivo existente, formatação concluída");
+//     sdcard_create_file(LOG_FILE);
+//     sdcard_create_file(WEIGHT_FILE);
+//     sdcard_create_file(BABY_HOURS_FILE);
+//     return ESP_OK;
+// }
+
+#pragma region Init
 
 esp_err_t sdcard_init(void)
 {
@@ -78,31 +92,36 @@ esp_err_t sdcard_init(void)
     // host.max_freq_khz = 10000; // Aumento a velocidade do Bus - Opcional
 
     ESP_LOGI(ROTULO_LOCAL, "Sistema de arquivos montado. Driver inicializado com sucesso.");
+    sdcard_load_weight_times();
     sd_mutex = xSemaphoreCreateMutex();
     return ESP_OK;
 }
 
+#pragma endregion
+
+#pragma region Files
+
 esp_err_t sdcard_write_file(char *path, char *data)
 {
-    if (MORE_LOGS)
-        ESP_LOGI(ROTULO_LOCAL, "Executando sdcard_write_file para salvar mensagem de log");
-
-    if (stat(path, &st) < 0)
-    {
-        ESP_LOGI(ROTULO_LOCAL, "Arquivo nao encontrado. Criando arquivo {%s}", path);
-        esp_err_t resultado = sdcard_create_file(path);
-        if (resultado != ESP_OK)
-        {
-            ESP_LOGE(ROTULO_LOCAL, "Falha ao criar o arquivo {%s} para escrita.", path);
-            return ESP_FAIL;
-        }
-    }
-
-    if (MORE_LOGS)
-        ESP_LOGI(ROTULO_LOCAL, "Abrindo arquivo {%s}", path);
-
     if (xSemaphoreTake(sd_mutex, pdMS_TO_TICKS(300)) == pdTRUE)
     {
+        if (MORE_LOGS)
+            ESP_LOGI(ROTULO_LOCAL, "Executando sdcard_write_file para salvar mensagem");
+
+        if (stat(path, &st) < 0)
+        {
+            ESP_LOGI(ROTULO_LOCAL, "Arquivo nao encontrado. Criando arquivo {%s}", path);
+            esp_err_t resultado = sdcard_create_file(path);
+            if (resultado != ESP_OK)
+            {
+                ESP_LOGE(ROTULO_LOCAL, "Falha ao criar o arquivo {%s} para escrita.", path);
+                return ESP_FAIL;
+            }
+        }
+
+        if (MORE_LOGS)
+            ESP_LOGI(ROTULO_LOCAL, "Abrindo arquivo {%s}", path);
+
         FILE *file = fopen(path, "a");
         if (file == NULL)
         {
@@ -136,15 +155,35 @@ esp_err_t sdcard_create_file(char *path)
 {
     FILE *file = fopen(path, "ab+");
     if (file)
+    {
+        fclose(file);
         return ESP_OK;
+    }
+
+    char m[80];
+    snprintf(m, 80, "Erro ao criar arquivo %s: %s", path, strerror(errno));
+    sdcard_log(LOG_ERROR, m, ROTULO_LOCAL);
+    ESP_LOGE(ROTULO_LOCAL, "%s", m);
     return ESP_FAIL;
 }
+
+void sdcard_clear_file(const char *filename)
+{
+    FILE *file = fopen(filename, "w"); // Modo "w" sobrescreve o arquivo
+    if (file != NULL)
+        fclose(file);
+}
+
+#pragma endregion
+
+#pragma region LOG
 
 esp_err_t sdcard_log(log_type_t log_type, char *message, const char *trace)
 {
     sdcard_notify_uart(trace, message);
 
     log_entry_t entry;
+    entry.path = LOG_FILE;
     snprintf(entry.message, sizeof(entry.message), "[%s] %s",
              log_type == LOG_WARN ? "WARNS" : log_type == LOG_ERROR ? "ERROR"
                                                                     : "INFOS",
@@ -153,8 +192,7 @@ esp_err_t sdcard_log(log_type_t log_type, char *message, const char *trace)
     if (sdcard_log_queue)
     {
         if (xQueueSend(sdcard_log_queue, &entry, pdMS_TO_TICKS(100)) != pdTRUE)
-        {
-            // The queue will be reade (xqueuereceive) in task.c
+        { // The queue will be readed (xqueuereceive) in task.c
             ESP_LOGW(ROTULO_LOCAL, "Fila de log cheia. Log descartado.");
             return ESP_FAIL;
         }
@@ -172,75 +210,56 @@ void sdcard_notify_uart(const char *stack_trace, char *message)
     ESP_LOGI(stack_trace, "%s", message);
 }
 
-// Sem uso por enquanto
+#pragma endregion
 
-// esp_err_t sdcard_format()
-// {
-//     esp_err_t ret = esp_vfs_fat_sdcard_format(MOUNT_POINT, sdcard);
-//     if (ret != ESP_OK)
-//     {
-//         ESP_LOGE(ROTULO_LOCAL, "Falha ao formatar no sistema de arquivo FAT (%s)", esp_err_to_name(ret));
-//         return ESP_FAIL;
-//     }
-
-//     ESP_LOGI(ROTULO_LOCAL, "Nenhum arquivo existente, formatação concluída");
-//     return ESP_OK;
-// }
+#pragma region Baby
 
 esp_err_t sdcard_load_weight_times()
 {
+    char m[80];
+    struct stat st;
     if (stat(BABY_HOURS_FILE, &st) < 0)
+    {
+        snprintf(m, sizeof(m), "Arquivo não encontrado: %s", BABY_HOURS_FILE);
+        sdcard_log(LOG_ERROR, m, ROTULO_LOCAL);
         return ESP_FAIL;
+    }
 
     FILE *file = fopen(BABY_HOURS_FILE, "r");
     if (file)
     {
-        char line[20];
-        while (fgets(line, 20, file))
+        while (fgets(m, sizeof(m), file))
         {
-            int hour, min, gmt;
-            if (sscanf(line, "%d:%d,%d", &hour, &min, &gmt) == 3)
+            if (strstr(m, "baby_id:") == m) // Check if line starts with baby_id:
             {
-                if (number_times < MAX_WEIGHT_TIMES)
+                if (sscanf(m, "baby_id:%11[^;]", baby_id) == 1)
                 {
-                    weight_times[number_times].hora = hour;
-                    weight_times[number_times].minuto = min;
-                    weight_times[number_times].gmt = gmt;
-                    number_times++;
+                    has_baby = true;
+                    ESP_LOGW(ROTULO_LOCAL, "ACHOU BABY ID {%s}", baby_id);
+                }
+            }
+            else if (strstr(m, "weight_time:") == m) // Check if line starts with weight_time:
+            {
+                int hour, min;
+                if (sscanf(m, "weight_time:%d:%d", &hour, &min) == 2)
+                {
+                    if (number_times < MAX_WEIGHT_TIMES)
+                    {
+                        weight_times[number_times].hora = hour;
+                        weight_times[number_times].minuto = min;
+                        number_times++;
+                        ESP_LOGW(ROTULO_LOCAL, "ACHOU HORARIO {%d:%d}", hour, min);
+                    }
                 }
             }
         }
         fclose(file);
-    }
-    return ESP_OK;
-}
-
-esp_err_t sdcard_save_weight_times()
-{
-    esp_err_t ret = ESP_OK;
-
-    char line[20];
-    for (int number_times = 0; number_times < MAX_WEIGHT_TIMES; number_times++)
-    {
-        snprintf(line, 20, "%d:%d,%d", weight_times[number_times].hora, weight_times[number_times].minuto, weight_times[number_times].gmt);
-        if (sdcard_write_file(BABY_HOURS_FILE, line) != ESP_OK)
-        {
-            ret = ESP_FAIL;
-            break;
-        }
-    }
-
-    return ret;
-}
-
-esp_err_t sdcard_clear_file(const char *filename)
-{
-    FILE *file = fopen(filename, "w"); // Modo "w" sobrescreve o arquivo
-    if (file != NULL)
-    {
-        fclose(file);
         return ESP_OK;
     }
 
+    snprintf(m, sizeof(m), "Erro ao abrir arquivo %s: %s", BABY_HOURS_FILE, strerror(errno));
+    sdcard_log(LOG_ERROR, m, ROTULO_LOCAL);
     return ESP_FAIL;
 }
+
+#pragma endregion

@@ -68,7 +68,10 @@
     "config_system.h": "c",
     "comm_libs.h": "c",
     "sdmmc_cmd.h": "c",
-    "sdcard_task.h": "c"
+    "sdcard_task.h": "c",
+    "mqtt_task.h": "c",
+    "cerrno": "c",
+    "esp_vfs_fat.h": "c"
   },
   "idf.flashType": "UART",
   "idf.portWin": "COM4",

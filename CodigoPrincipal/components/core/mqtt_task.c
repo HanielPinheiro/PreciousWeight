@@ -37,7 +37,7 @@ void mqtt_connection_status_callback(esp_mqtt_event_id_t connected)
     {
     case MQTT_EVENT_CONNECTED:
         ESP_LOGI(ROTULO_LOCAL, "MQTT - Connected to MQTT broker");
-        mqtt_publish("/status", "Esp32_online", 1);
+        mqtt_publish(MQTT_TOPIC_CONN_DISCONN, "CONNECTED", 1);
         break;
 
     case MQTT_EVENT_DISCONNECTED:
@@ -50,10 +50,10 @@ void mqtt_connection_status_callback(esp_mqtt_event_id_t connected)
         break;
 
     case MQTT_EVENT_DATA:
-        /**Aqui é onde eu devo tratar o dado recebido e avaliar o que é pra ser feito
+        /**Aqui é onde eu devo tratar o DADO RECEBIDO! e avaliar o que é pra ser feito
          * A balança tem 4 canais de comunicação:
          *  /scales/ = balança recebe comandos
-         *  /status/ = balança envia on/off
+         *  /status/ = balança envia on/off mqtt3.c
          *  /sensors/ = balança envia estado dos sensores (medidas)
          *  /weights/ = balança envia peso nos horarios
          *  LOGO, balança publica em 3 canais, status, sensors, weights, e recebe dados em 1
@@ -61,7 +61,17 @@ void mqtt_connection_status_callback(esp_mqtt_event_id_t connected)
          */
         if (strncmp(event->topic, MQTT_TOPIC_SUBSCRIBE, event->topic_len) == 0)
         {
-            ESP_LOGW(ROTULO_LOCAL, "MQTT - DATA RECEIVED - Resetando wifi");
+            // Cria uma cópia null-terminated segura dos dados
+            char msg_copy[event->data_len + 1]; // +1 para o null terminator
+            memcpy(msg_copy, event->data, event->data_len);
+            msg_copy[event->data_len] = '\0'; // Garante terminação nula
+
+            update_current_time();
+            sdcard_log(LOG_INFO, current_time, ROTULO_LOCAL);
+            sdcard_log(LOG_INFO, "MENSAGEM RECEBIDA VIA MQTT:", ROTULO_LOCAL);
+            sdcard_log(LOG_INFO, msg_copy, ROTULO_LOCAL);
+
+            process_mqtt_data(msg_copy);
         }
         break;
 
