@@ -14,12 +14,6 @@ class BabiesPage extends StatefulWidget {
 class _BabiesPageState extends State<BabiesPage> {
   bool isDischarged = false;
 
-  @override
-  void initState() {
-    super.initState();
-    context.read<BabyProvider>().loadBabies();
-  }
-
   void _changeState(bool b) {
     setState(() => isDischarged = b);
   }
@@ -28,9 +22,7 @@ class _BabiesPageState extends State<BabiesPage> {
   Widget build(BuildContext context) {
     final babyProvider = context.watch<BabyProvider>();
 
-    if (babyProvider.isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
+    if (babyProvider.isLoading) return const Center(child: CircularProgressIndicator());
 
     final filteredBabies = babyProvider.babies.where((baby) => baby.isActive == !isDischarged).toList();
 
@@ -49,19 +41,7 @@ class _BabiesPageState extends State<BabiesPage> {
               future: baby.getWeights(),
               builder: (context, snapshot) {
                 final text = snapshot.hasData && snapshot.data!.isNotEmpty ? "Último peso: ${snapshot.data!.last.weight.toString()} g" : "Último peso: N/A";
-
-                return ElementsOfViews.CardToList(
-                  context,
-                  Icons.baby_changing_station,
-                  baby.name!,
-                  text,
-                  () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => BabiesDetails(baby: baby),
-                    ),
-                  ),
-                );
+                return ElementsOfViews.CardToList(context, Icons.baby_changing_station, baby.name!, text, () => Navigator.push(context, MaterialPageRoute(builder: (context) => BabiesDetails(baby: baby))));
               },
             )),
       ],

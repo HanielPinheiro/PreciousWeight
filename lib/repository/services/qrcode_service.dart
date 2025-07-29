@@ -36,6 +36,11 @@ class CreateQrCode extends StatefulWidget {
 
 class _CreateQrCode extends State<CreateQrCode> {
   String qrData = "PW_D0EF7659B7C00*KwS2@y6G";
+  //Prefixo PW
+  //Separador _
+  //MAC D0EF7659B7C00
+  //Conjuncao *
+  //POP (PROOF OF POSSESSION) KwS2@y6G
 
   @override
   Widget build(BuildContext context) {

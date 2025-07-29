@@ -1,3 +1,5 @@
+import 'dart:ffi';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_esp_ble_prov/flutter_esp_ble_prov.dart';
 import 'dart:async';
@@ -17,7 +19,7 @@ class _BluefiService extends State<BluefiService> {
   final wifiLogin = TextEditingController();
   final wifiPassword = TextEditingController();
   final _flutterEspBleProvPlugin = FlutterEspBleProv();
-  late final String esp32Name;
+  late String esp32Name;
   late final String esp32POP;
 
   @override
@@ -35,9 +37,43 @@ class _BluefiService extends State<BluefiService> {
     super.dispose();
   }
 
+  int _similarityScore(String input, String candidate) {
+    int score = 0;
+    for (int i = 0; i < input.length && i < candidate.length; i++) {
+      if (input[i] == candidate[i]) {
+        score++;
+      } else {
+        break;
+      }
+    }
+    return score;
+  }
+
+  bool _findBestMatch(List<String> bleDevices) {
+    String target = esp32Name.substring(0, esp32Name.length - 7);
+    final threshold = target.length; // Set your minimum similarity requirement
+
+    String? bestMatch;
+    int highestScore = 0;
+
+    for (final item in bleDevices) {
+      final score = _similarityScore(target, item);
+      if (score > highestScore) {
+        highestScore = score;
+        bestMatch = item;
+      }
+    }
+
+    if (bestMatch != null && highestScore >= threshold) {
+      esp32Name = bestMatch;
+      return true;
+    }
+    return false;
+  }
+
   Future checkConn() async {
-    var list = await _flutterEspBleProvPlugin.scanBleDevices('');
-    if(!list.contains(esp32Name)) {
+    List<String> bleDevices = await _flutterEspBleProvPlugin.scanBleDevices('');
+    if (!_findBestMatch(bleDevices)) {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
@@ -62,7 +98,7 @@ class _BluefiService extends State<BluefiService> {
 
   Future provisionWifi() async {
     final login = wifiLogin.text;
-    if(login == ""){
+    if (login == "") {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
@@ -86,7 +122,7 @@ class _BluefiService extends State<BluefiService> {
     }
 
     final password = wifiPassword.text;
-    if(password == ""){
+    if (password == "") {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
@@ -111,7 +147,7 @@ class _BluefiService extends State<BluefiService> {
 
     var success = await _flutterEspBleProvPlugin.provisionWifi(esp32Name, esp32POP, login, password);
     // print(success);
-    if(success!) {
+    if (success!) {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
@@ -134,14 +170,15 @@ class _BluefiService extends State<BluefiService> {
               onPressed: () => Navigator.pop(context),
               child: Text(
                 "Ok",
-                style: TextStyle( color: Theme.of(context).colorScheme.primary),
+                style: TextStyle(color: Theme.of(context).colorScheme.primary),
               ),
             ),
           ],
         ),
-      ).then((_) { Navigator.pop(context);});
-    }
-    else {
+      ).then((_) {
+        Navigator.pop(context);
+      });
+    } else {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(

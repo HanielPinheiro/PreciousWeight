@@ -8,6 +8,10 @@ import 'package:precious_weight/repository/design/fonts.dart';
 import 'package:precious_weight/repository/helper/conversions.dart';
 import 'package:precious_weight/repository/services/api_service.dart';
 import 'package:precious_weight/repository/widgets/elements.dart';
+import 'package:provider/provider.dart';
+
+import '../../repository/providers/baby_provider.dart';
+import '../../repository/providers/scales_provider.dart';
 
 class ScaleBabies extends StatefulWidget {
   ScaleBabies({super.key, this.scale, this.baby});
@@ -20,51 +24,11 @@ class ScaleBabies extends StatefulWidget {
 }
 
 class _ScaleBabiesState extends State<ScaleBabies> {
-  final ScaleApi _scaleApi = ScaleApi();
-  final BabyApi _babyApi = BabyApi();
+  String _title = 'Associar Bebê à Balança';
+  String _confirmationMessage = 'Tem certeza que deseja associar este bebê à balança?';
 
   dynamic _selectedItem;
   List<dynamic> _itemsList = [];
-  bool _isLoading = true;
-  String _title = '';
-  String _associationButtonText = '';
-  String _confirmationMessage = '';
-
-  @override
-  void initState() {
-    super.initState();
-    _initializeScreen();
-  }
-
-  Future<void> _initializeScreen() async {
-    _title = 'Associar Bebê à Balança';
-    _confirmationMessage = 'Tem certeza que deseja associar este bebê à balança?';
-    _associationButtonText = widget.scale!.assignedBaby != null ? "Trocar Bebê Associado" : "Associar Bebê";
-
-    if (widget.scale != null)
-      await _fetchBabies();
-    else if (widget.baby != null) await _fetchScales();
-
-    setState(() => _isLoading = false);
-  }
-
-  Future<void> _fetchBabies() async {
-    await SafeApi.call(
-        context: context,
-        apiCall: () async {
-          final babies = await _babyApi.listBabies();
-          setState(() => _itemsList = babies!);
-        });
-  }
-
-  Future<void> _fetchScales() async {
-    await SafeApi.call(
-        context: context,
-        apiCall: () async {
-          final scales = await _scaleApi.listScales();
-          setState(() => _itemsList = scales!);
-        });
-  }
 
   Future<void> _confirmAssociation() async {
     if (_selectedItem == null) return;
@@ -82,23 +46,32 @@ class _ScaleBabiesState extends State<ScaleBabies> {
     }
   }
 
-  Future<void> _performAssociation() async {
-    await SafeApi.call(
-      context: context,
-      apiCall: () async {
-        if (widget.scale != null) {
-          await _scaleApi.setOrUnsetScale(widget.scale!.id.toString(), baby_code: _selectedItem.id.toString());
-        } else if (widget.baby != null) {
-          await _scaleApi.setOrUnsetScale(_selectedItem.id.toString(), baby_code: widget.baby!.id.toString());
-        }
-      },
-      onSuccess: () async {
-        await ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Associação realizada com sucesso!')),
-        );
-        Navigator.pop(context);
-      },
+  Future<void> _disassociate() async {
+    if (widget.scale == null) return;
+
+    final scaleProvider = context.read<ScalesProvider>();
+      await scaleProvider.setOrUnsetScale(widget.scale!.id.toString());
+    // } else if (widget.baby != null) {
+    //   await scaleProvider.setOrUnsetScale(_selectedItem.id.toString());
+    // }
+
+    await ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Desassociação realizada com sucesso!')),
     );
+  }
+
+  Future<void> _performAssociation() async {
+    final scaleProvider = context.read<ScalesProvider>();
+    if (widget.scale != null) {
+      await scaleProvider.setOrUnsetScale(widget.scale!.id.toString(), baby_code: _selectedItem.id.toString());
+    } else if (widget.baby != null) {
+      await scaleProvider.setOrUnsetScale(_selectedItem.id.toString(), baby_code: widget.baby!.id.toString());
+    }
+
+    await ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Associação realizada com sucesso!')),
+    );
+    Navigator.pop(context);
   }
 
   Widget _buildCurrentAssociation() {
@@ -157,71 +130,71 @@ class _ScaleBabiesState extends State<ScaleBabies> {
   }
 
   Widget _wrapText(BuildContext context, String text) {
-    return Expanded(
-        child: FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.center,
-            child: Text(
-              text,
-              style: TextStyle(
-                fontSize: 18,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-              overflow: TextOverflow.ellipsis,
-            )));
+    return Expanded(child: FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.center, child: Text(text, style: TextStyle(fontSize: 18, color: Theme.of(context).colorScheme.primary), overflow: TextOverflow.ellipsis)));
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
-        appBar: ElementsOfViews.SimpleAppBar(context, _title),
-        body: _isLoading
-            ? Center(child: CircularProgressIndicator())
-            : Column(
+  Widget _magic() {
+    final scaleProvider = context.watch<ScalesProvider>();
+    final babyProvider = context.watch<BabyProvider>();
+
+    if (widget.scale != null) setState(() => _itemsList = babyProvider.babies);
+    if (widget.baby != null) setState(() => _itemsList = scaleProvider.scales);
+
+    if (babyProvider.isLoading) return const Center(child: CircularProgressIndicator());
+    if (scaleProvider.isLoading) return const Center(child: CircularProgressIndicator());
+
+    return Column(
+      mainAxisSize: MainAxisSize.max,
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(
+            flex: 1,
+            child: Column(mainAxisSize: MainAxisSize.max, mainAxisAlignment: MainAxisAlignment.spaceEvenly, crossAxisAlignment: CrossAxisAlignment.center, children: [
+              widget.scale!.assignedBaby != null ?
+                Row(
+                  mainAxisSize: MainAxisSize.max,
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [ElementsOfViews.SimpleButton(context, "Desassociar Bebê", _disassociate, _selectedItem != null)],
+                ):SizedBox()
+              ,Row(
                 mainAxisSize: MainAxisSize.max,
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Expanded(
-                    flex: 1,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.max,
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        DropdownButton<dynamic>(
-                            value: _selectedItem,
-                            hint: Text('Selecione um item'),
-                            items: _itemsList.map((item) {
-                              return DropdownMenuItem<dynamic>(
-                                value: item,
-                                child: Text(widget.scale != null ? item.name : 'Balança ${item.id} (${item.hash})', style: displaySmall.copyWith(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold)),
-                              );
-                            }).toList(),
-                            onChanged: (value) {
-                              setState(() => _selectedItem = value);
-                            }),
-                        SizedBox(height: 10),
-                        ElementsOfViews.SimpleButton(context, _associationButtonText, _confirmAssociation, _selectedItem != null)
-                      ],
-                    ),
-                  ),
-                  Expanded(flex: 2, child: _buildCurrentAssociation()),
-                  if (widget.scale != null)
-                    Expanded(
-                      flex: 2,
-                      child: Column(
-                        children: [
-                          ElementsOfViews.CardToText(context, "Código ID: ${widget.scale!.id}"),
-                          ElementsOfViews.CardToText(context, "MAC Address: ${widget.scale!.hash}"),
-                          ElementsOfViews.CardToText(context, "Estado da balança: ${ScaleModel.ScaleOperation(widget.scale!.status)}"),
-                        ],
-                      ),
-                    ),
+                  DropdownButton<dynamic>(
+                      value: _selectedItem,
+                      hint: Text('Selecione um item', style: headlineSmall.copyWith(color: Theme.of(context).colorScheme.primary)),
+                      items: _itemsList.map((item) {
+                        return DropdownMenuItem<dynamic>(value: item, child: Text(widget.scale != null ? item.name : 'Balança ${item.id} (${item.hash})', style: displaySmall.copyWith(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold)));
+                      }).toList(),
+                      onChanged: (value) {
+                        setState(() => _selectedItem = value);
+                      }),
+                  SizedBox(height: 10),
+                  ElementsOfViews.SimpleButton(context, widget.scale!.assignedBaby != null ? "Trocar Bebê Associado" : "Associar Bebê", _confirmAssociation, _selectedItem != null)
                 ],
-              ),
-      ),
+              )
+            ])),
+        Expanded(flex: 2, child: _buildCurrentAssociation()),
+        if (widget.scale != null)
+          Expanded(
+            flex: 2,
+            child: Column(
+              children: [
+                ElementsOfViews.CardToText(context, "Código ID: ${widget.scale!.id}"),
+                ElementsOfViews.CardToText(context, "MAC Address: ${widget.scale!.hash}"),
+                ElementsOfViews.CardToText(context, "Estado da balança: ${ScaleModel.ScaleOperation(widget.scale!.status)}"),
+              ],
+            ),
+          ),
+      ],
     );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(child: Scaffold(appBar: ElementsOfViews.SimpleAppBar(context, _title), body: _magic()));
   }
 }

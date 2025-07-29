@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:precious_weight/repository/providers/scales_provider.dart';
 import 'package:provider/provider.dart';
 
 import 'repository/providers/baby_provider.dart';
@@ -9,6 +10,7 @@ void main() => runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => BabyProvider()),
+        ChangeNotifierProvider(create: (_) => ScalesProvider()),
       ],
       child:PreciousWeightApp()
     ),

@@ -58,7 +58,7 @@ class SafeApi {
       return result;
     } catch (error) {
       await ApiErrorHandler.handleError(context, error);
-      throw error; // Re-throw if you need to handle it further up the chain
+      throw error;
     }
   }
 }

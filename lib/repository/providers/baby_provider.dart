@@ -6,11 +6,17 @@ import '../../models/baby.dart';
 
 class BabyProvider with ChangeNotifier {
   final BabyApi _api = BabyApi();
-  List<BabyModel> _babies = [];
-  bool _isLoading = false;
 
-  List<BabyModel> get babies => _babies;
+  bool _isLoading = false;
   bool get isLoading => _isLoading;
+
+  List<BabyModel> _babies = [];
+  List<BabyModel> get babies => _babies;
+
+  BabyProvider(){
+    loadBabies();
+  }
+
 
   Future<void> loadBabies() async {
     _isLoading = true;
