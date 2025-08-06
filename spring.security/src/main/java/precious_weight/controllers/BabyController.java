@@ -1,9 +1,9 @@
 package precious_weight.controllers;
 
-import static precious_weight.config.constants.*;
+import static precious_weight.config.system.GlobalConstants.*;
 
-import precious_weight.models.BabyModel;
-import precious_weight.services.BabyService;
+import precious_weight.app.models.BabyModel;
+import precious_weight.app.services.BabyService;
 
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.sql.SQLException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @RestController

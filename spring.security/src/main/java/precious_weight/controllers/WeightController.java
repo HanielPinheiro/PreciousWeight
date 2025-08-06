@@ -1,17 +1,15 @@
 package precious_weight.controllers;
 
-import static precious_weight.config.constants.*;
+import static precious_weight.config.system.GlobalConstants.*;
 
 import org.springframework.http.ResponseEntity;
-import precious_weight.models.WeightModel;
-import precious_weight.requests.WeightRequest;
-import precious_weight.services.WeightService;
+import precious_weight.app.models.request.WeightRequest;
+import precious_weight.app.services.WeightService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @RestController

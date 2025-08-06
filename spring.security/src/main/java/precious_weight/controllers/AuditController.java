@@ -2,11 +2,11 @@ package precious_weight.controllers;
 
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import precious_weight.models.envers.AuditRepository;
+import precious_weight.app.models.envers.AuditRepository;
 
 import java.util.List;
 
-import static precious_weight.config.constants.*;
+import static precious_weight.config.system.GlobalConstants.*;
 
 @RestController
 @RequestMapping(AuditControllerName)

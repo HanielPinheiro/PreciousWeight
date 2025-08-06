@@ -1,8 +1,8 @@
 package precious_weight.controllers;
 
-import static precious_weight.config.constants.*;
-import precious_weight.models.ScaleModel;
-import precious_weight.services.ScaleService;
+import static precious_weight.config.system.GlobalConstants.*;
+import precious_weight.app.models.ScaleModel;
+import precious_weight.app.services.ScaleService;
 
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.beans.factory.annotation.Autowired;

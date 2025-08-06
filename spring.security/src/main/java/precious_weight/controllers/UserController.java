@@ -10,17 +10,17 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
-import precious_weight.models.RoleModel;
-import precious_weight.models.UserModel;
-import precious_weight.interfaces.iRole;
-import precious_weight.interfaces.iUser;
+import precious_weight.auth.models.RoleModel;
+import precious_weight.auth.models.UserModel;
+import precious_weight.auth.interfaces.iRole;
+import precious_weight.auth.interfaces.iUser;
 
 import java.util.List;
 import java.util.Set;
 
-import static precious_weight.config.constants.UserControllerName;
-import static precious_weight.config.constants.UserControllerName_New;
-import static precious_weight.config.constants.ControllerName_List;
+import static precious_weight.config.system.GlobalConstants.UserControllerName;
+import static precious_weight.config.system.GlobalConstants.UserControllerName_New;
+import static precious_weight.config.system.GlobalConstants.ControllerName_List;
 
 @RestController
 @RequestMapping(UserControllerName)

@@ -11,12 +11,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import static precious_weight.config.constants.*;
-import precious_weight.models.RoleModel;
-import precious_weight.interfaces.iUser;
-import precious_weight.models.UserModel;
-import precious_weight.requests.LoginRequest;
-import precious_weight.response.LoginResponse;
+import static precious_weight.config.system.GlobalConstants.*;
+import precious_weight.auth.models.RoleModel;
+import precious_weight.auth.interfaces.iUser;
+import precious_weight.auth.models.UserModel;
+import precious_weight.auth.models.request.LoginRequest;
+import precious_weight.auth.models.response.LoginResponse;
 
 import java.time.Instant;
 import java.util.stream.Collectors;
