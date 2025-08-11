@@ -2,20 +2,20 @@ package precious_weight.auth.models;
 
 import jakarta.persistence.*;
 
-import static precious_weight.config.system.GlobalConstants.RoleTableName;
-import static precious_weight.config.system.GlobalConstants.RoleTableFieldName_Id;
-import static precious_weight.config.system.GlobalConstants.RoleTableFieldName_Name;
+import static precious_weight.config.system.DataTransferLayerConstants.Auth_RoleTable_TableName;
+import static precious_weight.config.system.DataTransferLayerConstants.Auth_RoleTable_Id;
+import static precious_weight.config.system.DataTransferLayerConstants.Auth_RoleTable_Name;
 
 @Entity
-@Table(name = RoleTableName)
+@Table(name = Auth_RoleTable_TableName)
 public class RoleModel {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = RoleTableFieldName_Id)
+    @Column(name = Auth_RoleTable_Id)
     private Long roleId;
 
-    @Column(name = RoleTableFieldName_Name)
+    @Column(name = Auth_RoleTable_Name)
     private String name;
 
     public Long getRoleId() {
@@ -43,5 +43,10 @@ public class RoleModel {
         public long getRoleId() {
             return roleId;
         }
+    }
+
+    @Override
+    public String toString() {
+        return "RoleModel{ roleId=" + roleId +", name='" + name + '\'' +'}';
     }
 }

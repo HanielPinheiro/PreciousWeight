@@ -9,8 +9,8 @@ import org.springframework.stereotype.Repository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 
-import precious_weight.app.models.BabyModel;
 import precious_weight.app.models.ScaleModel;
+import precious_weight.app.models.BabyModel;
 import precious_weight.app.models.WeightModel;
 
 import java.util.List;

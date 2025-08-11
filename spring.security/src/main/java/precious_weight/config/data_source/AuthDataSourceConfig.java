@@ -46,7 +46,7 @@ public class AuthDataSourceConfig {
         //jpaProperties.put("hibernate.hbm2ddl.auto", "create"); //Apaga tudo e cria do zero a cada vez que inicia
         //jpaProperties.put("hibernate.hbm2ddl.auto", "validate"); //Apenas verifica se as tabelas/campos batem com as entidades
         jpaProperties.put("hibernate.hbm2ddl.auto", "update"); //Cria ou altera tabelas e colunas sem apagar dados
-        jpaProperties.put("hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect");
+        jpaProperties.put("hibernate.dialect", "org.hibernate.dialect.MySQL8Dialect");
         em.setJpaPropertyMap(jpaProperties);
 
         return em;

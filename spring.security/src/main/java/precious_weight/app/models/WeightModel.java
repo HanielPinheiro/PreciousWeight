@@ -7,29 +7,29 @@ import org.hibernate.envers.Audited;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
-import static precious_weight.config.system.GlobalConstants.*;
+import static precious_weight.config.system.DataTransferLayerConstants.*;
 
 @Entity
 @Audited
-@Table(name = WeightTableName)
+@Table(name = App_WeightTable_TableName)
 public class WeightModel implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = WeightTableFieldName_Id, nullable = false)
+    @Column(name = App_WeightTable_Id, nullable = false)
     private Integer weightId;
 
-    @Column(name = WeightTableFieldName_Date, nullable = false)
+    @Column(name = App_WeightTable_Date, nullable = false)
     @JsonFormat(timezone = "America/Sao_Paulo")
     private LocalDateTime weightDate;
 
-    @Column(name = ScaleTableFieldName_Id, nullable = false)
+    @Column(name = App_ScaleTable_Id, nullable = false)
     private Integer scaleId;
 
-    @Column(name = BabyTableFieldName_Id, nullable = false)
+    @Column(name = App_BabyTable_Id, nullable = false)
     private Integer babyId;
 
-    @Column(name = WeightTableFieldName_Value, nullable = false)
+    @Column(name = App_WeightTable_Value, nullable = false)
     private Double weightValue;
 
     public Integer getWeightId() {

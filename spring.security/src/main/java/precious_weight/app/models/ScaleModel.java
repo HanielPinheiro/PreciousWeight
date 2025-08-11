@@ -5,24 +5,24 @@ import org.hibernate.envers.Audited;
 
 import java.io.Serializable;
 
-import static precious_weight.config.system.GlobalConstants.*;
+import static precious_weight.config.system.DataTransferLayerConstants.*;
 
 @Entity
 @Audited
-@Table(name = ScaleTableName)
+@Table(name = App_ScaleTable_TableName)
 public class ScaleModel implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = ScaleTableFieldName_Id, nullable = false)
+    @Column(name = App_ScaleTable_Id, nullable = false)
     private Integer scaleId;
 
-    @Column(name = ScaleTableFieldName_Hash, nullable = false, length = 255, unique = true)
+    @Column(name = App_ScaleTable_Hash, nullable = false, length = 255, unique = true)
     private String scaleHash;
 
-    @Column(name = ScaleTableFieldName_State, nullable = false)
+    @Column(name = App_ScaleTable_State, nullable = false)
     private Integer scaleState;
 
-    @Column(name = BabyTableFieldName_Id, nullable = true)
+    @Column(name = App_BabyTable_Id, nullable = true)
     private Integer babyId;
 
     @Transient

@@ -23,8 +23,8 @@ import org.springframework.security.web.SecurityFilterChain;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 
-import static precious_weight.config.system.GlobalConstants.LoginControllerName;
-import static precious_weight.config.system.GlobalConstants.LoginControllerName_Reset;
+import static precious_weight.config.system.ApiConstants.LoginController;
+import static precious_weight.config.system.ApiConstants.LoginController_ResetPass;
 
 @Configuration
 @EnableWebSecurity
@@ -39,11 +39,12 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers(HttpMethod.POST, LoginControllerName).permitAll()
-                        .requestMatchers(HttpMethod.POST, LoginControllerName_Reset).permitAll()
-                        .requestMatchers("/api/app/**").authenticated()
-                        .requestMatchers("/api/auth/**").authenticated()
-                        .anyRequest().denyAll())
+                        .requestMatchers(HttpMethod.POST, LoginController).permitAll()
+                        .requestMatchers(HttpMethod.POST, LoginController_ResetPass).permitAll()
+                        //.requestMatchers("/api/app/**").authenticated()
+                        //.requestMatchers("/api/auth/**").authenticated()
+                        //.anyRequest().denyAll())
+                        .anyRequest().authenticated())
                 .csrf(csrf -> csrf.disable()) // apenas pra teste, precisa remover em produção
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));

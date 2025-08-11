@@ -1,4 +1,4 @@
-package precious_weight.controllers;
+package precious_weight.controllers.auth;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import static precious_weight.config.system.GlobalConstants.*;
 import precious_weight.auth.models.RoleModel;
 import precious_weight.auth.interfaces.iUser;
 import precious_weight.auth.models.UserModel;
@@ -20,6 +19,8 @@ import precious_weight.auth.models.response.LoginResponse;
 
 import java.time.Instant;
 import java.util.stream.Collectors;
+
+import static precious_weight.config.system.ApiConstants.*;
 
 @RestController
 public class LoginController {
@@ -35,7 +36,7 @@ public class LoginController {
                                 this.passwordEncoder = passwordEncoder;
                            }
 
-    @PostMapping(LoginControllerName)
+    @PostMapping(LoginController)
     public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest loginRequest) {
 
         var user = iUser.findByEmail(loginRequest.getUsername());
@@ -63,7 +64,7 @@ public class LoginController {
     }
 
 
-    @PostMapping(LoginControllerName_Reset)
+    @PostMapping(LoginController_ResetPass)
     public ResponseEntity<Void> resetPassword(@RequestBody LoginRequest request) {
 
         UserModel userFromDb;

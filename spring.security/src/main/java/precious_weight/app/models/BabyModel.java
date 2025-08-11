@@ -11,42 +11,41 @@ import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.Base64;
 
-import static precious_weight.config.system.GlobalConstants.*;
+import static precious_weight.config.system.DataTransferLayerConstants.*;
 
 @Entity
 @Audited
-@Table(name = BabyTableName)
+@Table(name = App_BabyTable_TableName)
 public class BabyModel implements Serializable {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = BabyTableFieldName_Id)
+    @Column(name = App_BabyTable_Id)
     private Integer babyId;
 
-    @Column(name = BabyTableFieldName_Name)
+    @Column(name = App_BabyTable_Name)
     private String babyName;
 
-    @Column(name = BabyTableFieldName_MotherName)
+    @Column(name = App_BabyTable_MotherName)
     private String babyMotherName;
 
-    @Column(name = BabyTableFieldName_BirthDate)
+    @Column(name = App_BabyTable_BirthDate)
     @JsonFormat(pattern = "yyyy-MM-dd", timezone = "America/Sao_Paulo")
     private LocalDate babyBirthDate;
 
-    @Column(name = BabyTableFieldName_State)
+    @Column(name = App_BabyTable_State)
     private Integer babyState;
 
-    @Column(name = BabyTableFieldName_WeightHour)
+    @Column(name = App_BabyTable_WeightHour)
     private String babyWeightHour;
 
-    @Column(name = BabyTableFieldName_HospitalId, nullable = false, length = 255, unique = true)
+    @Column(name = App_BabyTable_HospitalId, nullable = false, length = 255, unique = true)
     private String babyHospitalId;
 
-    @Column(name = BabyTableFieldName_ImageText)
+    @Column(name = App_BabyTable_ImageText)
     private String babyImageText;
 
     @JsonIgnore
-    @Column(name = BabyTableFieldName_Image, nullable = true, unique = true)
+    @Column(name = App_BabyTable_Image, nullable = true, unique = true)
     private Blob babyImage;
 
     public String getBabyImageAs64() throws SQLException {
@@ -62,7 +61,6 @@ public class BabyModel implements Serializable {
     public ScaleModel getAssignedScale() {
         return assignedScale;
     }
-
     public void setAssignedScale(ScaleModel assignedScale) {
         this.assignedScale = assignedScale;
     }
@@ -70,13 +68,11 @@ public class BabyModel implements Serializable {
     public Integer getBabyId() {
         return babyId;
     }
-
     public void setBabyId(Integer babyId) {
         this.babyId = babyId;
     }
 
     public String getBabyName() { return babyName; }
-
     public void setBabyName(String name) {
         this.babyName = name;
     }
@@ -84,53 +80,30 @@ public class BabyModel implements Serializable {
     public String getBabyMotherName() {
         return babyMotherName;
     }
-
     public void setBabyMotherName(String motherName) {
         this.babyMotherName = motherName;
     }
 
     public LocalDate getBabyBirthDate() { return babyBirthDate; }
-
     public void setBabyBirthDate(LocalDate birthDate) {
         this.babyBirthDate = birthDate;
     }
 
-    public String getBabyHospitalId() {
-        return babyHospitalId;
-    }
+    public void setBabyState(Integer state) {this.babyState = state;}
+    public Integer getBabyState() {return babyState;}
 
-    public void setBabyState(Integer state) {
-        this.babyState = state;
-    }
+    public void setBabyWeightHour(String weightHour) {this.babyWeightHour = weightHour;}
+    public String getBabyWeightHour() {return babyWeightHour;}
 
-    public Integer getBabyState() {
-        return babyState;
-    }
+    public void setBabyImageText(String imageText) {this.babyImageText = imageText;}
+    public String getBabyImageText() {return babyImageText;}
 
-    public void setBabyWeightHour(String weightHour) {
-        this.babyWeightHour = weightHour;
-    }
-
-    public String getBabyWeightHour() {
-        return babyWeightHour;
-    }
-
-    public void setBabyImageText(String imageText) {
-        this.babyImageText = imageText;
-    }
-
-    public String getBabyImageText() {
-        return babyImageText;
-    }
-
-    public void setBabyHospitalId(String babyHospitalId) {
-        this.babyHospitalId = babyHospitalId;
-    }
+    public String getBabyHospitalId() {return babyHospitalId;}
+    public void setBabyHospitalId(String babyHospitalId) {this.babyHospitalId = babyHospitalId;}
 
     public Blob getBabyImage() {
         return babyImage;
     }
-
     public void setBabyImage(Blob babyImage) {
         this.babyImage = babyImage;
     }

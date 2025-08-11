@@ -1,6 +1,4 @@
-package precious_weight.controllers;
-
-import static precious_weight.config.system.GlobalConstants.*;
+package precious_weight.controllers.app;
 
 import org.springframework.http.ResponseEntity;
 import precious_weight.app.models.request.WeightRequest;
@@ -12,60 +10,52 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.Map;
 
+import static precious_weight.config.system.ApiConstants.*;
+
 @RestController
-@RequestMapping(WeightControllerName)
+@RequestMapping(WeightController)
 public class WeightController {
 
     @Autowired
     WeightService weightService;
 
-    @PostMapping(ControllerName_List)
-    public ResponseEntity<?> listAll() {
+    @PostMapping(Controller_List)
+    public ResponseEntity<?> listAllWeights() {
         try {
             return ResponseEntity.ok(weightService.listAll());
         } catch (Exception ex) {
-            Map<String, String> error = new HashMap<String, String>() {{
-                put("error", ex.getMessage());
-            }};
+            Map<String, String> error = Map.of("error", ex.getMessage());
             return ResponseEntity.badRequest().body(error);
         }
     }
 
-    @PostMapping(ControllerName_Save)
-    public ResponseEntity<?> save(@RequestBody WeightRequest request) {
+    @PostMapping(Controller_Save)
+    public ResponseEntity<?> saveWeight(@RequestBody WeightRequest request) {
         try {
             return ResponseEntity.ok(weightService.save(request));
         } catch (Exception ex) {
-            Map<String, String> error = new HashMap<String, String>() {{
-                put("error", ex.getMessage());
-            }};
+            Map<String, String> error = Map.of("error", ex.getMessage());
             return ResponseEntity.badRequest().body(error);
         }
     }
 
-    @PostMapping(WeightControllerName_Babies)
+    @PostMapping(WeightController_Babies)
     public ResponseEntity<?> getBabyWeights(@PathVariable Integer babyId) {
         try {
             return ResponseEntity.ok(weightService.getBabyWeights(babyId));
         } catch (Exception ex) {
-            Map<String, String> error = new HashMap<String, String>() {{
-                put("error", ex.getMessage());
-            }};
+            Map<String, String> error = Map.of("error", ex.getMessage());
             return ResponseEntity.badRequest().body(error);
         }
     }
 
-    @PostMapping(WeightControllerName_Scales)
+    @PostMapping(WeightController_Scales)
     public ResponseEntity<?> getScaleWeights(@PathVariable Integer scaleId) {
         try {
             return ResponseEntity.ok(weightService.getScaleWeights(scaleId));
         } catch (Exception ex) {
-            Map<String, String> error = new HashMap<String, String>() {{
-                put("error", ex.getMessage());
-            }};
+            Map<String, String> error = Map.of("error", ex.getMessage());
             return ResponseEntity.badRequest().body(error);
         }
     }
-
-
 }

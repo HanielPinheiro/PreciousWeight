@@ -8,31 +8,31 @@ import precious_weight.auth.models.request.LoginRequest;
 import java.util.Set;
 import java.util.UUID;
 
-import static precious_weight.config.system.GlobalConstants.*;
+import static precious_weight.config.system.DataTransferLayerConstants.*;
 
 @Entity
-@Table(name = UserTableName)
+@Table(name = Auth_UserTable_TableName)
 public class UserModel {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = UserTableFieldName_Id, nullable = false)
+    @Column(name = Auth_UserTable_Id, nullable = false)
     private UUID userId;
 
-    @Column(name = UserTableFieldName_Email, nullable = false, unique = true)
+    @Column(name = Auth_UserTable_Email, nullable = false, unique = true)
     private String email;
 
-    @Column(name = UserTableFieldName_Password, nullable = false)
+    @Column(name = Auth_UserTable_Password, nullable = false)
     @JsonIgnore
     private String password;
 
-    @Column(name = UserTableFieldName_Organization, nullable = false)
+    @Column(name = Auth_UserTable_Organization, nullable = false)
     private String organization;
 
     @ManyToMany(cascade = CascadeType.MERGE, fetch = FetchType.EAGER)
     @JoinTable(
-            name=UserRoleRelationshipTableName,
-            joinColumns = @JoinColumn(name = UserTableFieldName_Id),
-            inverseJoinColumns = @JoinColumn(name = RoleTableFieldName_Id)
+            name= Auth_UserRoleRel_TableName,
+            joinColumns = @JoinColumn(name = Auth_UserTable_Id),
+            inverseJoinColumns = @JoinColumn(name = Auth_RoleTable_Id)
     )
     private Set<RoleModel> roleModels;
 

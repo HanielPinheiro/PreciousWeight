@@ -1,9 +1,8 @@
 package precious_weight.app.services;
 
-import precious_weight.auth.services.MqttPublisherService;
-import precious_weight.controllers.BabyController;
-import precious_weight.app.models.BabyModel;
 import precious_weight.app.models.ScaleModel;
+import precious_weight.auth.services.MqttPublisherService;
+import precious_weight.app.models.BabyModel;
 import precious_weight.app.interfaces.iBaby;
 import precious_weight.app.interfaces.iScale;
 
@@ -21,6 +20,14 @@ import java.util.stream.Collectors;
 
 @Service
 public class BabyService {
+    public enum BabyStates {
+        disabled(0), enabled(1);
+        public final int value;
+        BabyStates(int _value) {
+            value = _value;
+        }
+    }
+
     @Autowired
     private iBaby iBaby;
 
@@ -66,15 +73,14 @@ public class BabyService {
     public BabyModel enableOrDisable(Integer babyId, boolean enabled) throws Exception {
         // Verificar se existe balança vinculada ao bebe
         var babiesWithAndWithoutScales = listAll();
-        var baby = babiesWithAndWithoutScales.stream().filter(s -> s.getBabyId().equals(babyId))
-                .findFirst().orElse(null);
+        var baby = babiesWithAndWithoutScales.stream().filter(s -> s.getBabyId().equals(babyId)).findFirst().orElse(null);
 
         // Se sim, retornar erro
         if (baby == null) throw new Exception("Error when try to enable or disable -> baby is null");
         if (baby.getAssignedScale() != null) throw new Exception("Error when try to enable or disable -> baby has scale");
 
         // Se não, prosseguir com a ação
-        var val = enabled ? BabyController.BabyStates.enabled.value : BabyController.BabyStates.disabled.value;
+        var val = enabled ? BabyStates.enabled.value : BabyStates.disabled.value;
         baby.setBabyState(val);
         return save(baby);
     }

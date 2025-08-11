@@ -11,14 +11,5 @@ services:
         - MYSQL_PASSWORD=123
         - MYSQL_DATABASE=app_db
         - MYSQL_ROOT_PASSWORD=123
-    postgres:
-      container_name: precious-weight-postgres
-      image: postgres:latest
-      ports:
-        - "5432:5432"
-      expose:
-        - "5432"
-      environment:
-        - POSTGRES_USER=admin
-        - POSTGRES_PASSWORD=123
-        - POSTGRES_DB=auth_db
+      volumes:
+        - ./init.sql:/docker-entrypoint-initdb.d/init.sql  # Initialization script

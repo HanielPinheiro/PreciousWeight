@@ -5,8 +5,8 @@ import org.springframework.stereotype.Service;
 
 import precious_weight.app.interfaces.iBaby;
 import precious_weight.app.interfaces.iScale;
-import precious_weight.app.models.BabyModel;
 import precious_weight.app.models.ScaleModel;
+import precious_weight.app.models.BabyModel;
 import precious_weight.auth.services.MqttPublisherService;
 
 import java.util.List;
@@ -18,6 +18,14 @@ import java.util.stream.Collectors;
 
 @Service
 public class ScaleService {
+    public enum ScaleStates {
+        nonOperant(0), operant(1);
+        public final int value;
+        ScaleStates(int _value) {
+            value = _value;
+        }
+    }
+
     @Autowired
     private iScale iScale;
 
@@ -31,13 +39,9 @@ public class ScaleService {
         List<ScaleModel> scales = iScale.findAll();
 
         // Get all babies for scales that have babyId assigned
-        Set<Integer> babyIds = scales.stream()
-                .map(ScaleModel::getBabyId)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toSet());
+        Set<Integer> babyIds = scales.stream().map(ScaleModel::getBabyId).filter(Objects::nonNull).collect(Collectors.toSet());
 
-        Map<Integer, BabyModel> babyMap = iBaby.findAllByBabyIdIn(babyIds).stream()
-                .collect(Collectors.toMap(BabyModel::getBabyId, Function.identity()));
+        Map<Integer, BabyModel> babyMap = iBaby.findAllByBabyIdIn(babyIds).stream().collect(Collectors.toMap(BabyModel::getBabyId, Function.identity()));
 
         // Enhance each scale with baby information
         scales.forEach(scale -> {
@@ -48,29 +52,26 @@ public class ScaleService {
     }
 
     public ScaleModel GetScaleFromId(Integer scaleId) {
-        return GetScales().stream().filter(s -> s.getScaleId().equals(scaleId)).
-                findFirst().orElse(null);
+        return GetScales().stream().filter(s -> s.getScaleId().equals(scaleId)).findFirst().orElse(null);
     }
+
     public ScaleModel GetScaleFromHash(String scaleHash) {
         List<ScaleModel> scales = iScale.findAll();
-        return scales.stream().filter(s -> s.getScaleHash().equals(scaleHash)).
-                findFirst().orElse(null);
+        return scales.stream().filter(s -> s.getScaleHash().equals(scaleHash)).findFirst().orElse(null);
     }
 
     public Integer GetBabyIdByScaleId(Integer scaleId) {
-        return iScale.findById(scaleId)
-                .map(ScaleModel::getBabyId)
-                .orElse(null);
+        return iScale.findById(scaleId).map(ScaleModel::getBabyId).orElse(null);
     }
 
-    public ScaleModel save(String scaleHash) {
+      public ScaleModel SetScaleToUser(String scaleHash) {
         ScaleModel newScale = new ScaleModel();
         newScale.setScaleHash(scaleHash);
         newScale.setScaleState(0);
         return iScale.save(newScale);
     }
 
-    public ScaleModel updateHash(Integer id, ScaleModel model) throws Exception {
+    public ScaleModel UpdateHash(Integer id, ScaleModel model) throws Exception {
         if (iScale.findById(id).isEmpty()) throw new Exception("iScale is empty when try to update hash");
         ScaleModel scale = iScale.getReferenceById(id);
         scale.setScaleHash(model.getScaleHash());
@@ -79,7 +80,7 @@ public class ScaleService {
     }
 
 
-    public ScaleModel enableOrDisable(Integer id, boolean enabled) throws Exception {
+    public ScaleModel EnableOrDisable(Integer id, boolean enabled) throws Exception {
         var scaleWithBabyData = GetScaleFromId(id).getAssignedBaby();
         if (scaleWithBabyData != null) throw new Exception("iScale is empty when try to enable Or disable");
 
@@ -91,7 +92,7 @@ public class ScaleService {
         return GetScaleFromId(id);
     }
 
-    public ScaleModel setOrUnset(ScaleModel model, boolean set) throws Exception {
+    public ScaleModel SetOrUnset(ScaleModel model, boolean set) throws Exception {
         var scaleId = model.getScaleId();
         var babyId = model.getBabyId();
 
@@ -126,23 +127,11 @@ public class ScaleService {
         List<ScaleModel> scales = iScale.findAll();
 
         // Get all babies for scales that have babyId assigned
-        Set<Integer> babyIds = scales.stream()
-                .map(ScaleModel::getBabyId)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toSet());
+        Set<Integer> babyIds = scales.stream().map(ScaleModel::getBabyId).filter(Objects::nonNull).collect(Collectors.toSet());
 
-        Integer find = babyIds.stream().filter(s -> s.equals(babyId))
-                .findFirst().orElse(null);
+        Integer find = babyIds.stream().filter(s -> s.equals(babyId)).findFirst().orElse(null);
+
         return find != null;
-    }
-
-    public enum ScaleStates {
-        nonOperant(0), operant(1);
-        public final int value;
-
-        ScaleStates(int _value) {
-            value = _value;
-        }
     }
 
 }
