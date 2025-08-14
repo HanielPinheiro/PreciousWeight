@@ -1,6 +1,7 @@
 package precious_weight.controllers.auth;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -8,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import precious_weight.auth.models.ScaleDataModel;
 import precious_weight.auth.models.request.ScaleDataRequest;
 import precious_weight.auth.models.response.ScaleDataResponse;
-import precious_weight.auth.services.QrCodeService;
+import precious_weight.auth.services.ProFuturo__QrCodeService;
 import precious_weight.auth.services.ScaleDataService;
 
 import java.util.Map;
@@ -22,8 +23,6 @@ import static precious_weight.config.system.ApiConstants.*;
 public class ScaleDataController {
     @Autowired
     private ScaleDataService scaleDataService;
-    @Autowired
-    private QrCodeService qrCodeService;
 
     @PreAuthorize("isAuthenticated()")
     @PostMapping(Controller_Search)
@@ -38,11 +37,21 @@ public class ScaleDataController {
         }
     }
 
+    @PreAuthorize("isAuthenticated()")
+    @PostMapping(Controller_Search)
+    public ResponseEntity<?> getQrCodeById(@PathVariable UUID id) {
+        try {
+            byte[] pngData = scaleDataService.GetQrCodeFromId(id);
+            return ResponseEntity.ok().contentType(MediaType.IMAGE_PNG).body(pngData);
+        } catch (Exception ex) {
+            Map<String, String> error = Map.of("error", ex.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        }
+    }
+
     @PostMapping(Controller_List)
     @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
     public ResponseEntity<?> listScaleData() throws Exception {
-//        var a = qrCodeService.fromUuid("B48DA1D5B77A4C25AE91EDD3C9C46A8F");
-        var a = qrCodeService.fromUuid("Hello World");
         return ResponseEntity.ok(scaleDataService.GetScales().stream().map(ScaleDataResponse::new).collect(Collectors.toList()));
     }
 
