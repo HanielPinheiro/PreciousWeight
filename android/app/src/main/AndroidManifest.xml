@@ -23,8 +23,8 @@
 
     <application
         android:name="${applicationName}"
-        android:label="PreciousWeight"
-        android:icon="@mipmap/ic_launcher">
+        android:label="Precious Weight"
+        android:icon="@mipmap/launcher_icon">
 
         <!-- Main Activity -->
         <activity

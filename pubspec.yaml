@@ -11,18 +11,22 @@ dependencies:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
+
   google_fonts: ^6.2.1
+  provider: ^6.1.5
+  path_provider: ^2.1.5
+  intl: ^0.19.0
+  http: ^1.5.0
+  http_parser: ^4.1.2
   fl_chart: ^0.70.2
+
   pretty_qr_code: ^3.3.0
   mobile_scanner: ^6.0.7
   flutter_esp_ble_prov: ^0.1.7
 
-  intl: any
-  flutter_native_splash: ^2.4.5
-  http: any
-  path_provider: ^2.1.5
-  http_parser: any
-  provider: ^6.1.5
+  flutter_native_splash: ^2.4.6
+  flutter_launcher_icons: ^0.14.4
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -35,18 +39,29 @@ flutter:
 
 flutter_native_splash:
   color: "#ffffff"
-  image: assets/imgs/logotipo.png
-  branding: assets/imgs/logo.png
+  image: assets/imgs/my_splash.png
+  branding: assets/imgs/my_splash_brand.png
+
   color_dark: "#121212"
-  image_dark: assets/imgs/logotipo.png
-  branding_dark: assets/imgs/logo.png
+  image_dark: assets/imgs/my_splash.png
+  branding_dark: assets/imgs/my_splash_brand.png
 
   android_12:
-    image: assets/imgs/logotipo.png
     icon_background_color: "#ffffff"
-    image_dark: assets/imgs/logotipo.png
-    icon_background_color_dark: "#121212"
-    branding: assets/imgs/logo.png
-    branding_dark: assets/imgs/logo.png
+    image: assets/imgs/my_splash.png
+    branding: assets/imgs/my_splash_brand.png
 
+    icon_background_color_dark: "#121212"
+    image_dark: assets/imgs/my_splash.png
+    branding_dark: assets/imgs/my_splash_brand.png
+  android: true
+  ios: true
   web: false
+
+flutter_launcher_icons:
+  image_path: "assets/imgs/my_icon.png"
+  ios: true
+  remove_alpha_ios: true
+  android: "launcher_icon"
+  adaptative_icon_background: "#FFFFFF"
+  adaptative_icon_foreground: "assets/imgs/my_icon_android.png"

@@ -28,17 +28,3 @@ class PreciousWeightApp extends StatelessWidget {
     );
   }
 }
-
-class SplashScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        image: DecorationImage(
-          image: AssetImage('assets/imgs/logotipo.png'),
-          fit: BoxFit.cover,
-        ),
-      ),
-    );
-  }
-}
