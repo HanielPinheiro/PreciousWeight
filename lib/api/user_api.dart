@@ -15,13 +15,52 @@ class UserApi {
   Future<void> Login(String username, String password) async {
     try {
       final _body = jsonEncode({
-        'username': username,
+        'email': username,
         'password': password,
       });
 
       final _header = {'Content-Type': 'application/json'};
 
       _user = userFromJson(await ApiService.apiConn("${address_api}${api_user_login}", body: _body, header: _header));
+    } catch (error) {
+      throw error;
+    }
+  }
+  Future<void> Logout() async {
+    try {
+      _user = null;
+      // ApiConn("${address_api}${api_user_logout}");
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  Future<void> NewUser(String username, String password) async {
+    print(username);
+    try {
+      final _body = jsonEncode({
+        'email': username,
+        'password': password,
+        'organization': "Hospital Geral"
+      });
+
+      final _header = {'Content-Type': 'application/json'};
+      await ApiService.apiConn("${address_api}${api_user_new}", body: _body, header: _header);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  Future<void> ResetPassword(String username, String newPassword) async {
+    try {
+      final _body = jsonEncode({
+        'email': username,
+        'password': newPassword,
+      });
+
+      final _header = {'Content-Type': 'application/json'};
+
+      await ApiService.apiConn("${address_api}${api_user_reset}", body: _body, header: _header);
     } catch (error) {
       throw error;
     }
@@ -36,12 +75,5 @@ class UserApi {
     }
   }
 
-  Future<void> Logout() async {
-    try {
-      _user = null;
-      // ApiConn("${address_api}${api_user_logout}");
-    } catch (error) {
-      throw error;
-    }
-  }
+
 }

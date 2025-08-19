@@ -50,7 +50,8 @@ class BabyProvider with ChangeNotifier {
   }
 
   Future<BabyModel> addBaby(BabyModel newBaby) async {
-    final baby = await _api.insertBaby(newBaby.toJson());
+    final babyLikeJson = babyToJson(newBaby);
+    final baby = await _api.insertBaby(babyLikeJson);
     _babies.add(baby!);
     notifyListeners();
     return baby;

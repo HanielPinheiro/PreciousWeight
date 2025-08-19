@@ -60,8 +60,8 @@ class BabyModel {
         patient_motherName: motherName!,
         patient_birthDate: dateFormatter_dbToObj.format(birthDate!),
         patient_isActive: isActive! == true ? 1 : 0,
-        patient_qrCodeText: qrCodeText!,
-        patient_weightHour: weightHour!
+        patient_qrCodeText: qrCodeText,
+        patient_weightHour: weightHour
       };
 
   Future<List<WeightModel>?> getWeights() async {

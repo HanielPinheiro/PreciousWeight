@@ -124,12 +124,7 @@ class ElementsOfViews {
   }
 
   static Widget InputWithController(BuildContext context, TextEditingController _controller, String labelText, String hintText, Icon _icon, [bool isPassword = false, bool isReadOnly = false]) {
-    return TextField(
-        controller: _controller,
-        style: TextStyle(color: Theme.of(context).colorScheme.primary),
-        decoration: MyDecorations().GetInputDecoration(context, labelText,hintText,_icon),
-        readOnly: isReadOnly,
-        obscureText: isPassword);
+    return TextField(controller: _controller, style: TextStyle(color: Theme.of(context).colorScheme.primary), decoration: MyDecorations().GetInputDecoration(context, labelText, hintText, _icon), readOnly: isReadOnly, obscureText: isPassword);
   }
 
   static Future<void> ShowTimeManager(BuildContext context, ValueChanged<String> onSave, {required String initialTimes}) async {
@@ -146,25 +141,29 @@ class ElementsOfViews {
             padding: EdgeInsets.all(16),
             child: Column(
               children: [
-                Text('Gerenciar horários',style: displayMedium.copyWith(color: Theme.of(context).colorScheme.primary)),
+                Text('Gerenciar horários', style: displayMedium.copyWith(color: Theme.of(context).colorScheme.primary)),
                 SizedBox(height: 20),
-                SimpleButton(context,"Adicionar horário",() async {
+                SimpleButton(context, "Adicionar horário", () async {
+                  if (times.length > 9) {
+                    await showDialog(context: context, builder: (context) => AlertDialog(content: Text("O número máximo de horários é 10!")));
+                    return;
+                  }
                   final time = await _GetTimePicker(context);
-                  if (time != null)
-                    setState(() => times.add("${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}"));
-                },true),
+                  if (time != null) {
+                    final formattedStr = "${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}";
+                    if (!times.contains(formattedStr)) setState(() => times.add(formattedStr));
+                    times.sort();
+                  }
+                }, true),
                 SizedBox(height: 20),
                 Expanded(
-                  child: ListView.builder(
-                    itemCount: times.length,
-                    itemBuilder: (ctx, i) => ListTile(
-                      title: Text(times[i], textAlign: TextAlign.center, style: displaySmall.copyWith(color: Theme.of(context).colorScheme.primary)),
-                      trailing: IconButton(icon: Icon(Icons.delete, color: Theme.of(context).colorScheme.primary), onPressed: () => setState(() => times.removeAt(i)))
-                    )
-                  )
-                ),
+                    child: ListView.builder(
+                        itemCount: times.length, itemBuilder: (ctx, i) => ListTile(leading: Text((i + 1).toString(), textAlign: TextAlign.center, style: displaySmall.copyWith(color: Theme.of(context).colorScheme.primary)), title: Text(times[i], textAlign: TextAlign.center, style: displaySmall.copyWith(color: Theme.of(context).colorScheme.primary)), trailing: IconButton(icon: Icon(Icons.delete, color: Theme.of(context).colorScheme.primary), onPressed: () => setState(() => times.removeAt(i)))))),
                 SizedBox(height: 20),
-                SimpleButton(context,"Voltar",() {onSave(times.join(r" - ")); Navigator.pop(context);},true)
+                SimpleButton(context, "Voltar", () {
+                  onSave(times.join(r" - "));
+                  Navigator.pop(context);
+                }, true)
               ],
             ),
           );
@@ -172,9 +171,10 @@ class ElementsOfViews {
       ),
     );
   }
-  static TimeOfDay _GetTimeOfDayInGmtMinusThree(TimeOfDay? time){
+
+  static TimeOfDay _GetTimeOfDayInGmtMinusThree(TimeOfDay? time) {
     final now = DateTime.now();
-    final utcTime = time != null  ? DateTime(now.year, now.month, now.day, time.hour, time.minute) : DateTime(now.year, now.month, now.day, now.hour, now.minute);
+    final utcTime = time != null ? DateTime(now.year, now.month, now.day, time.hour, time.minute) : DateTime(now.year, now.month, now.day, now.hour, now.minute);
     final gmtMinus3Time = utcTime.subtract(const Duration(hours: 3));
     return TimeOfDay.fromDateTime(gmtMinus3Time);
   }
@@ -191,15 +191,9 @@ class ElementsOfViews {
       minuteLabelText: "Minuto",
       builder: (BuildContext context, Widget? child) {
         final colorScheme = Theme.of(context).colorScheme;
-        final style= ButtonStyle(
-            backgroundColor: WidgetStatePropertyAll(colorScheme.surface),
-            foregroundColor: WidgetStatePropertyAll(colorScheme.primary),
-            side: WidgetStatePropertyAll( BorderSide(color: colorScheme.primary, width: 1.5)),
-            elevation: WidgetStatePropertyAll(2)
-        );
+        final style = ButtonStyle(backgroundColor: WidgetStatePropertyAll(colorScheme.surface), foregroundColor: WidgetStatePropertyAll(colorScheme.primary), side: WidgetStatePropertyAll(BorderSide(color: colorScheme.primary, width: 1.5)), elevation: WidgetStatePropertyAll(2));
         return Theme(
-          data: Theme.of(context).copyWith(
-              timePickerTheme: TimePickerThemeData(confirmButtonStyle: style,cancelButtonStyle: style, backgroundColor: colorScheme.onSurface, hourMinuteColor: colorScheme.surface, hourMinuteTextColor: colorScheme.primary, helpTextStyle: headlineSmall.copyWith(color: colorScheme.primary))),
+          data: Theme.of(context).copyWith(timePickerTheme: TimePickerThemeData(confirmButtonStyle: style, cancelButtonStyle: style, backgroundColor: colorScheme.onSurface, hourMinuteColor: colorScheme.surface, hourMinuteTextColor: colorScheme.primary, helpTextStyle: headlineSmall.copyWith(color: colorScheme.primary))),
           child: Directionality(textDirection: TextDirection.ltr, child: MediaQuery(data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true), child: child!)),
         );
       },
@@ -238,8 +232,6 @@ class ElementsOfViews {
         });
   }
 
-
-
   static Widget SimpleButton(BuildContext context, String _text, [VoidCallback? _onPressed = null, bool isActive = false, bool isDisable = false]) {
     return TextButton(
       onPressed: isDisable
@@ -270,7 +262,7 @@ class ElementsOfViews {
         foregroundColor: Theme.of(context).colorScheme.surface,
         backgroundColor: Theme.of(context).colorScheme.onSecondary,
         elevation: 4.0,
-        // side: BorderSide(color: Theme.of(context).colorScheme.onSecondary, width: 1.0, style: BorderStyle.solid,),
+// side: BorderSide(color: Theme.of(context).colorScheme.onSecondary, width: 1.0, style: BorderStyle.solid,),
       ),
     );
   }

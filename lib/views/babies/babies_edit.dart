@@ -70,11 +70,7 @@ class _BabiesEditState extends State<BabiesEdit> {
         body: ListView(
           padding: const EdgeInsets.symmetric(horizontal: 8.0),
           children: <Widget>[
-            Column(
-              mainAxisSize: MainAxisSize.max,
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
+            Column(mainAxisSize: MainAxisSize.max,mainAxisAlignment: MainAxisAlignment.spaceEvenly,crossAxisAlignment: CrossAxisAlignment.center,children: [
                 const SizedBox(height: 20.0),
                 Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 25),
@@ -84,10 +80,8 @@ class _BabiesEditState extends State<BabiesEdit> {
                             child: Row(children: [ Container(child: qrRefImage ?? Container(child: Placeholder(color: Colors.grey)), constraints: BoxConstraints(maxHeight: 120, maxWidth: 120)),
                               SizedBox(width: 10),
                               Expanded(child: Column(mainAxisAlignment: MainAxisAlignment.spaceEvenly, crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [ElementsOfViews.SimpleButton(context, "Inserir Novo QR Code",
-                                          () async {ReadQrCode(context);}),
-                                ElementsOfViews.SimpleButton(context, "Remover QR Code",
-                                        () {setState(() {qrRefImage = null;});})
+                                  children: [ElementsOfViews.SimpleButton(context, "Inserir Novo QR Code", () async {ReadQrCode(context);}),
+                                ElementsOfViews.SimpleButton(context, "Remover QR Code", () {setState(() {qrRefImage = null;});})
                               ])),
                             ])))
                 ),
@@ -100,16 +94,14 @@ class _BabiesEditState extends State<BabiesEdit> {
                 const SizedBox(height: 12.0),
                 ElementsOfViews.InputWithController(context, _weightTimeController, 'Horário(s) da(s) coleta(s) do peso', '', Icon(Icons.abc, color: Theme.of(context).colorScheme.primary), false, true),
                 Row(children: [SizedBox(width: 15), ElementsOfViews.SimpleButton(context, "Gerenciar Horários",
-                                ()=>ElementsOfViews.ShowTimeManager(context,(newTimes) => setState(() => _weightTimeController.text = newTimes),initialTimes: _weightTimeController.text),false)
+                                () async {await ElementsOfViews.ShowTimeManager(context,(newTimes) => setState(() => _weightTimeController.text = newTimes),initialTimes: _weightTimeController.text);},false)
                 ]),
                 const SizedBox(height: 20.0),
                 OverflowBar(alignment: MainAxisAlignment.end,
                   children: <Widget>[
                     ElementsOfViews.SimpleButton(context, "LIMPAR CAMPOS", () {
-                      _hospIdController.clear();
-                      _nameIdController.clear();
-                      _nameMotherController.clear();
-                      _birthDateController.clear();
+                      _hospIdController.clear(); _nameIdController.clear();
+                      _nameMotherController.clear();_birthDateController.clear();
                       _weightTimeController.clear();
                     }),
                     const SizedBox(width: 8.0),

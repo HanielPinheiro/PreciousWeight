@@ -26,11 +26,10 @@ class BabyApi {
     }
   }
 
-  Future<BabyModel?> insertBaby(Map<String, dynamic> babyLikeJson) async {
+  Future<BabyModel?> insertBaby(String babyLikeJson) async {
     try {
-      final _body = jsonEncode(babyLikeJson);
       final _header = {'Content-Type': 'application/json', 'Authorization': 'Bearer ${UserApi().token!.accessToken}', 'Accept': 'application/json'};
-      return babyFromJson(await ApiService.apiConn("${address_api}${api_baby_new}", body: _body, header: _header));
+      return babyFromJson(await ApiService.apiConn("${address_api}${api_baby_new}", body: babyLikeJson, header: _header));
     } catch (error) {
       throw error;
     }

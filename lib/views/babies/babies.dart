@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:precious_weight/models/weight.dart';
 import 'package:provider/provider.dart';
@@ -5,6 +7,7 @@ import 'package:provider/provider.dart';
 import '../../repository/providers/baby_provider.dart';
 import '../../repository/widgets/elements.dart';
 import 'babies_details.dart';
+import 'babies_register.dart';
 
 class BabiesPage extends StatefulWidget {
   @override
@@ -26,25 +29,37 @@ class _BabiesPageState extends State<BabiesPage> {
 
     final filteredBabies = babyProvider.babies.where((baby) => baby.isActive == !isDischarged).toList();
 
-    return ListView(
-      children: [
-        Padding(padding: EdgeInsets.all(12.0)),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            ElementsOfViews.SimpleButton(context, "Bebês Ativos", () => _changeState(false), !isDischarged),
-            ElementsOfViews.SimpleButton(context, "Bebês Não Ativos", () => _changeState(true), isDischarged),
-          ],
-        ),
-        Padding(padding: EdgeInsets.all(12.0)),
-        ...filteredBabies.map((baby) => FutureBuilder<List<WeightModel>?>(
-              future: baby.getWeights(),
-              builder: (context, snapshot) {
-                final text = snapshot.hasData && snapshot.data!.isNotEmpty ? "Último peso: ${snapshot.data!.last.weight.toString()} g" : "Último peso: N/A";
-                return ElementsOfViews.CardToList(context, Icons.baby_changing_station, baby.name!, text, () => Navigator.push(context, MaterialPageRoute(builder: (context) => BabiesDetails(baby: baby))));
-              },
-            )),
-      ],
+    return Scaffold(
+      body: ListView(
+        children: [
+          Padding(padding: EdgeInsets.all(12.0)),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              ElementsOfViews.SimpleButton(context, "Bebês Ativos", () => _changeState(false), !isDischarged),
+              ElementsOfViews.SimpleButton(context, "Bebês Não Ativos", () => _changeState(true), isDischarged),
+            ],
+          ),
+          Padding(padding: EdgeInsets.all(12.0)),
+          ...filteredBabies.map((baby) => FutureBuilder<List<WeightModel>?>(
+                future: baby.getWeights(),
+                builder: (context, snapshot) {
+                  final text = snapshot.hasData && snapshot.data!.isNotEmpty ? "Último peso: ${snapshot.data!.last.weight.toString()} g" : "Último peso: N/A";
+                  return ElementsOfViews.CardToList(context, Icons.baby_changing_station, baby.name!, text, () => Navigator.push(context, MaterialPageRoute(builder: (context) => BabiesDetails(baby: baby))));
+                },
+              )),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(context, MaterialPageRoute(builder: (context) => BabiesRegister(scannedImage: Uint8List(0), scannedText: '')));
+        },
+        child: Icon(Icons.add),
+        tooltip: 'Adicionar novo bebê',
+        backgroundColor: Theme.of(context).primaryColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32.0), side: BorderSide(color: Theme.of(context).colorScheme.primary, width: 1.0, style: BorderStyle.solid)),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 }
