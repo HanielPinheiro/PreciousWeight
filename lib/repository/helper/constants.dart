@@ -28,6 +28,7 @@ const api_audit_weights = '/audit/weights/{code}';
 const api_baby_list = '/babies/list';
 const api_baby_search = '/babies/search/{code}';
 const api_baby_new = '/babies/save';
+const api_baby_getQr = '/babies/qr/{code}';
 const api_baby_updateQr = '/babies/image/{code}';
 const api_baby_enable = '/babies/enable/{code}';
 const api_baby_disable = '/babies/disable/{code}';

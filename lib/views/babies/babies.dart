@@ -17,9 +17,7 @@ class BabiesPage extends StatefulWidget {
 class _BabiesPageState extends State<BabiesPage> {
   bool isDischarged = false;
 
-  void _changeState(bool b) {
-    setState(() => isDischarged = b);
-  }
+  void _changeState(bool b) { setState(() => isDischarged = b); }
 
   @override
   Widget build(BuildContext context) {
@@ -45,15 +43,13 @@ class _BabiesPageState extends State<BabiesPage> {
                 future: baby.getWeights(),
                 builder: (context, snapshot) {
                   final text = snapshot.hasData && snapshot.data!.isNotEmpty ? "Último peso: ${snapshot.data!.last.weight.toString()} g" : "Último peso: N/A";
-                  return ElementsOfViews.CardToList(context, Icons.baby_changing_station, baby.name!, text, () => Navigator.push(context, MaterialPageRoute(builder: (context) => BabiesDetails(baby: baby))));
+                  return ElementsOfViews.CardToList(context, Icons.baby_changing_station, baby.name!, text, () => Navigator.push(context, MaterialPageRoute(builder: (context) => BabiesDetails(id: baby.id!))));
                 },
               )),
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => BabiesRegister(scannedImage: Uint8List(0), scannedText: '')));
-        },
+        onPressed: () { Navigator.push(context, MaterialPageRoute(builder: (context) => BabiesRegister(scannedImage: null, scannedText: null)));},
         child: Icon(Icons.add),
         tooltip: 'Adicionar novo bebê',
         backgroundColor: Theme.of(context).primaryColor,

@@ -128,7 +128,8 @@ class ElementsOfViews {
   }
 
   static Future<void> ShowTimeManager(BuildContext context, ValueChanged<String> onSave, {required String initialTimes}) async {
-    final times = initialTimes.split(r" - ")..removeWhere((t) => t.isEmpty);
+    List<String> times = [];
+    if (initialTimes != 'Sem horário definido') times = initialTimes.split(r"$")..removeWhere((t) => t.isEmpty);
 
     await showModalBottomSheet(
       context: context,
@@ -161,7 +162,7 @@ class ElementsOfViews {
                         itemCount: times.length, itemBuilder: (ctx, i) => ListTile(leading: Text((i + 1).toString(), textAlign: TextAlign.center, style: displaySmall.copyWith(color: Theme.of(context).colorScheme.primary)), title: Text(times[i], textAlign: TextAlign.center, style: displaySmall.copyWith(color: Theme.of(context).colorScheme.primary)), trailing: IconButton(icon: Icon(Icons.delete, color: Theme.of(context).colorScheme.primary), onPressed: () => setState(() => times.removeAt(i)))))),
                 SizedBox(height: 20),
                 SimpleButton(context, "Voltar", () {
-                  onSave(times.join(r" - "));
+                  onSave(times.join(r"$"));
                   Navigator.pop(context);
                 }, true)
               ],

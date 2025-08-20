@@ -20,13 +20,29 @@ class ApiService {
       if (response.statusCode >= 200 && response.statusCode < 300) {
         return responseBody;
       } else {
-        // Try to parse error message from response
         try {
           final errorJson = jsonDecode(responseBody);
           throw ApiException(statusCode: response.statusCode, message: errorJson['message'] ?? 'Request failed', details: errorJson['errors'] ?? responseBody);
         } catch (_) {
           throw ApiException(statusCode: response.statusCode, message: 'Request failed with status ${response.statusCode}', details: responseBody);
         }
+      }
+    } on http.ClientException catch (e) {
+      throw ApiException(statusCode: 0, message: 'Network error: ${e.message}', details: e.toString());
+    } finally {
+      client.close();
+    }
+  }
+
+  static Future<Uint8List?> getQrCode(String url) async {
+    final client = http.Client();
+    try {
+      final response = await client.post(Uri.parse(url), headers: {'Authorization': 'Bearer ${UserApi().token!.accessToken}'});
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return response.bodyBytes;
+      } else {
+        throw ApiException(statusCode: response.statusCode, message: 'Image download failed with status ${response.statusCode}', details: response.body);
       }
     } on http.ClientException catch (e) {
       throw ApiException(statusCode: 0, message: 'Network error: ${e.message}', details: e.toString());

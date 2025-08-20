@@ -35,6 +35,14 @@ class BabyApi {
     }
   }
 
+  Future<Uint8List?> getQrCode(String baby_code) async {
+    try {
+      return await ApiService.getQrCode("${address_api}${api_baby_getQr.replaceAll(api_pattern_code, baby_code)}");
+    } catch (error) {
+      throw error;
+    }
+  }
+
   Future<bool> updateBabyQr(String baby_code, Uint8List? image) async {
     try {
       await ApiService.uploadQrCode(baby_code, image);

@@ -13,7 +13,6 @@ DateTime parseUtcTime(String dateString) {
   return DateTime.parse("${dateString}Z").toLocal(); // "Z" forces UTC
 }
 
-
 Future<Uint8List> imageToUint8List(Image image) async {
   // Get the image as ui.Image
   final completer = Completer<ui.Image>();
