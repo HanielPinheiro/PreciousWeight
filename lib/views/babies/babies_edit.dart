@@ -13,6 +13,7 @@ import '../../repository/providers/baby_provider.dart';
 import '../../repository/services/api_service.dart';
 import '../../repository/services/qrcode_service.dart';
 import '../../repository/widgets/elements.dart';
+import '../../repository/widgets/error_handler.dart';
 
 class BabiesEdit extends StatefulWidget {
   const BabiesEdit({super.key, required this.baby});
@@ -226,11 +227,11 @@ class _BabiesEditState extends State<BabiesEdit> {
                             weightHour: _weightTimeController.text,
                           );
 
-                          await SafeApi.call(context: context, apiCall: () async => await _babyProvider.updateBaby(newBaby));
+                          await ErrorHandler.SafeApiCall(context: context, apiCall: () async => await _babyProvider.updateBaby(newBaby));
 
                           if (_currentText == null && _currentImage != null)
-                            await SafeApi.call(context: context, apiCall: () async => await _babyProvider.updateQrCode(widget.baby.id!, _currentImage));
-                          else if (_currentText != null && _currentImage == null) await SafeApi.call(context: context, apiCall: () async => await _babyProvider.updateQrCode(widget.baby.id!, null));
+                            await ErrorHandler.SafeApiCall(context: context, apiCall: () async => await _babyProvider.updateQrCode(widget.baby.id!, _currentImage));
+                          else if (_currentText != null && _currentImage == null) await ErrorHandler.SafeApiCall(context: context, apiCall: () async => await _babyProvider.updateQrCode(widget.baby.id!, null));
                           await showDialog(context: context, builder: (context) => AlertDialog(content: Text("Dados do Bebê [${widget.baby.id}] atualizados com sucesso!")));
                           Navigator.pop(context);
                         } catch (e) {

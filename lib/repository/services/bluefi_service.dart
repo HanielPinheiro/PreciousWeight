@@ -78,19 +78,8 @@ class _BluefiService extends State<BluefiService> {
         context: context,
         builder: (context) => AlertDialog(
           backgroundColor: Theme.of(context).colorScheme.surface,
-          title: Text(
-            "Balança já está conectada ao WiFi",
-            style: TextStyle(color: Theme.of(context).colorScheme.primary),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(
-                "Ok",
-                style: TextStyle(color: Theme.of(context).colorScheme.primary),
-              ),
-            ),
-          ],
+          title: Text("Balança já está conectada ao WiFi", style: TextStyle(color: Theme.of(context).colorScheme.primary)),
+          actions: [TextButton(onPressed: () => Navigator.pop(context), child: Text("Ok", style: TextStyle(color: Theme.of(context).colorScheme.primary)))],
         ),
       );
     }
@@ -103,18 +92,10 @@ class _BluefiService extends State<BluefiService> {
         context: context,
         builder: (context) => AlertDialog(
           backgroundColor: Theme.of(context).colorScheme.surface,
-          title: Text(
-            "Login Inválido",
-            style: TextStyle(color: Theme.of(context).colorScheme.primary),
-          ),
+          title: Text("Login Inválido", style: TextStyle(color: Theme.of(context).colorScheme.primary)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Por favor, verifique o login.',
-                style: TextStyle(color: Theme.of(context).colorScheme.primary),
-              ),
-            ],
+            children: [Text('Por favor, verifique o login.', style: TextStyle(color: Theme.of(context).colorScheme.primary))],
           ),
         ),
       );
@@ -127,18 +108,10 @@ class _BluefiService extends State<BluefiService> {
         context: context,
         builder: (context) => AlertDialog(
           backgroundColor: Theme.of(context).colorScheme.surface,
-          title: Text(
-            "Senha Inválida",
-            style: TextStyle(color: Theme.of(context).colorScheme.primary),
-          ),
+          title: Text("Senha Inválida", style: TextStyle(color: Theme.of(context).colorScheme.primary)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Por favor, verifique a senha.',
-                style: TextStyle(color: Theme.of(context).colorScheme.primary),
-              ),
-            ],
+            children: [Text('Por favor, verifique a senha.', style: TextStyle(color: Theme.of(context).colorScheme.primary))],
           ),
         ),
       );
@@ -152,28 +125,12 @@ class _BluefiService extends State<BluefiService> {
         context: context,
         builder: (context) => AlertDialog(
           backgroundColor: Theme.of(context).colorScheme.surface,
-          title: Text(
-            "Conexão Wifi Concluída!",
-            style: TextStyle(color: Theme.of(context).colorScheme.primary),
-          ),
+          title: Text("Conexão Wifi Concluída!", style: TextStyle(color: Theme.of(context).colorScheme.primary)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Agora você poderá associar um bebê à balança',
-                style: TextStyle(color: Theme.of(context).colorScheme.primary),
-              ),
-            ],
+            children: [Text('Agora você poderá associar um bebê à balança', style: TextStyle(color: Theme.of(context).colorScheme.primary))],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(
-                "Ok",
-                style: TextStyle(color: Theme.of(context).colorScheme.primary),
-              ),
-            ),
-          ],
+          actions: [TextButton(onPressed: () => Navigator.pop(context), child: Text("Ok", style: TextStyle(color: Theme.of(context).colorScheme.primary)))],
         ),
       ).then((_) {
         Navigator.pop(context);
@@ -183,18 +140,10 @@ class _BluefiService extends State<BluefiService> {
         context: context,
         builder: (context) => AlertDialog(
           backgroundColor: Theme.of(context).colorScheme.surface,
-          title: Text(
-            "Erro na Conexão Wifi",
-            style: TextStyle(color: Theme.of(context).colorScheme.primary),
-          ),
+          title: Text("Erro na Conexão Wifi", style: TextStyle(color: Theme.of(context).colorScheme.primary)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Por favor, verifique o nome da rede e a senha, e tente novamente.',
-                style: TextStyle(color: Theme.of(context).colorScheme.primary),
-              ),
-            ],
+            children: [Text('Por favor, verifique o nome da rede e a senha, e tente novamente.', style: TextStyle(color: Theme.of(context).colorScheme.primary))],
           ),
         ),
       );
@@ -220,10 +169,7 @@ class _BluefiService extends State<BluefiService> {
                 child: Container(
                   padding: EdgeInsets.all(10),
                   color: Theme.of(context).colorScheme.surface,
-                  child: Text(
-                    lbl_wifi_data_br,
-                    style: TextStyle(color: Theme.of(context).colorScheme.primary),
-                  ),
+                  child: Text(lbl_wifi_data_br, style: TextStyle(color: Theme.of(context).colorScheme.primary)),
                 ),
               ),
               Flexible(
@@ -234,21 +180,12 @@ class _BluefiService extends State<BluefiService> {
                     mainAxisSize: MainAxisSize.max,
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Flexible(
-                        child: Text(
-                          lbl_wifi_login_br,
-                          style: TextStyle(color: Theme.of(context).colorScheme.primary),
-                        ),
-                      ),
+                      Flexible(child: Text(lbl_wifi_login_br, style: TextStyle(color: Theme.of(context).colorScheme.primary))),
                       Expanded(
                         child: TextField(
                           controller: wifiLogin,
                           style: TextStyle(color: Theme.of(context).colorScheme.primary),
-                          decoration: InputDecoration(
-                            fillColor: Theme.of(context).colorScheme.surface,
-                            filled: true,
-                            border: OutlineInputBorder(),
-                          ),
+                          decoration: InputDecoration(fillColor: Theme.of(context).colorScheme.surface, filled: true, border: OutlineInputBorder()),
                         ),
                       ),
                     ],
@@ -263,22 +200,13 @@ class _BluefiService extends State<BluefiService> {
                     mainAxisSize: MainAxisSize.max,
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Flexible(
-                        child: Text(
-                          lbl_wifi_pass_br,
-                          style: TextStyle(color: Theme.of(context).colorScheme.primary),
-                        ),
-                      ),
+                      Flexible(child: Text(lbl_wifi_pass_br, style: TextStyle(color: Theme.of(context).colorScheme.primary))),
                       Expanded(
                         child: TextField(
                           controller: wifiPassword,
                           obscureText: true,
                           style: TextStyle(color: Theme.of(context).colorScheme.primary),
-                          decoration: InputDecoration(
-                            fillColor: Theme.of(context).colorScheme.surface,
-                            filled: true,
-                            border: OutlineInputBorder(),
-                          ),
+                          decoration: InputDecoration(fillColor: Theme.of(context).colorScheme.surface, filled: true, border: OutlineInputBorder()),
                         ),
                       ),
                     ],
@@ -294,20 +222,10 @@ class _BluefiService extends State<BluefiService> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       ElevatedButton.icon(
-                        icon: Icon(
-                          Icons.login,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                        label: Text(
-                          lbl_wifi_btn_connect_br,
-                          style: TextStyle(color: Theme.of(context).colorScheme.primary),
-                        ),
+                        icon: Icon(Icons.login, color: Theme.of(context).colorScheme.primary),
+                        label: Text(lbl_wifi_btn_connect_br, style: TextStyle(color: Theme.of(context).colorScheme.primary)),
                         onPressed: provisionWifi,
-                        style: ElevatedButton.styleFrom(
-                          foregroundColor: Theme.of(context).colorScheme.primary,
-                          backgroundColor: Theme.of(context).colorScheme.onSecondary,
-                          elevation: 4.0,
-                        ),
+                        style: ElevatedButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.primary, backgroundColor: Theme.of(context).colorScheme.onSecondary, elevation: 4.0),
                       ),
                     ],
                   ),

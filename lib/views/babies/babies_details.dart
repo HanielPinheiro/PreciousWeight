@@ -32,6 +32,33 @@ class _BabiesDetailsState extends State<BabiesDetails> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await _loadData();
+    });
+  }
+
+  Future<void> _loadData() async {
+    if (_isLoading) {
+      try {
+        _provider = context.read<BabyProvider>();
+        final baby = await _provider!.loadBabyWithQr(widget.id);
+        final weights = await baby.getWeights();
+
+        if (mounted) {
+          setState(() {
+            _currentBaby = baby;
+            _weights = weights;
+            _isLoading = false;
+          });
+        }
+      } catch (e) {
+        if (mounted)
+          setState(() {
+            _isLoading = false;
+          });
+        print('Error loading baby data: $e');
+      }
+    }
   }
 
   Widget _showFlex1() {
@@ -39,19 +66,24 @@ class _BabiesDetailsState extends State<BabiesDetails> {
       ElementsOfViews.SimpleButton(context, "Editar", () async {
         await Navigator.push(context, MaterialPageRoute(builder: (context) => BabiesEdit(baby: _currentBaby!)));
         final new_data = await _provider!.loadBabyWithQr(_currentBaby!.id!);
-        setState(() {_currentBaby = new_data!;});
+        setState(() {
+          _currentBaby = new_data;
+        });
       }),
       ElementsOfViews.SimpleButton(context, _currentBaby!.isActive! ? "Inativar Paciente" : "Ativar Paciente", () async {
         await _provider!.toggleBabyStatus(_currentBaby!);
         final new_data = await _provider!.getBabyById(_currentBaby!.id!);
-        setState(() {_currentBaby = new_data!;});
+        setState(() {
+          _currentBaby = new_data!;
+        });
       }, false, _currentBaby!.assignedScale != null),
       ElementsOfViews.SimpleButton(context, "${_currentBaby!.assignedScale != null ? 'Dados da Balança' : 'Associar Bebê à Balança'}", () {
         if (_currentBaby!.assignedScale != null) {
           var _scale = new ScaleModel(id: _currentBaby!.assignedScale!.id, hash: _currentBaby!.assignedScale!.hash, status: _currentBaby!.assignedScale!.status, babyId: _currentBaby!.id, assignedBaby: _currentBaby!);
-          Navigator.push(context, MaterialPageRoute(builder: (context) => ScaleDetails(scale: _scale)));
-        } else
-          Navigator.push(context, MaterialPageRoute(builder: (context) => ScaleBabies(baby: _currentBaby!)));
+          Navigator.push(context, MaterialPageRoute(builder: (context) => ScaleDetails(id: _scale.id)));
+        }
+        // else
+          // Navigator.push(context, MaterialPageRoute(builder: (context) => ScaleBabies(baby: _currentBaby!)));
       })
     ]);
   }
@@ -134,29 +166,7 @@ class _BabiesDetailsState extends State<BabiesDetails> {
     );
   }
 
-  Future<List<Widget>> _renderData(BuildContext context) async {
-    if (_isLoading) {
-      try {
-        _provider = context.read<BabyProvider>();
-        final baby = await _provider!.loadBabyWithQr(widget.id);
-        final weights = await baby.getWeights();
-
-        if (mounted) {
-          setState(() {
-            _currentBaby = baby;
-            _weights = weights;
-            _isLoading = false;
-          });
-        }
-      } catch (e) {
-        if (mounted)
-          setState(() {
-            _isLoading = false;
-          });
-        print('Error loading baby data: $e');
-      }
-    }
-
+  Future<List<Widget>> _renderData() async {
     return [
       Column(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
         Expanded(flex: 1, child: _showFlex1()),
@@ -169,7 +179,7 @@ class _BabiesDetailsState extends State<BabiesDetails> {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<List<Widget>>(
-      future: _renderData(context),
+      future: _renderData(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());

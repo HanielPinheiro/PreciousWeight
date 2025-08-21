@@ -24,6 +24,37 @@ class ElementsOfViews {
     );
   }
 
+  static showSimpleDialog(BuildContext context, String title, String content,{String? btnCancelLbl, String? btnConfirmLbl, }) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false, // user must tap a button
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(title),
+          content: Text(content),
+        );
+      },
+    );
+  }
+
+  static Future<bool> showConfirmDialog(BuildContext context, String title, String content,{String? btnCancelLbl, String? btnConfirmLbl, }) async {
+    final ans = await showDialog(
+      context: context,
+      barrierDismissible: false, // user must tap a button
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(title),
+          content: Text(content),
+          actions: [
+            SimpleButton(context, btnCancelLbl ?? "Cancelar", () {Navigator.of(context).pop(false);}),
+            SimpleButton(context, btnCancelLbl ?? "Confirmar", () {Navigator.of(context).pop(true);}),
+          ],
+        );
+      },
+    );
+    return ans;
+  }
+
   static Widget ScanButtonNoImage(BuildContext context, String label, VoidCallback onTap) {
     final theme = Theme.of(context);
     return Padding(
@@ -63,7 +94,7 @@ class ElementsOfViews {
             )));
   }
 
-  static Widget CardToText(BuildContext context, String label, {Color? bgColor, Color? fgColor}) {
+  static Widget CardToText(BuildContext context,  String label, {Color? bgColor, Color? fgColor, double? fontSize}) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 25),
       child: Card(
@@ -82,7 +113,7 @@ class ElementsOfViews {
           alignment: Alignment.center, // Centers the text inside the card
           child: Text(
             label,
-            style: amaranth_29.copyWith(color: fgColor ?? Theme.of(context).colorScheme.primary),
+            style: amaranth_29.copyWith(color: fgColor ?? Theme.of(context).colorScheme.primary, fontSize: fontSize ?? 29),
             textAlign: TextAlign.center, // Ensures text alignment
           ),
         ),

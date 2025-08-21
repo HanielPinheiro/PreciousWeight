@@ -2,8 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../repository/providers/scales_provider.dart';
+import '../../repository/services/bluefi_service.dart';
+import '../../repository/services/qrcode_service.dart';
 import '../../repository/widgets/elements.dart';
 import 'scales_details.dart';
+
+/**
+ * Use context.watch<T>() when the widget needs to rebuild upon provider changes.
+ * Use context.read<T>() when accessing provider data without triggering a rebuild (e.g., in event handlers).
+ * Use Consumer<T> for more granular control over widget rebuilds, affecting only a specific subtree.
+ * Prefer context.watch<T>() and context.read<T>() over Provider.of<T>(context) for modern Flutter development with the provider package.
+ */
 
 class ScalesPage extends StatefulWidget {
   @override
@@ -11,12 +20,11 @@ class ScalesPage extends StatefulWidget {
 }
 
 class _ScalesPageState extends State<ScalesPage> {
-  bool isEnabled = true;
+  int isEnabled = 1;
 
   void _changeState(bool b) {
-    setState(() {
-      isEnabled = b;
-    });
+    final v = b == true ? 1 : 0;
+    setState(() => isEnabled = v);
   }
 
   @override
@@ -25,22 +33,37 @@ class _ScalesPageState extends State<ScalesPage> {
 
     if (scalesProvider.isLoading) return const Center(child: CircularProgressIndicator());
 
-    final filteredScales = scalesProvider.scales.where((scale) => scale.status == (isEnabled ? 1 : 0)).toList();
+    final filteredScales = scalesProvider.scales.where((scale) => scale.status == isEnabled).toList();
 
-    return ListView(
-      children: [
-        Padding(padding: EdgeInsets.all(12.0)),
-        Row(mainAxisSize: MainAxisSize.max, crossAxisAlignment: CrossAxisAlignment.center, mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-          ElementsOfViews.SimpleButton(context, "Balanças Ativas", () => _changeState(true), isEnabled),
-          ElementsOfViews.SimpleButton(context, "Balanças Não Ativas", () => _changeState(false), !isEnabled),
-        ]),
-        Padding(padding: EdgeInsets.all(12.0)),
-        ...filteredScales.map((_scale) {
-          return ElementsOfViews.CardToList(context, Icons.scale, 'Código da Balança #${_scale.id}', 'Estado ${_scale.status == 1 ? 'Operante' : 'Inoperante'}', () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => ScaleDetails(scale: _scale)));
-          });
-        }).toList()
-      ],
+    return Scaffold(
+      body: ListView(
+        children: [
+          Padding(padding: EdgeInsets.all(12.0)),
+          Row(mainAxisSize: MainAxisSize.max, crossAxisAlignment: CrossAxisAlignment.center, mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+            ElementsOfViews.SimpleButton(context, "Balanças Ativas", () => _changeState(true), isEnabled == 1),
+            ElementsOfViews.SimpleButton(context, "Balanças Não Ativas", () => _changeState(false), isEnabled != 1),
+          ]),
+          Padding(padding: EdgeInsets.all(12.0)),
+          ...filteredScales.map((_scale) {
+            return ElementsOfViews.CardToList(context, Icons.scale, 'Código da Balança #${_scale.id}', 'Estado ${_scale.status == 1 ? 'Operante' : 'Inoperante'}', () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => ScaleDetails(id:_scale.id)));
+            });
+          }).toList()
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+          onPressed: () async {
+            final result = await Navigator.push(context, MaterialPageRoute(builder: (context) => ScanQrCode()));
+            if (result != null) {
+              String qrText = result['text'];
+              await Navigator.push(context, MaterialPageRoute(builder: (context) => BluefiService(qrText)));
+            }
+          },
+          child: Icon(Icons.add),
+          tooltip: 'Adicionar nova balança',
+          backgroundColor: Theme.of(context).primaryColor,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32.0), side: BorderSide(color: Theme.of(context).colorScheme.primary, width: 1.0, style: BorderStyle.solid))),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 }

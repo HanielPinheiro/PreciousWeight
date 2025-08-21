@@ -20,20 +20,34 @@ class ScaleModel {
   final String hash;
   final int status;
   final int? babyId;
-  final BabyModel? assignedBaby;
+  String? mac;
+  String? pop;
+  BabyModel? assignedBaby;
 
-  ScaleModel({required this.id, required this.hash, required this.status, required this.babyId, required this.assignedBaby});
+  ScaleModel({required this.id, required this.hash, required this.status, required this.babyId, this.assignedBaby, this.pop, this.mac});
 
-  static ScaleModel fromJson(Map<String, dynamic> json) => ScaleModel(id: json[scales_id], hash: json[scales_hash], status: json[scales_state], babyId: json[scales_baby_id], assignedBaby: json[scales_baby] != null ? babyFromJson(jsonEncode(json[scales_baby])) : null);
+  static ScaleModel fromJson(Map<String, dynamic> json) => ScaleModel(
+        id: json[scales_id],
+        hash: json[scales_hash],
+        status: json[scales_state],
+        babyId: json[scales_baby_id],
+      );
 
-  Map<String, dynamic> toJson() => {scales_id: id, scales_hash: hash, scales_state: status, scales_baby_id: babyId, scales_baby: babyId != null ? babyToJson(assignedBaby!) : null};
+  Map<String, dynamic> toJson() => {
+        scales_id: id,
+        scales_hash: hash,
+        scales_state: status,
+        scales_baby_id: babyId,
+      };
 
-  ScaleModel copyWith({int? id, String? hash, int? status, int? babyId, BabyModel? assignedBaby}) => ScaleModel(
+  ScaleModel copyWith({int? id, String? hash, int? status, int? babyId, BabyModel? assignedBaby, String? pop, String? mac}) => ScaleModel(
         id: id ?? this.id,
         hash: hash ?? this.hash,
         status: status ?? this.status,
         babyId: babyId ?? this.babyId,
         assignedBaby: assignedBaby ?? this.assignedBaby,
+        pop: pop ?? this.pop,
+        mac: mac ?? this.mac,
       );
 
   static ScaleOperation(int state) {
@@ -42,4 +56,14 @@ class ScaleModel {
     else
       return 'Não Operante';
   }
+
+  static ScaleModel copyFrom(ScaleModel other) => ScaleModel(
+        id: other.id,
+        hash: other.hash,
+        status: other.status,
+        babyId: other.babyId,
+        assignedBaby: other.assignedBaby,
+        pop: other.pop,
+        mac: other.mac,
+      );
 }

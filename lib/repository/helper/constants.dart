@@ -36,12 +36,13 @@ const api_baby_update = '/babies/update/{code}';
 
 const api_scale_list = '/scales/list';
 const api_scale_search = '/scales/search/{code}';
-const api_scale_new= '/scales/save/{hash}';
-const api_scale_update = '/scales/update/{code}';
+const api_scale_set= '/scales/set/{hash}';
 const api_scale_enable = '/scales/enable/{code}';
 const api_scale_disable = '/scales/disable/{code}';
-const api_scale_set = '/scales/baby/set';
-const api_scale_unset = '/scales/baby/unset';
+const api_scale_setBaby = '/scales/baby/set';
+const api_scale_unsetBaby = '/scales/baby/unset';
+const api_scaleData_get = '/scale_data/search/{hash}';
+const api_scaleData_getQr = '/scale_data/qr/{hash}';
 
 const api_user_login = '/login';
 const api_user_reset = '/reset_password';

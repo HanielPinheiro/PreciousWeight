@@ -17,6 +17,18 @@ class BabyProvider with ChangeNotifier {
     loadBabies();
   }
 
+  Future<void> loadBabies() async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      await _updateCache();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   Future<void> _updateCache() async {
     try {
       _babies = (await _api.listBabies())!;
@@ -34,20 +46,6 @@ class BabyProvider with ChangeNotifier {
     final index = _babies.indexWhere((b) => b.id == baby_id);
     return (index != -1) ? _babies[index]: null;
   }
-
-
-  Future<void> loadBabies() async {
-    _isLoading = true;
-    notifyListeners();
-
-    try {
-      await _updateCache();
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
 
   Future<BabyModel?> getBabyById(int id) async {
     try {
