@@ -1,17 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:precious_weight/models/baby.dart';
 import 'package:provider/provider.dart';
-
-import '../../repository/widgets/error_handler.dart';
-import 'scales_babies.dart';
 import '../../repository/design/button_styles.dart';
 import '../../repository/providers/scales_provider.dart';
 import '../../models/scales.dart';
 import '../../repository/design/fonts.dart';
 import '../../repository/helper/conversions.dart';
-import '../../repository/services/api_service.dart';
 import '../../repository/widgets/elements.dart';
 import '../../repository/providers/baby_provider.dart';
+import 'scales_babies.dart';
 
 /**
  * Use context.watch<T>() when the widget needs to rebuild upon provider changes.
@@ -38,54 +35,45 @@ class _ScaleDetailsState extends State<ScaleDetails> {
   @override
   void initState() {
     super.initState();
-    _loadData();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await _loadData();
+    });
   }
 
   Future<void> _loadData() async {
-    // ✅ Use ErrorHandler to wrap ALL API calls
-    await ErrorHandler.SafeApiCall(
-        context: context,
-        apiCall: () async {
-          final provider = context.read<ScalesProvider>();
-          final scale = await provider.getScaleById(widget.id);
+    final provider = context.read<ScalesProvider>();
+    final scale = await provider.getScaleById(context, widget.id);
 
-          BabyModel? baby;
-          if (scale != null && scale.babyId != null) {
-            baby = await context.read<BabyProvider>().getBabyById(scale.babyId!);
-          }
+    BabyModel? baby;
+    if (scale.babyId != null) {
+      baby = await context.read<BabyProvider>().getBabyById(context, scale.babyId!);
+    }
 
-          if (mounted) {
-            setState(() {
-              _currentScale = scale?.copyWith(assignedBaby: baby);
-              _scaleActive = scale?.status == 1;
-              _hasBaby = scale?.babyId != null;
-              _isLoading = false;
-            });
-          }
-        });
+    if (mounted) {
+      setState(() {
+        _currentScale = scale.copyWith(assignedBaby: baby);
+        _scaleActive = scale.status == 1;
+        _hasBaby = scale.babyId != null;
+        _isLoading = false;
+      });
+    }
   }
 
   Widget _showFlex1() {
     return Row(mainAxisSize: MainAxisSize.max, crossAxisAlignment: CrossAxisAlignment.center, mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
       ElementsOfViews.SimpleButton(context, _scaleActive ? "Inativar Balança" : "Ativar Balança", () async {
-        await ErrorHandler.SafeApiCall(
-            context: context,
-            apiCall: () async {
-              await context.read<ScalesProvider>().enableOrDisableScale(_currentScale!);
-            },
-            onSuccess: () async {
-              await _loadData();
-            });
-      }),
+        await context.read<ScalesProvider>().enableOrDisableScale(context, _currentScale!);
+        await _loadData();
+      }, false, _hasBaby),
       ElementsOfViews.SimpleButton(context, _hasBaby ? "Trocar Bebê de Balança" : "Associar Bebê à Balança", () async {
-        // final result = await Navigator.push(context, MaterialPageRoute(builder: (context) => ScaleBabies(scale: _currentScale)));
-        // if (result == true) await _loadData();
+        await Navigator.push(context, MaterialPageRoute(builder: (context) => ScaleBabies(scale: _currentScale)));
+        await _loadData();
       })
     ]);
   }
 
   _wrapText(BuildContext context, String text) {
-    return Expanded(child: FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.center, child: Text(text, style: TextStyle(fontSize: 18, color: Theme.of(context).colorScheme.primary), overflow: TextOverflow.ellipsis)));
+    return Expanded(child: FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.center, child: Text(text, style: TextStyle(fontSize: 20, color: Theme.of(context).colorScheme.primary), overflow: TextOverflow.ellipsis)));
   }
 
   Widget _showFlex2() {
@@ -102,19 +90,18 @@ class _ScaleDetailsState extends State<ScaleDetails> {
           decoration: MyDecorations().GetBoxDecoration(context),
           child: Row(
             children: [
-              Container(
-                child: _currentScale!.assignedBaby!.qrCodeImage!,
-                constraints: BoxConstraints(maxWidth: 120),
-              ),
+              if (_currentScale!.assignedBaby!.qrCodeImage != null)
+                Container(
+                  child: _currentScale!.assignedBaby!.qrCodeImage,
+                  constraints: BoxConstraints(maxWidth: 120),
+                ),
               SizedBox(width: 10),
               Expanded(
                   child: Column(mainAxisAlignment: MainAxisAlignment.spaceEvenly, crossAxisAlignment: CrossAxisAlignment.center, children: [
-                Text("Nome", style: displaySmall.copyWith(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold)),
-                _wrapText(context, _currentScale!.assignedBaby!.name!),
-                Text("Nome da mãe", style: displaySmall.copyWith(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold)),
-                _wrapText(context, _currentScale!.assignedBaby!.motherName!),
-                Text("Data de Nascimento", style: displaySmall.copyWith(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold)),
-                _wrapText(context, dateFormatter_objToDb.format(_currentScale!.assignedBaby!.birthDate!)),
+                Text("Bebê na Balança", style: displaySmall.copyWith(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 24)),
+                _wrapText(context, "Nome: ${_currentScale!.assignedBaby!.name!}"),
+                _wrapText(context, "Nome da mãe: ${_currentScale!.assignedBaby!.motherName!}"),
+                _wrapText(context, "Data de Nascimento: ${dateFormatter_objToDb.format(_currentScale!.assignedBaby!.birthDate!)}"),
               ])),
             ],
           ),
@@ -129,8 +116,7 @@ class _ScaleDetailsState extends State<ScaleDetails> {
       crossAxisAlignment: CrossAxisAlignment.center,
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        ElementsOfViews.CardToText(context, "Código ID: ${_currentScale!.id}"),
-        ElementsOfViews.CardToText(context, "MAC Address: ${_currentScale!.hash}"),
+        ElementsOfViews.CardToText(context, "Código Hash: \n${_currentScale!.hash}"),
         ElementsOfViews.CardToText(context, "Estado da balança: ${ScaleModel.ScaleOperation(_currentScale!.status)}"),
       ],
     );

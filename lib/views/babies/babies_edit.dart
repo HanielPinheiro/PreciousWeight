@@ -4,16 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
-import '../../api/baby_api.dart';
 import '../../models/baby.dart';
 import '../../repository/design/button_styles.dart';
 import '../../repository/design/fonts.dart';
 import '../../repository/helper/conversions.dart';
 import '../../repository/providers/baby_provider.dart';
-import '../../repository/services/api_service.dart';
 import '../../repository/services/qrcode_service.dart';
 import '../../repository/widgets/elements.dart';
-import '../../repository/widgets/error_handler.dart';
 
 class BabiesEdit extends StatefulWidget {
   const BabiesEdit({super.key, required this.baby});
@@ -43,21 +40,26 @@ class _BabiesEditState extends State<BabiesEdit> {
     _nameMotherController = TextEditingController(text: widget.baby.motherName ?? '');
     _weightTimeController = TextEditingController(text: widget.baby.weightHour != null ? widget.baby.weightHour! : 'Sem horário definido');
     _birthDateController = TextEditingController(text: widget.baby.birthDate != null ? dateFormatter_objToDb.format(widget.baby.birthDate!) : '');
-    _loadQrImg();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await _loadQrImg();
+    });
   }
 
   Future<void> _loadQrImg() async {
     if (widget.baby.qrCodeText != null) {
-      _currentText = widget.baby.qrCodeText;
+      setState(() {
+        _currentText = widget.baby.qrCodeText;
+      });
     }
 
     // Load QR image if baby has one
     if (widget.baby.hasQrCode && widget.baby.id != null) {
       try {
-        final qrData = await context.read<BabyProvider>().getQrCode(widget.baby.id!);
-        if (qrData != null) {
+        final baby = await context.read<BabyProvider>().getBabyById(context, widget.baby.id!);
+        if (baby.qrCodeImage != null) {
+          final qrCodeBytes = await imageToUint8List(baby.qrCodeImage!);
           setState(() {
-            _currentImage = qrData;
+            _currentImage = qrCodeBytes;
           });
         }
       } catch (e) {
@@ -116,15 +118,14 @@ class _BabiesEditState extends State<BabiesEdit> {
           decoration: MyDecorations().GetBoxDecoration(context),
           child: Column(
             children: [
-              // Show current image or placeholder
-              if (_currentImage != null && _currentImage!.isNotEmpty) // Show scanned text if available
-                Container(constraints: BoxConstraints(maxHeight: 120, maxWidth: 120), child: _currentImage != null && _currentImage!.length > 0 ? Image.memory(_currentImage!) : Placeholder(color: Colors.grey, strokeWidth: 2.0, fallbackWidth: 120, fallbackHeight: 120)),
-
-              SizedBox(height: 10),
-
-              if (_currentText != null && _currentText!.isNotEmpty) // Show scanned text if available
-                _qrIdData(),
-
+              // Show current image
+              if (_currentImage != null) // Show scanned text if available
+                Container(constraints: BoxConstraints(maxHeight: 120, maxWidth: 120), child: Image.memory(_currentImage!)),
+              // Show scanned text if available
+              if (_currentText != null && _currentText!.isNotEmpty) _qrIdData(),
+              //Show  placeholder
+              if (_currentImage == null && _currentText == null) // Show placeholder
+                Placeholder(color: Colors.grey, strokeWidth: 2.0, fallbackWidth: 120, fallbackHeight: 120),
               Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
                 ElementsOfViews.SimpleButton(context, "Alterar", _showImageSourceDialog),
               ]),
@@ -227,11 +228,11 @@ class _BabiesEditState extends State<BabiesEdit> {
                             weightHour: _weightTimeController.text,
                           );
 
-                          await ErrorHandler.SafeApiCall(context: context, apiCall: () async => await _babyProvider.updateBaby(newBaby));
+                          await _babyProvider.updateBaby(context, newBaby);
 
                           if (_currentText == null && _currentImage != null)
-                            await ErrorHandler.SafeApiCall(context: context, apiCall: () async => await _babyProvider.updateQrCode(widget.baby.id!, _currentImage));
-                          else if (_currentText != null && _currentImage == null) await ErrorHandler.SafeApiCall(context: context, apiCall: () async => await _babyProvider.updateQrCode(widget.baby.id!, null));
+                            await _babyProvider.updateQrCode(context, widget.baby.id!, _currentImage);
+                          else if (_currentText != null && _currentImage == null) await _babyProvider.updateQrCode(context, widget.baby.id!, null);
                           await showDialog(context: context, builder: (context) => AlertDialog(content: Text("Dados do Bebê [${widget.baby.id}] atualizados com sucesso!")));
                           Navigator.pop(context);
                         } catch (e) {

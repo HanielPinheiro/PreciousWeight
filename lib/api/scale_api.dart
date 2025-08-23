@@ -16,9 +16,10 @@ class ScaleApi {
     }
   }
 
-  Future<ScaleModel?> searchScale(String scale_code) async {
+  Future<ScaleModel?> getScaleFromId(String idLikeString) async {
     try {
-      return scaleFromJson(await ApiService.apiConn("${address_api}${api_scale_search.replaceAll(api_pattern_code, scale_code)}"));
+      final _header = {'Content-Type': 'application/json', 'Authorization': 'Bearer ${UserApi().token!.accessToken}'};
+      return scaleFromJson(await ApiService.apiConn("${address_api}${api_scale_search.replaceAll(api_pattern_code, idLikeString)}", header: _header));
     } catch (error) {
       throw error;
     }

@@ -1,18 +1,15 @@
 import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
-import '../../api/baby_api.dart';
+
 import '../../models/baby.dart';
 import '../../repository/design/button_styles.dart';
 import '../../repository/design/fonts.dart';
 import '../../repository/helper/conversions.dart';
 import '../../repository/providers/baby_provider.dart';
-import '../../repository/services/api_service.dart';
 import '../../repository/services/qrcode_service.dart';
 import '../../repository/widgets/elements.dart';
-import '../../repository/widgets/error_handler.dart';
 
 class BabiesRegister extends StatefulWidget {
   const BabiesRegister({super.key, required this.scannedImage, required this.scannedText});
@@ -208,11 +205,11 @@ class _BabiesRegisterState extends State<BabiesRegister> {
                           );
 
                           // First add the baby
-                          final addedBaby = await ErrorHandler.SafeApiCall(context: context, apiCall: () async => await _babyProvider.addBaby(newBaby));
+                          final addedBaby = await _babyProvider.addBaby(context, newBaby);
 
                           // Update QR code if needed
                           if (widget.scannedText == null && widget.scannedImage != null) {
-                            await ErrorHandler.SafeApiCall(context: context, apiCall: () async => await _babyProvider.updateQrCode(addedBaby.id!, widget.scannedImage));
+                            await _babyProvider.updateQrCode(context, addedBaby.id!, widget.scannedImage);
                           }
 
                           // Show success message

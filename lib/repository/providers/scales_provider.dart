@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../api/baby_api.dart';
 import '../../models/scales.dart';
 import '../../api/scale_api.dart';
+import '../services/api_service.dart';
 
 class ScalesProvider with ChangeNotifier {
   final _scaleApi = new ScaleApi();
@@ -21,23 +22,27 @@ class ScalesProvider with ChangeNotifier {
   }
 
   Future<void> _updateCache() async {
-    _isLoading = false;
-    notifyListeners();
+    try {
+      _isLoading = true;
+      notifyListeners();
 
-    _scales = (await _scaleApi.listScales())!;
-    _scales.forEach((p) async {
-      await _populatesScaleModelWithExtraData(p);
-    });
-
-    _isLoading = true;
-    notifyListeners();
+      _scales = (await _scaleApi.listScales())!;
+      _scales.forEach((p) async {
+        await _populatesScaleModelWithExtraData(p);
+      });
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 
   Future<void> _populatesScaleModelWithExtraData(ScaleModel newScale) async {
-    final data = await _scaleApi.getScaleDataFromHash(newScale.hash);
-    newScale.mac = data[0];
-    newScale.pop = data[1];
-    if (newScale.babyId != null) newScale.assignedBaby = await _babyApi.searchBaby(newScale.babyId!.toString());
+    try {
+      final data = await _scaleApi.getScaleDataFromHash(newScale.hash);
+      newScale.mac = data[0];
+      newScale.pop = data[1];
+      if (newScale.babyId != null) newScale.assignedBaby = await _babyApi.searchBaby(newScale.babyId!.toString());
+    } finally {}
   }
 
   int _getIndexFromList(int scale_id) {
@@ -54,56 +59,126 @@ class ScalesProvider with ChangeNotifier {
     _scales.add(scale);
   }
 
-  ScaleModel? _scaleInCacheFromHash(String hash) {
-    final index = _scales.indexWhere((b) => b.hash == hash);
-    return (index != -1) ? _scales[index] : null;
-  }
-
   Future<void> loadScales() async {
     await _updateCache();
   }
 
-  Future<ScaleModel?> getScaleById(int scale_id) async {
-    ScaleModel? scale = null;
+  Future<ScaleModel> getScaleById(BuildContext context, int scale_id) async {
+    try {
+      ScaleModel? scale = null;
 
-    scale = _scaleInCache(scale_id);
-    if (scale == null) {
-      await _updateCache();
       scale = _scaleInCache(scale_id);
-      if (scale == null) throw new Exception("Scale not found");
+      if (scale == null) {
+        await SafeApi.call(
+            context: context,
+            apiCall: () async {
+              await _updateCache();
+            });
+        scale = _scaleInCache(scale_id);
+        if (scale == null) throw new Exception("Scale not found");
+      }
+
+      return scale;
+    } catch (e) {
+      throw e;
+    } finally {
+      notifyListeners();
     }
-
-    notifyListeners();
-    return scale;
   }
 
-  Future<ScaleModel?> setNewScale(String hash) async {
-    final scale = await _scaleApi.setNewScale(hash);
-    await _setNewScaleToCache(scale!);
-    notifyListeners();
-    return scale;
+  Future<ScaleModel?> setNewScale(BuildContext context, String hash) async {
+    try {
+      final scale = await SafeApi.call(
+        context: context,
+        apiCall: () async {
+          await _scaleApi.setNewScale(hash);
+        },
+      );
+      if (scale == null) throw new Exception("Can't add new scale");
+      await _setNewScaleToCache(scale!);
+      return scale;
+    } catch (e) {
+      return null;
+    } finally {
+      notifyListeners();
+    }
   }
 
-  Future<void> setOrUnsetBaby(int scale_id, {String? baby_code}) async {
-    bool result = await _scaleApi.setOrUnsetBaby(scale_id.toString(), baby_code: baby_code);
-    if (!result) throw Exception("Erro ao executar setOrUnsetScale");
-    final updatedScale = await getScaleById(scale_id);
-    final index = _getIndexFromList(scale_id);
-    if ((updatedScale!.babyId == null || updatedScale.babyId!.toString() != baby_code) && index != -1) _scales[index] = updatedScale.copyWith(babyId: int.tryParse(baby_code ?? ''));
-    notifyListeners();
+  Future<void> setOrUnsetBaby(BuildContext context, int scale_id, {String? baby_code}) async {
+    try {
+      await SafeApi.call(
+        context: context,
+        apiCall: () async {
+          await _scaleApi.setOrUnsetBaby(scale_id.toString(), baby_code: baby_code);
+        },
+      );
+      final updatedScale = await getScaleById(context, scale_id);
+      final index = _getIndexFromList(scale_id);
+      if (updatedScale.babyId != null && index != -1) {
+        final s = new ScaleModel(
+          babyId: null,
+          assignedBaby: null,
+          id: updatedScale.id,
+          hash: updatedScale.hash,
+          status: updatedScale.status,
+          pop: updatedScale.pop,
+          mac: updatedScale.mac,
+        );
+        _scales[index] = s;
+      } else {
+        final baby_id = int.parse(baby_code!);
+        final bb = await _babyApi.searchBaby(baby_code);
+        final s = new ScaleModel(
+          babyId: baby_id,
+          assignedBaby: bb,
+          id: updatedScale.id,
+          hash: updatedScale.hash,
+          status: updatedScale.status,
+          pop: updatedScale.pop,
+          mac: updatedScale.mac,
+        );
+        _scales[index] = s;
+      }
+    } catch (e) {
+      return null;
+    } finally {
+      notifyListeners();
+    }
   }
 
-  Future<void> enableOrDisableScale(ScaleModel scale) async {
-    final isActive = scale.status == 1;
-    await _scaleApi.enableOrDisableScale(scale.id.toString(), !isActive);
-    final idx = _getIndexFromList(scale.id);
-    if (idx != -1) _scales[idx] = scale.copyWith(status: !isActive ? 1 : 0);
-    notifyListeners();
+  Future<void> enableOrDisableScale(BuildContext context, ScaleModel scale) async {
+    try {
+      final isActive = scale.status == 1;
+      await SafeApi.call(
+        context: context,
+        apiCall: () async {
+          await _scaleApi.enableOrDisableScale(scale.id.toString(), !isActive);
+        },
+      );
+      final idx = _getIndexFromList(scale.id);
+      if (idx != -1) {
+        _scales[idx] = scale.copyWith(status: !isActive ? 1 : 0);
+      }
+    } catch (e) {
+      return null;
+    } finally {
+      notifyListeners();
+    }
   }
 
-  Future<Uint8List?> getScaleQrFromHash(String hash) async {
-    final data = await _scaleApi.getScaleQrFromHash(hash);
-    notifyListeners();
-    return data;
+  Future<Uint8List?> getScaleQrFromHash(BuildContext context, String hash) async {
+    try {
+      final data = await SafeApi.call(
+        context: context,
+        apiCall: () async {
+          await _scaleApi.getScaleQrFromHash(hash);
+        },
+      );
+      return data;
+    } catch (e) {
+      return null;
+    } finally {
+      notifyListeners();
+    }
   }
 }
