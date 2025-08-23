@@ -1,0 +1,341 @@
+#include "process_mqtt_data.h"
+
+static char *ROTULO_LOCAL = "BABY_CONTROL";
+static bool has_baby = false;
+
+char baby_id[12] = {0};
+SemaphoreHandle_t has_baby_mutex = NULL;
+horario_pesagem_t weight_times[MAX_WEIGHT_TIMES];
+uint8_t number_of_weight_times = 0;
+int calibration_steps = 0;
+
+void update_has_baby_flag(bool state)
+{ // Restringe o acesso à flag para evitar concorrencia
+    if (has_baby_mutex == NULL)
+        has_baby = state;
+    else
+    {
+        while (true)
+        {
+            if (xSemaphoreTake(has_baby_mutex, pdMS_TO_TICKS(100)) == pdTRUE)
+            {
+                has_baby = state;
+                xSemaphoreGive(has_baby_mutex);
+                break;
+            }
+            vTaskDelay(pdMS_TO_TICKS(300));
+        }
+    }
+}
+
+bool scale_has_baby()
+{ // Restringe o acesso à flag para evitar concorrencia
+    bool result = false;
+    if (has_baby_mutex == NULL)
+        result = has_baby;
+    else
+    {
+        while (true)
+        {
+            if (xSemaphoreTake(has_baby_mutex, pdMS_TO_TICKS(100)) == pdTRUE)
+            {
+                result = has_baby;
+                xSemaphoreGive(has_baby_mutex);
+                break;
+            }
+            vTaskDelay(pdMS_TO_TICKS(300));
+        }
+    }
+    return result;
+}
+
+static int extract_number(const char *str)
+{
+    char *endptr;
+    int num = (int)strtol(str, &endptr, 10);
+
+    if (num > 59)
+        num = 59;
+    else if (num < 0)
+        num = 0;
+
+    return num;
+}
+
+static esp_err_t clear_routine()
+{ // Limpa dados atuais
+    memset(baby_id, 0, sizeof(baby_id));
+    memset(weight_times, 0, sizeof(weight_times));
+    number_of_weight_times = 0;
+    update_has_baby_flag(false);
+    sdcard_clear_file(BABY_HOURS_FILE);
+    stop_schedule_timer();
+    return ESP_OK;
+}
+
+static esp_err_t run_routine()
+{
+    log_entry_t entry;
+    entry.path = BABY_HOURS_FILE;
+
+    int offset = 0;
+    offset += snprintf(entry.message, sizeof(entry.message), "baby_id:%s;\n", baby_id);
+    for (int i = 0; i < number_of_weight_times && offset < sizeof(entry.message); i++)
+        offset += snprintf(entry.message + offset, sizeof(entry.message) - offset, "weight_time:%02d:%02d;\n", weight_times[i].hour, weight_times[i].minutes);
+
+    ESP_LOGW(ROTULO_LOCAL, "Vai salvar no SD: %s", entry.message);
+
+    while (1)
+    {
+        if (xQueueSend(sdcard_log_queue, &entry, pdMS_TO_TICKS(100)) == pdTRUE)
+            break;
+
+        vTaskDelay(pdMS_TO_TICKS(500));
+    }
+
+    if (scale_has_baby() && number_of_weight_times > 0)
+        schedule_next_measure();
+
+    return ESP_OK;
+}
+
+static esp_err_t baby_routine(const char *data)
+{
+    size_t id_len = strlen(data);
+    if (id_len > 0 && id_len < sizeof(baby_id))
+    {
+        if (clear_routine() != ESP_OK)
+            return ESP_FAIL;
+
+        strncpy(baby_id, data, sizeof(baby_id) - 1);
+        baby_id[sizeof(baby_id) - 1] = '\0'; // Garante terminação nula
+        update_has_baby_flag(true);
+
+        ESP_LOGW(ROTULO_LOCAL, "BABY_ID: %s", baby_id);
+        return ESP_OK;
+    }
+    return ESP_FAIL;
+}
+
+static esp_err_t weight_times_routine(const char *data)
+{
+    horario_pesagem_t weight;
+    // Verifica se a string tem formato HH:MM (ex: "08:00")
+    if (strlen(data) >= 5 && data[2] == ':')
+    {
+        weight.hour = (uint8_t)extract_number(&data[0]);    // HH
+        weight.minutes = (uint8_t)extract_number(&data[3]); // MM
+        ESP_LOGW(ROTULO_LOCAL, "Horário: %02d:%02d", weight.hour, weight.minutes);
+
+        weight_times[number_of_weight_times] = weight;
+        ESP_LOGW(ROTULO_LOCAL, "[%d] Horário: %02d:%02d", number_of_weight_times, weight_times[number_of_weight_times].hour, weight_times[number_of_weight_times].minutes);
+        number_of_weight_times++;
+
+        return ESP_OK;
+    }
+    return ESP_FAIL;
+}
+
+static esp_err_t measure_routine()
+{
+    weight_t weight = measure_weight();
+    char m[50];
+    snprintf(m, 50, "%s;Raw{%ld};Grams{%.2f}", RECEIVED_MEASURE, weight.raw_value, weight.value);
+    sdcard_log(LOG_INFO, m, ROTULO_LOCAL);
+    while (true)
+    {
+        if (mqtt_publish(MQTT_TOPIC_PUB_WEIGHT, m, 1))
+            break;
+        vTaskDelay(pdMS_TO_TICKS(300));
+    }
+    return ESP_OK;
+}
+
+static esp_err_t calibrate_routine(const char *data)
+{
+    /*
+     Rotina fabricante:
+     colocar peso conhecido, calibrar salvar scale 'de fábrica' no authdb e aqui no codigo no array em bios.c
+
+     Rotina do cliente (hospital):
+     Se no futuro leitura da balança for ruim:
+     - Realizar tara.
+     */
+    if (calibration_steps == 0)
+    {
+        for (int i = 0; i < SENSORS_COUNT; i++)
+            hx711_tare(&sensors[i], WEIGHT_NUMBER_TO_TARE);
+        while (true)
+        {
+            if (mqtt_publish(MQTT_TOPIC_PUB_WEIGHT, RECEIVED_CALIBRATE, 2))
+            {
+                sdcard_log(LOG_INFO, "Tara concluida pra todos os sensores", ROTULO_LOCAL);
+                break;
+            }
+            vTaskDelay(pdMS_TO_TICKS(300));
+        }
+        calibration_steps++;
+    }
+
+    /**
+     - Colocar peso bebe na balança e digitar peso dele com 2 casas decimais.
+     - Substituir scale dos sensores
+     - Realizar nova leitura de peso e pedir confirmação
+     */
+    if (calibration_steps == 1)
+    {
+        int size = strlen(data);
+        if (size > 2 && size <= 8)
+        {
+
+            char *endptr;
+            float known_weight_grams = strtof(data, &endptr);
+
+            if (endptr == data || *endptr != '\0' || known_weight_grams <= 0) // Validate the conversion
+                return ESP_ERR_INVALID_ARG;
+
+            char m[100];
+            snprintf(m, 100, "Novo peso de referencia: {%.2f}", known_weight_grams);
+            scale_in_grams = known_weight_grams;
+            sdcard_log(LOG_INFO, m, ROTULO_LOCAL);
+
+            for (int i = 0; i < SENSORS_COUNT; i++)
+            {
+                sensors[i].raw_scale = hx711_read_average(&sensors[i], WEIGHT_NUMBER_TO_AVERAGE);
+                snprintf(m, 100, "Novo valor bruto de referencia - Sensor[%d]:%ld", i, sensors[i].raw_scale);
+                sdcard_log(LOG_INFO, m, ROTULO_LOCAL);
+            }
+
+            while (true)
+            {
+                if (mqtt_publish(MQTT_TOPIC_PUB_WEIGHT, RECEIVED_CALIBRATE, 2))
+                    break;
+                vTaskDelay(pdMS_TO_TICKS(300));
+            }
+            measure_routine();
+            calibration_steps++;
+        }
+    }
+
+    /*
+        - Se confirmar (calibration_steps > 1), ja atualizei o db, se não, recomeça
+         No AuthDb colocar campo de data  do ajuste do scale,
+        estará em branco quando for ajuste 'de fabrica',
+        se não estiver em branco, indica que houve 'ajuste' do peso naquela data e os valores de 'scale_in_grams' não são os de fábrica.
+*/
+    if (calibration_steps > 1)
+    {
+        calibration_steps = 0;
+    }
+
+    /*Criar telas no app,
+      Endpoint na api
+      Comandos no mqtt
+    Fluxo no Código esp32
+    */
+    return ESP_OK;
+}
+
+static esp_err_t wifi_routine()
+{
+    // 1. Stop MQTT client first (if you have access to it)
+    sdcard_log(LOG_WARN, "Desligando MQTT", ROTULO_LOCAL);
+    esp_mqtt_client_handle_t client = mqtt_get_client_handle();
+    if (client)
+    {
+        esp_mqtt_client_stop(client);
+        esp_mqtt_client_destroy(client);
+        client = NULL;
+    }
+    sdcard_log(LOG_WARN, "MQTT desligado, desligando wifi", ROTULO_LOCAL);
+    full_wifi_reset();
+    return ESP_OK;
+}
+
+static const CommandHandler handlers[] = {
+    {RECEIVED_BABY, baby_routine, "Baby ID recebido", "ERRO AO LER BABY ID"},
+    {RECEIVED_TIMES, weight_times_routine, "Horario recebido", "ERRO AO LER WEIGHTS"},
+    {RECEIVED_RUN, run_routine, "Bebe e horarios salvos", "ERRO AO LER RUN"},
+    {RECEIVED_CLEAR, clear_routine, "Bebe e horarios apagados", "ERRO AO LER CLEAR"},
+    {RECEIVED_MEASURE, measure_routine, "Medida realizada", "ERRO AO LER MEASURE"},
+    {RECEIVED_CALIBRATE, calibrate_routine, "Calibração realizada", "ERRO AO LER CALIBRATE"},
+    {RECEIVED_WIFI, wifi_routine, "Reset de WiFi realizado", "ERRO AO LER WIFI"},
+};
+
+void process_mqtt_data(const char *mqtt_data)
+{
+    if (has_baby_mutex == NULL)
+        has_baby_mutex = xSemaphoreCreateMutex();
+
+    int handlers_size = sizeof(handlers) / sizeof(handlers[0]);
+    for (int i = 0; i < handlers_size; i++)
+    {
+        const CommandHandler *h = &handlers[i];
+        size_t len = strlen(h->prefix);
+        if (strncmp(mqtt_data, h->prefix, len) == 0)
+        {
+            if (calibration_steps > 0 && !strcmp(h->prefix, RECEIVED_CALIBRATE))
+            {
+                calibration_steps = 0;
+            }
+
+            if (!scale_has_baby() && strcmp(h->prefix, RECEIVED_BABY))
+            {
+                mqtt_publish(MQTT_TOPIC_PUB_WEIGHT, "ERROR_BABY_NOT_INFORMED", 1);
+                return;
+            }
+
+            if (number_of_weight_times >= MAX_WEIGHT_TIMES && strcmp(h->prefix, RECEIVED_TIMES))
+            {
+                mqtt_publish(MQTT_TOPIC_PUB_WEIGHT, "ERROR_MAX_WEIGHT_TIMES_ACHIEVED", 1);
+                return;
+            }
+
+            const char *SUCCESS_MSG = "1";
+            const char *ERROR_MSG = "0";
+            const char *data = mqtt_data + len;
+            esp_err_t result = h->handler(data);
+            if (result == ESP_OK)
+            {
+                mqtt_publish(MQTT_TOPIC_PUB_WEIGHT, SUCCESS_MSG, 1);
+                if (strstr(h->log_success, "%s"))
+                    ESP_LOGI(ROTULO_LOCAL, "%s - %s", h->log_success, baby_id);
+                else
+                    ESP_LOGI(ROTULO_LOCAL, "%s", h->log_success);
+            }
+            else
+            {
+                sdcard_log(LOG_ERROR, h->log_error, ROTULO_LOCAL);
+                mqtt_publish(MQTT_TOPIC_PUB_WEIGHT, ERROR_MSG, 1);
+            }
+            return;
+        }
+    }
+}
+
+char *get_reset_reason_string(esp_reset_reason_t reason)
+{
+    switch (reason)
+    {
+    case ESP_RST_POWERON:
+        return "Razao do último reset: Power-On Reset";
+    case ESP_RST_SW:
+        return "Razao do último reset: Software Reset (esp_restart)";
+    case ESP_RST_PANIC:
+        return "Razao do último reset: Panic/Crash Reset";
+    case ESP_RST_INT_WDT:
+        return "Razao do último reset: Interrupt Watchdog Reset";
+    case ESP_RST_TASK_WDT:
+        return "Razao do ultimo reset: Task Watchdog Reset";
+    case ESP_RST_WDT:
+        return "Razao do ultimo reset: Other Watchdog Reset";
+    case ESP_RST_DEEPSLEEP:
+        return "Razao do ultimo reset: Deep Sleep Wakeup";
+    case ESP_RST_BROWNOUT:
+        return "Razao do ultimo reset: Brownout Reset";
+    case ESP_RST_SDIO:
+        return "Razao do ultimo reset: SDIO Reset";
+    default:
+        return "Razao do ultimo reset: Unknown Reset Reason";
+    }
+}

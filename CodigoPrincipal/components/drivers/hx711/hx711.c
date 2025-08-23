@@ -1,22 +1,21 @@
 #include "hx711.h"
 
-// static const char *ROTULO_LOCAL = "HX711";
-
+static const char *ROTULO_LOCAL = "HX711 DRIVER";
+float scale_in_grams = 1000.0;
 /**
  * Esp32 PIN SCK = Output, HX711 PIN SCK = INPUT (Clock comes from uC)
  * Esp32 PIN DOUT = INPUT, HX711 PIN DOUT = Output (Data processed from sensors)
  */
 
-esp_err_t hx711_init(hx711_t *dev, gpio_num_t dout, gpio_num_t sck, hx711_mode_t mode)
+esp_err_t hx711_init(hx711_t *sensor, gpio_num_t dout, gpio_num_t sck, hx711_mode_t mode)
 {
-    if (!dev)
+    if (!sensor)
         return ESP_ERR_INVALID_ARG;
 
-    dev->dout_pin = dout;
-    dev->sck_pin = sck;
-    dev->clock_cycles_from_mode = (int)mode;
-    dev->offset = 0;
-    dev->scale = 1.0f;
+    sensor->dout_pin = dout;
+    sensor->sck_pin = sck;
+    sensor->clock_cycles_from_mode = (int)mode;
+    sensor->offset = 0;
 
     // Configure DOUT as input
     gpio_config_t dout_conf = {
@@ -39,59 +38,120 @@ esp_err_t hx711_init(hx711_t *dev, gpio_num_t dout, gpio_num_t sck, hx711_mode_t
     ESP_ERROR_CHECK(gpio_config(&sck_conf));
     gpio_set_level(sck, 0); // idle low
 
-    // Dummy read to clear/reset
-    hx711_read_raw(dev);
+    return ESP_OK;
+}
+
+#pragma region Control Power State
+
+bool hx711_is_ready(hx711_t *sensor)
+{
+    return gpio_get_level(sensor->dout_pin) == 0;
+}
+
+esp_err_t hx711_wait_ready(hx711_t *sensor, uint32_t timeout_ms)
+{
+    TickType_t start_time = xTaskGetTickCount();
+
+    while (!hx711_is_ready(sensor))
+    {
+        if ((xTaskGetTickCount() - start_time) * portTICK_PERIOD_MS > timeout_ms)
+            return ESP_ERR_TIMEOUT;
+
+        vTaskDelay(pdMS_TO_TICKS(1));
+    }
 
     return ESP_OK;
 }
 
-int32_t hx711_read_raw(hx711_t *dev)
+esp_err_t hx711_power_on(hx711_t *sensor)
 {
-    /**
-    * Por que removi timeout_ticks?
-      Motivo: Essa mudança foi didática. Na prática:
-        Seu uso original (while (gpio_get_level() == 1)) pode travar o sistema se o sensor falhar.
-        Em dispositivos médicos, timeouts fixos são perigosos (ex.: se o bebê estiver na balança e o sensor travar, o sistema deve continuar operando).
-        Posteriormente, vamos substituir por filas (queues) e timeouts supervisionados pelo system manager.
-    */
+    gpio_set_level(sensor->sck_pin, 0);
+    vTaskDelay(pdMS_TO_TICKS(5));
+    if (!hx711_is_ready(sensor))
+    {
+        gpio_set_level(sensor->dout_pin, 0);
+        vTaskDelay(pdMS_TO_TICKS(5));
+        if (hx711_is_ready(sensor) == false)
+            return ESP_ERR_NOT_FINISHED;
+    }
+    return ESP_OK;
+}
+
+esp_err_t hx711_power_down(hx711_t *sensor)
+{
+    for (int i = 0; i < SENSORS_COUNT; i++)
+    {
+        gpio_set_level(sensor->sck_pin, 0);
+        vTaskDelay(pdMS_TO_TICKS(1));
+
+        gpio_set_level(sensor->sck_pin, 1);
+        vTaskDelay(pdMS_TO_TICKS(1));
+
+        if (hx711_is_ready(sensor) == true)
+            return ESP_ERR_NOT_FINISHED;
+    }
+    return ESP_OK;
+}
+
+#pragma endregion
+
+int32_t hx711_read_raw(hx711_t *sensor)
+{
+    // esp_err_t ret = hx711_wait_ready(sensor, 1000);
+    // if (ret != ESP_OK)
+    // {
+    //     ESP_LOGE(ROTULO_LOCAL, "HX711 timeout: %s", esp_err_to_name(ret));
+    //     return HX711_INVALID_READING;
+    // }
 
     int32_t data = 0;
-    for (int i = 0; i < dev->clock_cycles_from_mode; i++)
+    for (int i = 0; i < sensor->clock_cycles_from_mode; i++)
     {
-        gpio_set_level(dev->sck_pin, 1);
+        gpio_set_level(sensor->sck_pin, 1);
         esp_rom_delay_us(1);
 
         if (i < 24)
         {
             data = data << 1;
-            if (gpio_get_level(dev->dout_pin))
+            if (gpio_get_level(sensor->dout_pin))
                 data++;
         }
-
-        gpio_set_level(dev->sck_pin, 0);
+        gpio_set_level(sensor->sck_pin, 0);
         esp_rom_delay_us(1);
     }
 
     // Convert from 24-bit signed to 32-bit signed
-    if (data & 0x800000)    
+    if (data & 0x800000)
         data |= 0xFF000000;
-    
 
     return data;
 }
 
-float hx711_read_weight(hx711_t *dev)
+int32_t hx711_read_average(hx711_t *sensor, uint8_t samples)
 {
-    return (hx711_read_raw(dev) - dev->offset) * dev->scale;
+    int32_t mean = 0;
+    int8_t count = 0;
+    while (count < samples)
+    {
+        int32_t reading = hx711_read_raw(sensor);
+        int32_t ten_percent = mean / 10;
+
+        if (count == 0 || (reading >= mean - ten_percent && reading <= mean + ten_percent))
+        {
+            count++;
+            mean += (reading - mean) / count;
+            // ESP_LOGI(ROTULO_LOCAL, "Sample %d: %ld, Cumulative: %ld", count, reading, mean);
+        }
+        // else
+        //     ESP_LOGI(ROTULO_LOCAL, "Sample rejected: %ld", reading);
+
+        vTaskDelay(pdMS_TO_TICKS(50));
+    }
+    return mean;
 }
 
-void hx711_tare(hx711_t *dev, uint8_t samples)
+void hx711_tare(hx711_t *sensor, uint8_t samples)
 {
-    int32_t sum = 0;
-    for (uint8_t i = 0; i < samples; i++)
-    {
-        sum += hx711_read_raw(dev);
-        vTaskDelay(pdMS_TO_TICKS(10));
-    }
-    dev->offset = sum / samples;
+    sensor->offset = hx711_read_average(sensor, samples);
+    ESP_LOGI(ROTULO_LOCAL, "Final tare: Samples=%d, Offset=%ld", samples, sensor->offset);
 }

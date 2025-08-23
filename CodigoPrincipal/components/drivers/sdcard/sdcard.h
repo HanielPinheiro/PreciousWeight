@@ -9,10 +9,10 @@
 #include "sys/stat.h"
 #include "string.h"
 #include "errno.h"
-#include "config_system.h"
+#include "process_mqtt_data.h"
 #include "sdcard_task.h"
 
-#define MODO_DEBUG true
+
 #define MORE_LOGS false
 #define MAX_LOG_LENGTH 160
 
@@ -27,12 +27,7 @@ typedef struct
     char message[MAX_LOG_LENGTH];
 } log_entry_t;
 
-typedef enum
-{
-    LOG_INFO = 0,
-    LOG_WARN = 1,
-    LOG_ERROR = 2
-} log_type_t;
+
 
 extern sdmmc_card_t *sdcard;
 

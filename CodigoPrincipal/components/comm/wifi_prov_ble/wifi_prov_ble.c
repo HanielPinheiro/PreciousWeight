@@ -255,6 +255,11 @@ static esp_err_t custom_prov_data_handler(uint32_t session_id, const uint8_t *in
 
     return ESP_OK;
 }
+static void reset_wifi()
+{
+    ESP_ERROR_CHECK(nvs_flash_erase()); /* NVS partition was truncated and needs to be erased */
+    ESP_ERROR_CHECK(nvs_flash_init());  /* Retry nvs_flash_init */
+}
 
 static void wifi_init_all()
 {
@@ -292,10 +297,24 @@ static void start_wifi_sta() // Conectar usando dados salvos(modo STA)
     xEventGroupWaitBits(wifi_event_group, BIT0, true, true, portMAX_DELAY);
 }
 
-void reset_wifi()
+void full_wifi_reset()
 {
-    ESP_ERROR_CHECK(nvs_flash_erase()); /* NVS partition was truncated and needs to be erased */
-    ESP_ERROR_CHECK(nvs_flash_init());  /* Retry nvs_flash_init */
+    ESP_LOGI(ROTULO_LOCAL, "Performing full WiFi reset...");
+
+    // 2. After stop mqtt client Deinit provisioning manager
+    wifi_prov_mgr_deinit();
+
+    // 3. Stop WiFi
+    ESP_ERROR_CHECK(esp_wifi_stop());
+    ESP_ERROR_CHECK(esp_wifi_deinit());
+
+    // 4. Erase NVS (this is what your reset_wifi does)
+    reset_wifi();
+
+    // 5. Restart the ESP32
+    ESP_LOGI(ROTULO_LOCAL, "Wi-Fi reseted. Restarting ESP32...");
+    vTaskDelay(pdMS_TO_TICKS(1000));
+    esp_restart();
 }
 
 void start_ble_provisioning()
@@ -314,7 +333,7 @@ void start_ble_provisioning()
     ESP_ERROR_CHECK(wifi_prov_mgr_init(config));
     ESP_ERROR_CHECK(wifi_prov_scheme_ble_set_service_uuid(my_bluetooth_uuid));
     ESP_ERROR_CHECK(wifi_prov_mgr_endpoint_create("PW_PROVISION_DATA"));
-    ESP_ERROR_CHECK(wifi_prov_mgr_start_provisioning(WIFI_PROV_SECURITY_1, MQTT_POP, MQTT_SERVICE_NAME, NULL));
+    ESP_ERROR_CHECK(wifi_prov_mgr_start_provisioning(WIFI_PROV_SECURITY_1, MQTT_POP, WIFI_DEVICE_NAME, NULL));
     ESP_ERROR_CHECK(wifi_prov_mgr_endpoint_register("custom-data", custom_prov_data_handler, NULL));
 
     xEventGroupWaitBits(wifi_event_group, BIT0, true, true, portMAX_DELAY);

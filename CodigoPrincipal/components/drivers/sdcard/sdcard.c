@@ -234,7 +234,7 @@ esp_err_t sdcard_load_weight_times()
             {
                 if (sscanf(m, "baby_id:%11[^;]", baby_id) == 1)
                 {
-                    has_baby = true;
+                    update_has_baby_flag(true); // sensors_task acessa essa variavel, mas nao precisa de mutex aqui, pois é lida antes das tasks serem geradas
                     ESP_LOGW(ROTULO_LOCAL, "ACHOU BABY ID {%s}", baby_id);
                 }
             }
@@ -243,11 +243,11 @@ esp_err_t sdcard_load_weight_times()
                 int hour, min;
                 if (sscanf(m, "weight_time:%d:%d", &hour, &min) == 2)
                 {
-                    if (number_times < MAX_WEIGHT_TIMES)
+                    if (number_of_weight_times < MAX_WEIGHT_TIMES)
                     {
-                        weight_times[number_times].hora = hour;
-                        weight_times[number_times].minuto = min;
-                        number_times++;
+                        weight_times[number_of_weight_times].hour = hour;
+                        weight_times[number_of_weight_times].minutes = min;
+                        number_of_weight_times++;
                         ESP_LOGW(ROTULO_LOCAL, "ACHOU HORARIO {%d:%d}", hour, min);
                     }
                 }

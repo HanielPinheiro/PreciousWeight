@@ -50,7 +50,6 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
     switch (mqtt_event)
     {
     case MQTT_EVENT_CONNECTED:
-        buzzer_short_beep();
         connected = true;
 
         // AQUI SE INSCREVE NO CANAL DO MQTT PRA OUVIR EVENTOS!!!
@@ -58,7 +57,6 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
         break;
 
     case MQTT_EVENT_DISCONNECTED:
-        buzzer_short_alert();
         connected = false;
         break;
 
@@ -93,7 +91,7 @@ void mqtt_app_start(void)
                             .certificate = (const char *)client_cert_pem_start,
                             .key = (const char *)client_key_pem_start,
                         },
-                        .client_id = MQTT_SERVICE_NAME},
+                        .client_id = WIFI_DEVICE_NAME},
         .session = {.keepalive = MQTT_KEEPALIVE, .disable_clean_session = true, .last_will = {.topic = MQTT_TOPIC_CONN_DISCONN, .msg = "DISCONNECTED", .qos = 1, .retain = true}},
         .network = {.reconnect_timeout_ms = 10000, .disable_auto_reconnect = false}};
 

@@ -1,10 +1,7 @@
 #include "bios.h"
-#include "sensors_task.h"
 
 static const char *ROTULO_LOCAL = "BIOS";
-
-hx711_t scale1, scale2, scale3, scale4;
-hx711_t sensores[NUM_SENSORES_PESO];
+hx711_t sensors[NUM_WEIGHT_SENSORS] = {0};
 
 static void initialize_buzzers()
 {
@@ -55,39 +52,49 @@ static esp_err_t weight_sensors_routine(hx711_t *sensor, gpio_num_t dout, gpio_n
     if (hx711_init(sensor, dout, sck, HX711_CHANNEL_A_128) != ESP_OK)
     {
         char msg[80];
-        snprintf(msg, 80, "Falha ao inicializar sensor 1, portas: %d [OUT] e %d [CLK].", SCALE1_DOUT, SCALE1_SCK);
+        snprintf(msg, 80, "Falha ao inicializar sensor 1, portas: %d [OUT] e %d [CLK].", sensor->dout_pin, sensor->sck_pin);
         sdcard_log(LOG_ERROR, msg, ROTULO_LOCAL);
         return ESP_FAIL;
     }
-    hx711_tare(sensor, 10);
     return ESP_OK;
 }
 
 static esp_err_t initialize_weight_sensors()
 {
-    // 2. Inicializa Sensores
-    scale1.sensor_id = 0;
-    if (weight_sensors_routine(&scale1, SCALE1_DOUT, SCALE1_SCK) != ESP_OK)
-        return ESP_FAIL;
-
-    scale2.sensor_id = 1;
-    if (weight_sensors_routine(&scale2, SCALE2_DOUT, SCALE2_SCK) != ESP_OK)
-        return ESP_FAIL;
-
-    scale3.sensor_id = 2;
-    if (weight_sensors_routine(&scale3, SCALE3_DOUT, SCALE3_SCK) != ESP_OK)
-        return ESP_FAIL;
-
-    scale4.sensor_id = 3;
-    if (weight_sensors_routine(&scale4, SCALE4_DOUT, SCALE4_SCK) != ESP_OK)
-        return ESP_FAIL;
-
-    sensores[0] = scale1;
-    sensores[1] = scale2;
-    sensores[2] = scale3;
-    sensores[3] = scale4;
-
+    int dout[4] = {SCALE1_DOUT, SCALE2_DOUT, SCALE3_DOUT, SCALE4_DOUT};
+    int sck[4] = {SCALE1_SCK, SCALE2_SCK, SCALE3_SCK, SCALE4_SCK};
+    uint32_t raw_scale[4] = {0UL, 0UL, 0UL, 0UL};
+    for (int i = 0; i < SENSORS_COUNT; i++)
+    {
+        // sensors[i].sensor_id = i;
+        sensors[i].raw_scale = raw_scale[i];
+        if (weight_sensors_routine(&sensors[i], dout[i], sck[i]) != ESP_OK)
+            return ESP_FAIL;
+    }
     return ESP_OK;
+}
+
+weight_t measure_weight()
+{
+    sdcard_log(LOG_INFO, "Medindo peso agendado", ROTULO_LOCAL);
+    weight_t weight;
+    weight.raw_value = 0UL;
+    weight.value = 0.0;
+
+    for (int i = 0; i < SENSORS_COUNT; i++)
+    {
+        int32_t average_raw = hx711_read_average(&sensors[i], WEIGHT_NUMBER_TO_AVERAGE);
+        weight.raw_value += average_raw;
+        // offset = tara. Supondo o valor da medida na tara é 5000 e o valor agora é 8000, o delta bruto é 3000
+        //  se eu calibrei com um peso conhecido, ou seja, eu sei que 3000 é 998 gramas, multiplico
+        //  ((raw_value - raw_offset)  /raw_scale) * scale_in_grams =>
+        int32_t dividend = (sensors[i].raw_scale != 0) ? sensors[i].raw_scale : 1;
+        weight.value += ((average_raw - sensors[i].offset) / dividend) * scale_in_grams;
+    }
+
+    weight.raw_value /= SENSORS_COUNT;
+    weight.value /= SENSORS_COUNT;
+    return weight;
 }
 
 void init_hardware()

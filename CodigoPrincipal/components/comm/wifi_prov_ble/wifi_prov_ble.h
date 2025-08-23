@@ -19,7 +19,7 @@ void update_current_time();
 void print_efuse_mac();
 
 void start_ble_provisioning();
-void reset_wifi();
+void full_wifi_reset();
 void init_wifi();
 bool is_wifi_connected();
 

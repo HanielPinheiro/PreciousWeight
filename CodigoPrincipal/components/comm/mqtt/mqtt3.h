@@ -3,7 +3,6 @@
 #define MQTT3_H
 
 #include "comm_libs.h"
-#include "buzzer.h"
 #include "mqtt_client.h"
 
 #define MQTT_ADDRESS "mqtts://192.168.0.15:8883"
