@@ -9,12 +9,12 @@ public class ApiConstants {
     public static final String Controller_Enable= "/enable/{id}";
     public static final String Controller_Disable = "/disable/{id}";
     public static final String Controller_Update = "/update/{id}";
-
+    public static final String Controller_GetQR = "/qr/{id}";
     // App -------------------------------------------------
     public static final String BabyController = "/babies";
 
     public static final String ScaleController = "/scales";
-    public static final String ScaleController_SetScaleToUser = "/set";
+    public static final String ScaleController_SetScaleToUser = "/set/{id}";
     public static final String ScaleController_SetBaby = "/baby/set";
     public static final String ScaleController_UnsetBaby = "/baby/unset";
 
@@ -35,4 +35,6 @@ public class ApiConstants {
 
     public static final String UserController = "/users";
     public static final String ScaleDataController = "/scale_data";
+    public static final String ScaleDataController_Update = "/update";
+
 }

@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.*;
 import precious_weight.auth.models.ScaleDataModel;
 import precious_weight.auth.models.request.ScaleDataRequest;
 import precious_weight.auth.models.response.ScaleDataResponse;
-import precious_weight.auth.services.ProFuturo__QrCodeService;
 import precious_weight.auth.services.ScaleDataService;
 
 import java.util.Map;
@@ -30,7 +29,7 @@ public class ScaleDataController {
         try {
             ScaleDataModel data = scaleDataService.GetScaleFromId(id);
             if (data == null) return ResponseEntity.badRequest().build();
-            return GetAnswer(data);
+            return ResponseEntity.ok(new ScaleDataResponse(data));
         } catch (Exception ex) {
             Map<String, String> error = Map.of("error", ex.getMessage());
             return ResponseEntity.badRequest().body(error);
@@ -38,9 +37,11 @@ public class ScaleDataController {
     }
 
     @PreAuthorize("isAuthenticated()")
-    @PostMapping(Controller_Search)
+    @PostMapping(Controller_GetQR)
     public ResponseEntity<?> getQrCodeById(@PathVariable UUID id) {
         try {
+            var scale = scaleDataService.GetScaleFromId(id);
+            if (scale == null) throw new Exception("Invalid id");
             byte[] pngData = scaleDataService.GetQrCodeFromId(id);
             return ResponseEntity.ok().contentType(MediaType.IMAGE_PNG).body(pngData);
         } catch (Exception ex) {
@@ -52,33 +53,28 @@ public class ScaleDataController {
     @PostMapping(Controller_List)
     @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
     public ResponseEntity<?> listScaleData() throws Exception {
-        return ResponseEntity.ok(scaleDataService.GetScales().stream().map(ScaleDataResponse::new).collect(Collectors.toList()));
+        var b = scaleDataService.GetScales().stream().map(ScaleDataResponse::new).collect(Collectors.toList());
+        return ResponseEntity.ok(b);
     }
 
     @PostMapping(Controller_New)
     @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
     public ResponseEntity<?> newScaleData(@RequestBody ScaleDataRequest request) {
         boolean exist = scaleDataService.GetScaleFromMac(request.getMac()) != null;
-        if(exist) return ResponseEntity.badRequest().body(Map.of("error", "This mac address already was registered."));
-        return GetAnswer(scaleDataService.NewScaleData(request));
+        if (exist) return ResponseEntity.badRequest().body(Map.of("error", "This mac address already was registered."));
+        return ResponseEntity.ok(new ScaleDataResponse(scaleDataService.NewOrUpdateScaleData(request)));
     }
 
-    @PostMapping(Controller_Update)
+    @PostMapping(ScaleDataController_Update)
     @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
     public ResponseEntity<?> updateScaleData(@RequestBody ScaleDataRequest request) {
         boolean exist = scaleDataService.GetScaleFromId(request.getId()) != null;
-        if(!exist) return ResponseEntity.badRequest().body(Map.of("error", "Scale Data not found."));
+        if (!exist) return ResponseEntity.badRequest().body(Map.of("error", "Scale Data not found."));
 
         exist = scaleDataService.GetScaleFromMac(request.getMac()) != null;
-        if(exist) return ResponseEntity.badRequest().body(Map.of("error", "This mac address already was registered."));
+        if (exist) return ResponseEntity.badRequest().body(Map.of("error", "This mac address already was registered."));
 
-        return GetAnswer(scaleDataService.UpdateScaleData(request));
-    }
-
-    private ResponseEntity<?> GetAnswer(ScaleDataModel data) {
-        var answer = new ScaleDataResponse(data);
-        if (data.getQrCode() != null) answer.setQrCode(data.getQrCode());
-        return ResponseEntity.ok(data);
+        return ResponseEntity.ok(new ScaleDataResponse(scaleDataService.NewOrUpdateScaleData(request)));
     }
 
 }

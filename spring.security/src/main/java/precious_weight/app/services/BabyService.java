@@ -1,10 +1,10 @@
 package precious_weight.app.services;
 
 import precious_weight.app.models.ScaleModel;
+import precious_weight.app.models.request.BabyRequest;
 import precious_weight.auth.services.MqttPublisherService;
 import precious_weight.app.models.BabyModel;
 import precious_weight.app.interfaces.iBaby;
-import precious_weight.app.interfaces.iScale;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -12,9 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.sql.Blob;
 import javax.sql.rowset.serial.SerialBlob;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -23,6 +21,7 @@ public class BabyService {
     public enum BabyStates {
         disabled(0), enabled(1);
         public final int value;
+
         BabyStates(int _value) {
             value = _value;
         }
@@ -32,24 +31,13 @@ public class BabyService {
     private iBaby iBaby;
 
     @Autowired
-    private iScale iScale;
+    private ScaleService scaleService;
 
     @Autowired
     private MqttPublisherService mqttPublisherService;
 
     public List<BabyModel> listAll() {
-        List<BabyModel> babies = iBaby.findAll();
-        List<ScaleModel> assignedScales = iScale.findByBabyIdIsNotNull();
-
-        Map<Integer, ScaleModel> babyToScaleMap = assignedScales.stream()
-                .collect(Collectors.toMap(ScaleModel::getBabyId, Function.identity()));
-
-        babies.forEach(baby -> {
-            if (babyToScaleMap.containsKey(baby.getBabyId()))
-                baby.setAssignedScale(babyToScaleMap.get(baby.getBabyId()));
-        });
-
-        return babies;
+        return iBaby.findAll();
     }
 
     public BabyModel searchById(Integer id) throws Exception {
@@ -58,16 +46,11 @@ public class BabyService {
         return baby.get();
     }
 
-    public BabyModel save(BabyModel babyModel) {
-        return iBaby.save(babyModel);
-    }
-
     public void uploadImage(Integer id, MultipartFile file) throws Exception {
         Blob scaleImage = new SerialBlob(file.getBytes());
-
         BabyModel babyModel = searchById(id);
         babyModel.setBabyImage(scaleImage);
-        save(babyModel);
+        iBaby.save(babyModel);
     }
 
     public BabyModel enableOrDisable(Integer babyId, boolean enabled) throws Exception {
@@ -82,39 +65,50 @@ public class BabyService {
         // Se não, prosseguir com a ação
         var val = enabled ? BabyStates.enabled.value : BabyStates.disabled.value;
         baby.setBabyState(val);
-        return save(baby);
+        return iBaby.save(baby);
     }
 
-    public BabyModel update(Integer id, BabyModel request) throws Exception {
-            BabyModel babyModel = searchById(id);
+    public BabyModel NewOrUpdateScaleData(BabyRequest request) {
+        return iBaby.save(new BabyModel(request));
+    }
 
-            if (request.getBabyHospitalId() != null)
-                babyModel.setBabyHospitalId(request.getBabyHospitalId());
+    public BabyModel update(Integer id, BabyRequest request) throws Exception {
+        BabyModel babyModel = searchById(id);
 
-            if (request.getBabyName() != null)
-                babyModel.setBabyName(request.getBabyName());
+        if (request.getBabyHospitalId() != null)
+            babyModel.setBabyHospitalId(request.getBabyHospitalId());
 
-            if (request.getBabyMotherName() != null)
-                babyModel.setBabyMotherName(request.getBabyMotherName());
+        if (request.getBabyName() != null)
+            babyModel.setBabyName(request.getBabyName());
 
-            if (request.getBabyBirthDate() != null)
-                babyModel.setBabyBirthDate(request.getBabyBirthDate());
+        if (request.getBabyMotherName() != null)
+            babyModel.setBabyMotherName(request.getBabyMotherName());
 
-            if (request.getBabyImageText() != null)
-                babyModel.setBabyImageText(request.getBabyImageText());
+        if (request.getBabyBirthDate() != null)
+            babyModel.setBabyBirthDate(request.getBabyBirthDate());
 
-            if (request.getBabyWeightHour() != null) {
-                babyModel.setBabyWeightHour(request.getBabyWeightHour());
-                //verifico se bebe tem balança
-                var scales = iScale.findByBabyId(babyModel.getBabyId());
+        if (request.getBabyImageText() != null)
+            babyModel.setBabyImageText(request.getBabyImageText());
 
-                //se tiver, envio novo horário pra balança
-                if(!scales.isEmpty()) {
-                    /* enviar dado para balanca definindo horário da pesagem desse bebe */
-                    mqttPublisherService.sendCriticalCommand(scales.getFirst().getScaleHash(),babyModel.getBabyWeightHour());
-                }
-            }
+        if (request.getBabyWeightTime() != null) {
+            babyModel.setBabyWeightTime(request.getBabyWeightTime());
+            if (babyModel.getAssignedScale() != null)
+                scaleService.SendNewWeightTimesToScale(id, request.getBabyWeightTime());
+        }
 
-            return save(babyModel);
+        return iBaby.save(babyModel);
+    }
+
+    public byte[] GetQrCodeFromId(Integer id) {
+        try {
+            BabyModel model = iBaby.getReferenceById(id);
+            Blob babyImage = model.getBabyImage();
+            if (babyImage == null) throw new Exception("Do not exist qr code for this image");
+
+            int blobLength = (int) babyImage.length();
+            return babyImage.getBytes(1, blobLength);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to get Qr Code data", e);
+        }
     }
 }

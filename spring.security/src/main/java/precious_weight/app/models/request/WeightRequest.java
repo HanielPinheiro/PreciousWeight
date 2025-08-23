@@ -8,7 +8,6 @@ public class WeightRequest {
     public Integer getScaleId() {
         return scaleId;
     }
-
     public void setScaleId(Integer scaleId) {
         this.scaleId = scaleId;
     }
@@ -16,7 +15,6 @@ public class WeightRequest {
     public Integer getBabyId() {
         return babyId;
     }
-
     public void setBabyId(Integer babyId) {
         this.babyId = babyId;
     }
@@ -24,7 +22,6 @@ public class WeightRequest {
     public Double getWeightValue() {
         return weightValue;
     }
-
     public void setWeightValue(Double weightValue) {
         this.weightValue = weightValue;
     }

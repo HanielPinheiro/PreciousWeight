@@ -1,27 +1,24 @@
 package precious_weight.auth.models.request;
 
 public class UserRequest {
-        private String username;
+        private String email;
         private String password;
         private String organization;
 
-        // Default constructor (required for deserialization)
-        public UserRequest() {
-        }
+        public UserRequest() {}
 
-        // Parameterized constructor
-        public UserRequest(String username, String password, String organization) {
-            this.username = username;
+        public UserRequest(String email, String password, String organization) {
+            this.email = email;
             this.password = password;
             this.organization = organization;
         }
 
         // Getters and setters
-        public String getUsername() {
-            return username;
+        public String getEmail() {
+            return email;
         }
-        public void setUsername(String username) {
-            this.username = username;
+        public void setEmail(String email) {
+            this.email = email;
         }
 
         public String getPassword() {

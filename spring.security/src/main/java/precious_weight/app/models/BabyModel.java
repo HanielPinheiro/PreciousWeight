@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import org.hibernate.envers.Audited;
+import precious_weight.app.models.request.BabyRequest;
 
 import java.io.Serializable;
 import java.sql.Blob;
@@ -17,6 +18,19 @@ import static precious_weight.config.system.DataTransferLayerConstants.*;
 @Audited
 @Table(name = App_BabyTable_TableName)
 public class BabyModel implements Serializable {
+    public BabyModel(){}
+
+    public BabyModel(BabyRequest request) {
+        this.babyId = request.getBabyId();
+        this.babyName = request.getBabyName();
+        this.babyMotherName = request.getBabyMotherName();
+        this.babyBirthDate = request.getBabyBirthDate();
+        this.babyState = request.getBabyState();
+        this.babyWeightTime = request.getBabyWeightTime();
+        this.babyHospitalId = request.getBabyHospitalId();
+        this.babyImageText = request.getBabyImageText();
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = App_BabyTable_Id)
@@ -36,7 +50,7 @@ public class BabyModel implements Serializable {
     private Integer babyState;
 
     @Column(name = App_BabyTable_WeightHour)
-    private String babyWeightHour;
+    private String babyWeightTime;
 
     @Column(name = App_BabyTable_HospitalId, nullable = false, length = 255, unique = true)
     private String babyHospitalId;
@@ -55,15 +69,10 @@ public class BabyModel implements Serializable {
         return Base64.getEncoder().encodeToString(blobAsBytes);
     }
 
-    @Transient
+    @OneToOne(mappedBy = "assignedBaby", fetch = FetchType.LAZY)
     private ScaleModel assignedScale;
-
-    public ScaleModel getAssignedScale() {
-        return assignedScale;
-    }
-    public void setAssignedScale(ScaleModel assignedScale) {
-        this.assignedScale = assignedScale;
-    }
+    public ScaleModel getAssignedScale() {return assignedScale;}
+    public void setAssignedScale(ScaleModel scale) {this.assignedScale = scale;}
 
     public Integer getBabyId() {
         return babyId;
@@ -89,14 +98,14 @@ public class BabyModel implements Serializable {
         this.babyBirthDate = birthDate;
     }
 
-    public void setBabyState(Integer state) {this.babyState = state;}
     public Integer getBabyState() {return babyState;}
+    public void setBabyState(Integer state) {this.babyState = state;}
 
-    public void setBabyWeightHour(String weightHour) {this.babyWeightHour = weightHour;}
-    public String getBabyWeightHour() {return babyWeightHour;}
+    public String getBabyWeightTime() {return babyWeightTime;}
+    public void setBabyWeightTime(String weightHour) {this.babyWeightTime = weightHour;}
 
-    public void setBabyImageText(String imageText) {this.babyImageText = imageText;}
     public String getBabyImageText() {return babyImageText;}
+    public void setBabyImageText(String imageText) {this.babyImageText = imageText;}
 
     public String getBabyHospitalId() {return babyHospitalId;}
     public void setBabyHospitalId(String babyHospitalId) {this.babyHospitalId = babyHospitalId;}

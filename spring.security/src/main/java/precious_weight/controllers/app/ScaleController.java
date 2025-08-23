@@ -1,6 +1,9 @@
 package precious_weight.controllers.app;
 
 import precious_weight.app.models.ScaleModel;
+import precious_weight.app.models.request.ScaleRequest;
+import precious_weight.app.models.response.BabyResponse;
+import precious_weight.app.models.response.ScaleResponse;
 import precious_weight.app.services.ScaleService;
 
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -23,7 +26,7 @@ public class ScaleController {
     @PostMapping(Controller_List)
     public ResponseEntity<?> listAll() {
         try {
-            return ResponseEntity.ok(scaleService.GetScales());
+            return ResponseEntity.ok(scaleService.GetScales().stream().map(ScaleResponse::new).toList());
         } catch (Exception ex) {
             Map<String, String> error = Map.of("error", ex.getMessage());
             return ResponseEntity.badRequest().body(error);
@@ -34,8 +37,8 @@ public class ScaleController {
     @PostMapping(Controller_Search)
     public ResponseEntity<?> getById(@PathVariable Integer id) {
         try {
-            ScaleModel data = scaleService.GetScaleFromId(id);
-            return data != null ? ResponseEntity.ok(data) : ResponseEntity.badRequest().build();
+            ScaleModel model = scaleService.GetScaleFromId(id);
+            return model != null ? ResponseEntity.ok(new ScaleResponse(model)) : ResponseEntity.badRequest().build();
         } catch (Exception ex) {
             Map<String, String> error = Map.of("error", ex.getMessage());
             return ResponseEntity.badRequest().body(error);
@@ -44,20 +47,9 @@ public class ScaleController {
 
     @PreAuthorize("isAuthenticated()")
     @PostMapping(ScaleController_SetScaleToUser)
-    public ResponseEntity<?> scaleToUser(@PathVariable String scaleHash) {
+    public ResponseEntity<?> scaleToUser(@PathVariable UUID id) {
         try {
-            return ResponseEntity.ok(scaleService.SetScaleToUser(scaleHash));
-        } catch (Exception ex) {
-            Map<String, String> error = Map.of("error", ex.getMessage());
-            return ResponseEntity.badRequest().body(error);
-        }
-    }
-
-    @PreAuthorize("isAuthenticated()")
-    @PostMapping(Controller_Update)
-    public ResponseEntity<?> updateHash(@PathVariable Integer id, @RequestBody ScaleModel model) {
-        try {
-            return ResponseEntity.ok(scaleService.UpdateHash(id, model));
+            return ResponseEntity.ok(new ScaleResponse(scaleService.SetScaleToUser(id)));
         } catch (Exception ex) {
             Map<String, String> error = Map.of("error", ex.getMessage());
             return ResponseEntity.badRequest().body(error);
@@ -68,7 +60,7 @@ public class ScaleController {
     @PostMapping(Controller_Enable)
     public ResponseEntity<?> enableScale(@PathVariable Integer id) {
         try {
-            return ResponseEntity.ok(scaleService.EnableOrDisable(id, true));
+            return ResponseEntity.ok(new ScaleResponse(scaleService.EnableOrDisable(id, true)));
         } catch (Exception ex) {
             Map<String, String> error = Map.of("error", ex.getMessage());
             return ResponseEntity.badRequest().body(error);
@@ -79,7 +71,7 @@ public class ScaleController {
     @PostMapping(Controller_Disable)
     public ResponseEntity<?> disableScale(@PathVariable Integer id) {
         try {
-            return ResponseEntity.ok(scaleService.EnableOrDisable(id, false));
+            return ResponseEntity.ok(new ScaleResponse(scaleService.EnableOrDisable(id, false)));
         } catch (Exception ex) {
             Map<String, String> error = Map.of("error", ex.getMessage());
             return ResponseEntity.badRequest().body(error);
@@ -88,9 +80,9 @@ public class ScaleController {
 
     @PreAuthorize("isAuthenticated()")
     @PostMapping(ScaleController_SetBaby)
-    public ResponseEntity<?> setBaby(@RequestBody ScaleModel model) {
+    public ResponseEntity<?> setBaby(@RequestBody ScaleRequest model) {
         try {
-            return ResponseEntity.ok(scaleService.SetOrUnset(model, true));
+            return ResponseEntity.ok(new ScaleResponse(scaleService.SetOrUnsetBabyToScale(model, true)));
         } catch (Exception ex) {
             Map<String, String> error = Map.of("error", ex.getMessage());
             return ResponseEntity.badRequest().body(error);
@@ -99,9 +91,9 @@ public class ScaleController {
 
     @PreAuthorize("isAuthenticated()")
     @PostMapping(ScaleController_UnsetBaby)
-    public ResponseEntity<?> unsetBaby(@RequestBody ScaleModel model) {
+    public ResponseEntity<?> unsetBaby(@RequestBody ScaleRequest model) {
         try {
-            return ResponseEntity.ok(scaleService.SetOrUnset(model, false));
+            return ResponseEntity.ok(new ScaleResponse(scaleService.SetOrUnsetBabyToScale(model, false)));
         } catch (Exception ex) {
             Map<String, String> error = Map.of("error", ex.getMessage());
             return ResponseEntity.badRequest().body(error);

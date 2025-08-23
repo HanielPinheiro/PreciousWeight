@@ -4,7 +4,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -37,15 +36,14 @@ public class UserController {
     }
 
     @PostMapping(Controller_New)
-    @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
     public ResponseEntity<Void> newUser(@RequestBody UserRequest request) {
         var basicRole = iRole.findByName(RoleModel.Values.BASIC.name()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST));
 
-        var userFromDb = iUser.findByEmail(request.getUsername());
+        var userFromDb = iUser.findByEmail(request.getEmail());
         if (userFromDb.isPresent()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
 
         var user = new UserModel();
-        user.setEmail(request.getUsername());
+        user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setOrganization(request.getOrganization());
         user.setRoles(Set.of(basicRole));

@@ -20,37 +20,13 @@ public class ScaleDataService {
     @Autowired
     private iScaleData iScaleData;
 
-    public ScaleDataModel NewScaleData(ScaleDataRequest scaleData) {
-        ScaleDataModel model = new ScaleDataModel();
+    public ScaleDataModel NewOrUpdateScaleData(ScaleDataRequest scaleData) {
+        UUID id = scaleData.getId();
+        ScaleDataModel model = (id != null) ? GetScaleFromId(id) : new ScaleDataModel();
         model.setMac(scaleData.getMac());
         model.setPop(generatePop());
-
-//        model = iScaleData.save(model);
-//        model.getScaleId();
-//
-//        //gerar qr code
-//        //colocar qrcode no db
-//        //salvar de novo
-//
-//        model.setQrCode("asd");
         return iScaleData.save(model);
     }
-
-    public ScaleDataModel UpdateScaleData(ScaleDataRequest scaleData) {
-        ScaleDataModel model = iScaleData.getReferenceById(scaleData.getId());
-//        model.setMac(scaleData.getMac());
-//        model.setPop(generatePop());
-//        model = iScaleData.save(model);
-//        model.getScaleId();
-//
-//        //gerar qr code
-//        //colocar qrcode no db
-//        //salvar de novo
-//
-//        model.setQrCode("asd");
-        return iScaleData.save(model);
-    }
-
 
     public List<ScaleDataModel> GetScales() {
         return iScaleData.findAll();
@@ -59,10 +35,10 @@ public class ScaleDataService {
     public ScaleDataModel GetScaleFromId(UUID scaleId) {
         return GetScales().stream().filter(model -> model.getScaleId().equals(scaleId)).findFirst().orElse(null);
     }
+
     public byte[] GetQrCodeFromId(UUID scaleId) {
-        try {
-            BufferedImage qrImage = generateQRCodeImage(scaleId.toString(), 250, 250);
-            // Convert BufferedImage to byte array
+        try {// Convert BufferedImage to byte array
+            BufferedImage qrImage = generateQRCodeImage(scaleId.toString());
             ByteArrayOutputStream arrayOfBytes = new ByteArrayOutputStream();
             ImageIO.write(qrImage, "PNG", arrayOfBytes);
             return arrayOfBytes.toByteArray();
@@ -75,25 +51,28 @@ public class ScaleDataService {
         return GetScales().stream().filter(model -> model.getMac().equals(scaleMac)).findFirst().orElse(null);
     }
 
-    private String generatePop() {
-        String ALPHANUMERIC = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@$%*+-./: ";
-        int size =ALPHANUMERIC.length();
-        SecureRandom random = new SecureRandom();
-            StringBuilder sb = new StringBuilder(8);
-            for (int i = 0; i < 8; i++) sb.append(ALPHANUMERIC.charAt(random.nextInt(size)));
-            return sb.toString();
+    public String GetScaleMacFromScaleHashId(String scaleHashId) throws Exception {
+        var result = GetScales().stream().filter(model -> model.getScaleId().equals(UUID.fromString(scaleHashId))).findFirst().orElse(null);
+        if (result == null) throw new Exception("Scale Data not Found");
+        return result.getMac();
     }
 
-    private BufferedImage generateQRCodeImage(String data, int width, int height) throws Exception {
-        QRCodeWriter qrCodeWriter = new QRCodeWriter();
-        BitMatrix bitMatrix = qrCodeWriter.encode(data, BarcodeFormat.QR_CODE, width, height);
+    private String generatePop() {
+        String ALPHANUMERIC = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@$%*+-";
+        int size = ALPHANUMERIC.length();
+        SecureRandom random = new SecureRandom();
+        StringBuilder sb = new StringBuilder(8);
+        for (int i = 0; i < 8; i++) sb.append(ALPHANUMERIC.charAt(random.nextInt(size)));
+        return sb.toString();
+    }
 
-        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-        for (int x = 0; x < width; x++) {
-            for (int y = 0; y < height; y++) {
+    private BufferedImage generateQRCodeImage(String data) throws Exception {
+        QRCodeWriter qrCodeWriter = new QRCodeWriter();
+        BitMatrix bitMatrix = qrCodeWriter.encode(data, BarcodeFormat.QR_CODE, 250, 250);
+        BufferedImage image = new BufferedImage(250, 250, BufferedImage.TYPE_INT_RGB);
+        for (int x = 0; x < 250; x++)
+            for (int y = 0; y < 250; y++)
                 image.setRGB(x, y, bitMatrix.get(x, y) ? 0x000000 : 0xFFFFFF);
-            }
-        }
         return image;
     }
 }

@@ -39,7 +39,7 @@ public class LoginController {
     @PostMapping(LoginController)
     public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest loginRequest) {
 
-        var user = iUser.findByEmail(loginRequest.getUsername());
+        var user = iUser.findByEmail(loginRequest.getEmail());
         if (user.isEmpty() || !user.get().isLoginCorrect(loginRequest, passwordEncoder)) throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
 
         var now = Instant.now();
@@ -70,7 +70,7 @@ public class LoginController {
         UserModel userFromDb;
 
         try {
-            userFromDb = iUser.findByEmail(request.getUsername()).orElseThrow();
+            userFromDb = iUser.findByEmail(request.getEmail()).orElseThrow();
         }
         catch (Exception e){
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);

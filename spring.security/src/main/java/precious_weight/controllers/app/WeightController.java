@@ -1,6 +1,7 @@
 package precious_weight.controllers.app;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import precious_weight.app.models.request.WeightRequest;
 import precious_weight.app.services.WeightService;
 
@@ -19,6 +20,7 @@ public class WeightController {
     @Autowired
     WeightService weightService;
 
+    @PreAuthorize("isAuthenticated()")
     @PostMapping(Controller_List)
     public ResponseEntity<?> listAllWeights() {
         try {
@@ -29,6 +31,7 @@ public class WeightController {
         }
     }
 
+    @PreAuthorize("isAuthenticated()")
     @PostMapping(Controller_Save)
     public ResponseEntity<?> saveWeight(@RequestBody WeightRequest request) {
         try {
@@ -39,6 +42,7 @@ public class WeightController {
         }
     }
 
+    @PreAuthorize("isAuthenticated()")
     @PostMapping(WeightController_Babies)
     public ResponseEntity<?> getBabyWeights(@PathVariable Integer babyId) {
         try {
@@ -49,6 +53,7 @@ public class WeightController {
         }
     }
 
+    @PreAuthorize("isAuthenticated()")
     @PostMapping(WeightController_Scales)
     public ResponseEntity<?> getScaleWeights(@PathVariable Integer scaleId) {
         try {

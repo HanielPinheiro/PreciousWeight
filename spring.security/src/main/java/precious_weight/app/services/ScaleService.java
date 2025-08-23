@@ -7,20 +7,22 @@ import precious_weight.app.interfaces.iBaby;
 import precious_weight.app.interfaces.iScale;
 import precious_weight.app.models.ScaleModel;
 import precious_weight.app.models.BabyModel;
+import precious_weight.app.models.request.ScaleRequest;
 import precious_weight.auth.services.MqttPublisherService;
+import precious_weight.auth.services.ScaleDataService;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static precious_weight.config.system.MqttConstants.*;
 
 @Service
 public class ScaleService {
     public enum ScaleStates {
         nonOperant(0), operant(1);
         public final int value;
+
         ScaleStates(int _value) {
             value = _value;
         }
@@ -35,20 +37,11 @@ public class ScaleService {
     @Autowired
     private MqttPublisherService mqttPublisherService;
 
+    @Autowired
+    private ScaleDataService scaleDataService;
+
     public List<ScaleModel> GetScales() {
-        List<ScaleModel> scales = iScale.findAll();
-
-        // Get all babies for scales that have babyId assigned
-        Set<Integer> babyIds = scales.stream().map(ScaleModel::getBabyId).filter(Objects::nonNull).collect(Collectors.toSet());
-
-        Map<Integer, BabyModel> babyMap = iBaby.findAllByBabyIdIn(babyIds).stream().collect(Collectors.toMap(BabyModel::getBabyId, Function.identity()));
-
-        // Enhance each scale with baby information
-        scales.forEach(scale -> {
-            if (scale.getBabyId() != null) scale.setAssignedBaby(babyMap.get(scale.getBabyId()));
-        });
-
-        return scales;
+        return iScale.findAll();
     }
 
     public ScaleModel GetScaleFromId(Integer scaleId) {
@@ -60,78 +53,110 @@ public class ScaleService {
         return scales.stream().filter(s -> s.getScaleHash().equals(scaleHash)).findFirst().orElse(null);
     }
 
-    public Integer GetBabyIdByScaleId(Integer scaleId) {
-        return iScale.findById(scaleId).map(ScaleModel::getBabyId).orElse(null);
+    public List<ScaleModel> GetScalesWithBaby() {
+        return iScale.findAll().stream().filter(p->p.getAssignedBaby() != null).toList();
     }
 
-      public ScaleModel SetScaleToUser(String scaleHash) {
+    public Integer GetBabyIdByScaleId(Integer scaleId) {
+        return iScale.findById(scaleId).get().getAssignedBaby().getBabyId();
+
+    }
+
+    public ScaleModel SetScaleToUser(UUID id) throws Exception {
+        if (scaleDataService.GetScaleFromId(id) == null) throw new Exception("Invalid ID!");
+        if(GetScaleFromHash(id.toString()) != null) throw new Exception("Scale already inserted");
+
         ScaleModel newScale = new ScaleModel();
-        newScale.setScaleHash(scaleHash);
+        newScale.setScaleHash(id.toString());
         newScale.setScaleState(0);
         return iScale.save(newScale);
     }
 
-    public ScaleModel UpdateHash(Integer id, ScaleModel model) throws Exception {
-        if (iScale.findById(id).isEmpty()) throw new Exception("iScale is empty when try to update hash");
-        ScaleModel scale = iScale.getReferenceById(id);
-        scale.setScaleHash(model.getScaleHash());
-        iScale.save(scale);
-        return GetScaleFromId(id);
-    }
-
-
     public ScaleModel EnableOrDisable(Integer id, boolean enabled) throws Exception {
-        var scaleWithBabyData = GetScaleFromId(id).getAssignedBaby();
-        if (scaleWithBabyData != null) throw new Exception("iScale is empty when try to enable Or disable");
+        ScaleModel scale = GetScaleFromId(id);
+        if (scale == null) throw new Exception("Scale not found");
+        if (scale.getAssignedBaby() != null) throw new Exception("Scale has a baby attached to it. Unset the baby first.");
 
-        if (iScale.findById(id).isEmpty()) throw new Exception("iScale is empty when try to enable or disable");
         int value = enabled ? ScaleStates.operant.value : ScaleStates.nonOperant.value;
-        ScaleModel scale = iScale.getReferenceById(id);
         scale.setScaleState(value);
         iScale.save(scale);
         return GetScaleFromId(id);
     }
 
-    public ScaleModel SetOrUnset(ScaleModel model, boolean set) throws Exception {
-        var scaleId = model.getScaleId();
-        var babyId = model.getBabyId();
+    public String GetMacFromScaleByHash(String scaleHash) throws Exception {
+        return scaleDataService.GetScaleMacFromScaleHashId(scaleHash);
+    }
 
-        if (iScale.findById(scaleId).isEmpty()) throw new Exception("iScale is empty when try to set or unset");
+    public ScaleModel SetOrUnsetBabyToScale(ScaleRequest scaleRequest, boolean set) throws Exception {
+        Integer scaleId = scaleRequest.getScaleId();
+        Integer babyId = scaleRequest.getBabyId();
 
+        ScaleModel scale = GetScaleFromId(scaleId);
+        if (scale == null) throw new Exception("Scale not found");
         if (set) {
-            var scaleHasBaby = GetScaleFromId(scaleId).getAssignedBaby();
-            if (scaleHasBaby != null) throw new Exception("scale already has a baby when try to set or unset");
+            if (scale.getAssignedBaby() != null) throw new Exception("Scale already has a baby");
 
-            if (iBaby.findById(babyId).isEmpty()) throw new Exception("baby not found when try to set or unset");
-            if (BabyHasScale(babyId)) throw new Exception("baby already has a scale when try to set or unset");
+            BabyModel baby = iBaby.findById(babyId).orElse(null);
+            if (baby == null) throw new Exception("Baby not found!");
 
-            ScaleModel scale = iScale.getReferenceById(scaleId);
-            if (scale.getScaleState() == ScaleStates.nonOperant.value) throw new Exception("iScale is not operant when try to set or unset");
+            if (BabyHasScale(babyId) != null) throw new Exception("Baby already has a scale");
 
-            scale.setBabyId(babyId);
+            if (scale.getScaleState() == ScaleStates.nonOperant.value) throw new Exception("Scale is not operant");
+            scale.setAssignedBaby(baby);
             iScale.save(scale);
 
-            /* enviar dado para balanca definindo horário da pesagem desse bebe */
-            mqttPublisherService.sendCriticalCommand(scale.getScaleHash(), iBaby.findById(babyId).get().getBabyWeightHour());
+            String mac = GetMacFromScaleByHash(scale.getScaleHash());
+            String babyWeightTime = baby.getBabyWeightTime();
+            SendBabyDataToScaleViaMqtt(mac, babyId, babyWeightTime);
 
-            return GetScaleFromId(scaleId);
+            return iScale.findById(scaleId).get();
         } else {
-            ScaleModel scaleWithBabyData = GetScaleFromId(model.getScaleId());
-            scaleWithBabyData.setBabyId(null);
-            return iScale.save(scaleWithBabyData);
+            ScaleModel scaleWithBabyData = GetScaleFromId(scale.getScaleId());
+            scaleWithBabyData.setAssignedBaby(null);
+
+            SendClearToScaleViaMqtt(GetMacFromScaleByHash(scaleWithBabyData.getScaleHash()));
+
+            iScale.save(scaleWithBabyData);
+            return iScale.findById(scaleId).get();
         }
     }
 
 
     private Boolean BabyHasScale(Integer babyId) {
-        List<ScaleModel> scales = iScale.findAll();
-
-        // Get all babies for scales that have babyId assigned
-        Set<Integer> babyIds = scales.stream().map(ScaleModel::getBabyId).filter(Objects::nonNull).collect(Collectors.toSet());
-
-        Integer find = babyIds.stream().filter(s -> s.equals(babyId)).findFirst().orElse(null);
-
+        List<ScaleModel> scales = GetScalesWithBaby(); // Get all babies for scales that have babyId assigned
+        if(scales.isEmpty()) return null;
+        ScaleModel find = scales.stream().filter(s -> Objects.equals(s.getAssignedBaby().getBabyId(), babyId)).toList().getFirst();
         return find != null;
     }
 
+    private void SendClearToScaleViaMqtt(String mac ){
+        mqttPublisherService.sendCriticalCommand(mac, MQTT_COMMAND_CLEAR);
+    }
+
+    private void SendBabyDataToScaleViaMqtt(String mac, Integer babyId, String babyWeightTime) throws Exception {
+        //Envio [BAB]ID
+        mqttPublisherService.sendCriticalCommand(mac, MQTT_COMMAND_BABY + babyId.toString());
+
+        //Envio [WEI]time
+        if (babyWeightTime== null)  //time = 12:00
+            mqttPublisherService.sendCriticalCommand(mac, MQTT_COMMAND_WEIGHT_TIME + DEFAULT_WEIGHT_TIME);
+
+        else { // vários 'times' =>08:00$09:00$10:00...
+            String[] weightTimes = babyWeightTime.split("\\$");
+            if (weightTimes.length == 0)
+                mqttPublisherService.sendCriticalCommand(mac, MQTT_COMMAND_WEIGHT_TIME + babyWeightTime);
+            else
+                for (String weightTime : weightTimes) mqttPublisherService.sendCriticalCommand(mac, MQTT_COMMAND_WEIGHT_TIME + weightTime);
+        }
+
+        //Envio [RUN]
+        mqttPublisherService.sendCriticalCommand(mac, MQTT_COMMAND_RUN);
+    }
+
+    public void SendNewWeightTimesToScale(Integer babyId, String babyWeightTime) throws Exception {
+        String hash = iBaby.getReferenceById(babyId).getAssignedScale().getScaleHash();
+        String mac = GetMacFromScaleByHash(hash);
+        SendClearToScaleViaMqtt(mac);
+        SendBabyDataToScaleViaMqtt(mac,babyId,babyWeightTime);
+    }
 }

@@ -9,5 +9,4 @@ import java.util.Set;
 
 @Repository
 public interface iBaby extends JpaRepository<BabyModel, Integer> {
-    List<BabyModel> findAllByBabyIdIn(Set<Integer> ids);
 }

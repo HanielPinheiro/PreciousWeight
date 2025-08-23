@@ -22,19 +22,14 @@ public class ScaleModel implements Serializable {
     @Column(name = App_ScaleTable_State, nullable = false)
     private Integer scaleState;
 
-    @Column(name = App_BabyTable_Id, nullable = true)
-    private Integer babyId;
-
-    @Transient
+    @OneToOne
+    @JoinColumn(name = App_BabyTable_Id)  // Match your DB column
     private BabyModel assignedBaby;
-
     public BabyModel getAssignedBaby() {
         return assignedBaby;
     }
+    public void setAssignedBaby(BabyModel baby) {this.assignedBaby = baby;}
 
-    public void setAssignedBaby(BabyModel assignedBaby) {
-        this.assignedBaby = assignedBaby;
-    }
     public Integer getScaleId() {
         return scaleId;
     }
@@ -45,9 +40,7 @@ public class ScaleModel implements Serializable {
     public String getScaleHash() {
         return scaleHash;
     }
-    public void setScaleHash(String scaleHash) {
-        this.scaleHash = scaleHash;
-    }
+    public void setScaleHash(String scaleHash) {this.scaleHash = scaleHash;}
 
     public Integer getScaleState() {
         return scaleState;
@@ -55,18 +48,6 @@ public class ScaleModel implements Serializable {
     public void setScaleState(Integer scaleState) {
         this.scaleState = scaleState;
     }
-
-    public Integer getBabyId() {
-        return babyId;
-    }
-    public void setBabyId(Integer id) {
-        this.babyId = id;
-    }
-
-    public void FromJson(String mqttJson){
-
-    }
-
 }
 
 
