@@ -63,11 +63,11 @@ static esp_err_t initialize_weight_sensors()
 {
     int dout[4] = {SCALE1_DOUT, SCALE2_DOUT, SCALE3_DOUT, SCALE4_DOUT};
     int sck[4] = {SCALE1_SCK, SCALE2_SCK, SCALE3_SCK, SCALE4_SCK};
-    uint32_t raw_scale[4] = {0UL, 0UL, 0UL, 0UL};
-    for (int i = 0; i < SENSORS_COUNT; i++)
+    uint32_t calib_factor[4] = {86UL, 123UL, 74UL, 116UL}; // estimados manualmente
+    for (int i = 0; i < NUM_WEIGHT_SENSORS; i++)
     {
-        // sensors[i].sensor_id = i;
-        sensors[i].raw_scale = raw_scale[i];
+        sensors[i].id = i;
+        sensors[i].calib_factor = calib_factor[i];
         if (weight_sensors_routine(&sensors[i], dout[i], sck[i]) != ESP_OK)
             return ESP_FAIL;
     }
@@ -81,19 +81,19 @@ weight_t measure_weight()
     weight.raw_value = 0UL;
     weight.value = 0.0;
 
-    for (int i = 0; i < SENSORS_COUNT; i++)
+    for (int i = 0; i < NUM_WEIGHT_SENSORS; i++)
     {
         int32_t average_raw = hx711_read_average(&sensors[i], WEIGHT_NUMBER_TO_AVERAGE);
         weight.raw_value += average_raw;
         // offset = tara. Supondo o valor da medida na tara é 5000 e o valor agora é 8000, o delta bruto é 3000
         //  se eu calibrei com um peso conhecido, ou seja, eu sei que 3000 é 998 gramas, multiplico
-        //  ((raw_value - raw_offset)  /raw_scale) * scale_in_grams =>
-        int32_t dividend = (sensors[i].raw_scale != 0) ? sensors[i].raw_scale : 1;
+        //  ((raw_value - raw_offset)  /calib_factor) * scale_in_grams =>
+        int32_t dividend = (sensors[i].calib_factor != 0) ? sensors[i].calib_factor : 1;
         weight.value += ((average_raw - sensors[i].offset) / dividend) * scale_in_grams;
     }
 
-    weight.raw_value /= SENSORS_COUNT;
-    weight.value /= SENSORS_COUNT;
+    weight.raw_value /= NUM_WEIGHT_SENSORS;
+    weight.value /= NUM_WEIGHT_SENSORS;
     return weight;
 }
 

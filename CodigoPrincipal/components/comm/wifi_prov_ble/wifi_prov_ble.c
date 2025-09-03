@@ -12,7 +12,6 @@
 
 static void initialize_sntp(void)
 {
-    ESP_LOGI("DATE_TIME", "Initializing SNTP");
     esp_sntp_config_t config = ESP_NETIF_SNTP_DEFAULT_CONFIG_MULTIPLE(2, ESP_SNTP_SERVER_LIST("a.st1.ntp.br", "b.st1.ntp.br"));
     esp_netif_sntp_init(&config);
 }
@@ -180,8 +179,14 @@ static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_
             esp_wifi_connect();
             break;
         case WIFI_EVENT_STA_CONNECTED:
-            ESP_LOGI(ROTULO_LOCAL, "Connected. Getting Date Time from SNTP");
+            ESP_LOGI(ROTULO_LOCAL, "Connected!");
 
+            int rssi_strength;
+            esp_err_t ret = esp_wifi_sta_get_rssi(&rssi_strength);
+            if (ret == ESP_OK)
+                ESP_LOGI(ROTULO_LOCAL, "Wi-Fi Strength {%d}", rssi_strength);
+
+            ESP_LOGI(ROTULO_LOCAL, "Getting Date Time from SNTP");
             vTaskDelay(pdMS_TO_TICKS(5000));
             start_date_time();
             set_timezone_gmt3();
@@ -255,7 +260,7 @@ static esp_err_t custom_prov_data_handler(uint32_t session_id, const uint8_t *in
 
     return ESP_OK;
 }
-static void reset_wifi()
+static void erase_nvs()
 {
     ESP_ERROR_CHECK(nvs_flash_erase()); /* NVS partition was truncated and needs to be erased */
     ESP_ERROR_CHECK(nvs_flash_init());  /* Retry nvs_flash_init */
@@ -268,7 +273,7 @@ static void wifi_init_all()
     /* Initialize NVS partition */
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND)
-        reset_wifi();
+        erase_nvs();
 
     ESP_ERROR_CHECK(esp_netif_init());                /* Initialize TCP/IP */
     ESP_ERROR_CHECK(esp_event_loop_create_default()); /* Initialize the event loop */
@@ -297,7 +302,7 @@ static void start_wifi_sta() // Conectar usando dados salvos(modo STA)
     xEventGroupWaitBits(wifi_event_group, BIT0, true, true, portMAX_DELAY);
 }
 
-void full_wifi_reset()
+void reset_wifi()
 {
     ESP_LOGI(ROTULO_LOCAL, "Performing full WiFi reset...");
 
@@ -309,7 +314,7 @@ void full_wifi_reset()
     ESP_ERROR_CHECK(esp_wifi_deinit());
 
     // 4. Erase NVS (this is what your reset_wifi does)
-    reset_wifi();
+    erase_nvs();
 
     // 5. Restart the ESP32
     ESP_LOGI(ROTULO_LOCAL, "Wi-Fi reseted. Restarting ESP32...");

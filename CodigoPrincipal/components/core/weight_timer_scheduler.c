@@ -1,10 +1,10 @@
 #include "weight_timer_scheduler.h"
 
 static const char *ROTULO_LOCAL = "SENSOR_TASK";
-static TimerHandle_t schedule_weight_measure_timer;
+static TimerHandle_t schedule_weight_measure_timer = {0};
 static QueueHandle_t weight_measure = NULL;
 static bool control = false;
-static char log_msg[150];
+static char log_msg[150] = {0};
 
 void schedule_next_measure()
 {
@@ -14,8 +14,8 @@ void schedule_next_measure()
         return;
     }
 
-    time_t now;
-    struct tm timeinfo;
+    time_t now = {0};
+    struct tm timeinfo = {0};
     time(&now);
     localtime_r(&now, &timeinfo);
 
@@ -82,7 +82,7 @@ static void task_worker(void *pvParams)
 {
     while (1)
     {
-        weight_t w;
+        weight_t w = {0};
         if (xQueueReceive(weight_measure, &w, portMAX_DELAY))
         {
             snprintf(log_msg, sizeof(log_msg), "Raw{%ld}_Calibrated{%.2f}", w.raw_value, w.value);
@@ -100,12 +100,6 @@ void stop_schedule_timer()
 
 void init_weight_sensors_timer()
 {
-    for (int i = 0; i < SENSORS_COUNT; i++)
-    {
-        ESP_LOGI(ROTULO_LOCAL, "Tare - Sensor[%d]", i);
-        hx711_tare(&sensors[i], WEIGHT_NUMBER_TO_TARE);
-    }
-
     schedule_weight_measure_timer = xTimerCreate(
         "SchedulerTimer",            // Name
         pdMS_TO_TICKS(1000),         // Initial period (dummy value)

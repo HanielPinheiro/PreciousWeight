@@ -163,7 +163,7 @@ static esp_err_t calibrate_routine(const char *data)
      */
     if (calibration_steps == 0)
     {
-        for (int i = 0; i < SENSORS_COUNT; i++)
+        for (int i = 0; i < NUM_WEIGHT_SENSORS; i++)
             hx711_tare(&sensors[i], WEIGHT_NUMBER_TO_TARE);
         while (true)
         {
@@ -199,10 +199,10 @@ static esp_err_t calibrate_routine(const char *data)
             scale_in_grams = known_weight_grams;
             sdcard_log(LOG_INFO, m, ROTULO_LOCAL);
 
-            for (int i = 0; i < SENSORS_COUNT; i++)
+            for (int i = 0; i < NUM_WEIGHT_SENSORS; i++)
             {
-                sensors[i].raw_scale = hx711_read_average(&sensors[i], WEIGHT_NUMBER_TO_AVERAGE);
-                snprintf(m, 100, "Novo valor bruto de referencia - Sensor[%d]:%ld", i, sensors[i].raw_scale);
+                sensors[i].calib_factor = hx711_read_average(&sensors[i], WEIGHT_NUMBER_TO_AVERAGE);
+                snprintf(m, 100, "Novo valor bruto de referencia - Sensor[%d]:%ld", i, sensors[i].calib_factor);
                 sdcard_log(LOG_INFO, m, ROTULO_LOCAL);
             }
 
@@ -248,7 +248,7 @@ static esp_err_t wifi_routine()
         client = NULL;
     }
     sdcard_log(LOG_WARN, "MQTT desligado, desligando wifi", ROTULO_LOCAL);
-    full_wifi_reset();
+    reset_wifi();
     return ESP_OK;
 }
 
@@ -279,11 +279,11 @@ void process_mqtt_data(const char *mqtt_data)
                 calibration_steps = 0;
             }
 
-            if (!scale_has_baby() && strcmp(h->prefix, RECEIVED_BABY))
-            {
-                mqtt_publish(MQTT_TOPIC_PUB_WEIGHT, "ERROR_BABY_NOT_INFORMED", 1);
-                return;
-            }
+            // if (!scale_has_baby() && strcmp(h->prefix, RECEIVED_BABY))
+            // {
+            //     mqtt_publish(MQTT_TOPIC_PUB_WEIGHT, "ERROR_BABY_NOT_INFORMED", 1);
+            //     return;
+            // }
 
             if (number_of_weight_times >= MAX_WEIGHT_TIMES && strcmp(h->prefix, RECEIVED_TIMES))
             {
@@ -298,10 +298,11 @@ void process_mqtt_data(const char *mqtt_data)
             if (result == ESP_OK)
             {
                 mqtt_publish(MQTT_TOPIC_PUB_WEIGHT, SUCCESS_MSG, 1);
-                if (strstr(h->log_success, "%s"))
-                    ESP_LOGI(ROTULO_LOCAL, "%s - %s", h->log_success, baby_id);
-                else
-                    ESP_LOGI(ROTULO_LOCAL, "%s", h->log_success);
+                ESP_LOGI(ROTULO_LOCAL, "%s", h->log_success);
+                // if (strstr(h->log_success, "%s"))
+                //     ESP_LOGI(ROTULO_LOCAL, "%s - %s", h->log_success, baby_id);
+                // else
+                // ESP_LOGI(ROTULO_LOCAL, "%s", h->log_success);
             }
             else
             {

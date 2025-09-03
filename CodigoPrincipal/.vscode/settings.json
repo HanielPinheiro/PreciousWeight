@@ -82,7 +82,9 @@
     "tuple": "c",
     "type_traits": "c",
     "utility": "c",
-    "compare": "c"
+    "compare": "c",
+    "text_encoding": "c",
+    "thread": "c"
   },
   "idf.flashType": "UART",
   "idf.portWin": "COM4",

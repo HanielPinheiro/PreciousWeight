@@ -17,7 +17,7 @@ void mqtt_manager_task(void *pvParameters)
             {
                 ESP_LOGI(ROTULO_LOCAL, "Stopping MQTT client");
                 esp_mqtt_client_stop(client);
-                vTaskDelay(pdMS_TO_TICKS(500));
+                vTaskDelay(pdMS_TO_TICKS(500));                
 
                 ESP_LOGI(ROTULO_LOCAL, "Destroying MQTT client");
                 esp_mqtt_client_destroy(client);
