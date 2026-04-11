@@ -42,14 +42,14 @@ esp_err_t sdcard_init(void)
     host.max_freq_khz = 4000; // ← Ajusta a velocidade do BUS para 4MHz
 
     // Ajusta pullup dos pinos:
-    gpio_set_pull_mode(GPIO_NUM_5, GPIO_PULLUP_ONLY);  // CS
-    gpio_set_pull_mode(GPIO_NUM_19, GPIO_PULLUP_ONLY); // MISO (obrigatório!)
+    gpio_set_pull_mode(SDCARD_CS, GPIO_PULLUP_ONLY);   // CS
+    gpio_set_pull_mode(SDCARD_MISO, GPIO_PULLUP_ONLY); // MISO (obrigatório!)
 
     // Configura o trafego de informação via cabos (BUS)
     spi_bus_config_t bus_cfg = {
-        .mosi_io_num = GPIO_NUM_23,
-        .miso_io_num = GPIO_NUM_19,
-        .sclk_io_num = GPIO_NUM_18,
+        .mosi_io_num = SDCARD_MOSI,
+        .miso_io_num = SDCARD_MISO,
+        .sclk_io_num = SDCARD_CLK,
         .quadwp_io_num = -1,     // Pinos para modo Quad SPI (QSPI), não usado em SD Cards (apenas para memórias Flash/QSPI).
         .quadhd_io_num = -1,     // Pinos para modo Quad SPI (QSPI), não usado em SD Cards (apenas para memórias Flash/QSPI).
         .max_transfer_sz = 4000, // Tamanho máximo de cada transferência SPI. No codigo github está 4000
@@ -74,7 +74,7 @@ esp_err_t sdcard_init(void)
     // This initializes the slot without card detect (CD) and write protect (WP) signals.
     // Modify slot_config.gpio_cd and slot_config.gpio_wp if your board has these signals.
     sdspi_device_config_t slot_config = SDSPI_DEVICE_CONFIG_DEFAULT();
-    slot_config.gpio_cs = GPIO_NUM_5;
+    slot_config.gpio_cs = SDCARD_CS;
     slot_config.host_id = host.slot;
 
     ESP_LOGI(ROTULO_LOCAL, "Montando Sistema de Arquivos (FAT)");

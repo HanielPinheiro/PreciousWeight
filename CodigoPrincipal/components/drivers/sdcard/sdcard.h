@@ -3,6 +3,8 @@
 #define SDCARD_H
 
 #include "stdio.h"
+#include "xtensa_api.h"
+#include "xt_utils.h"
 #include "sdmmc_cmd.h"
 #include "esp_vfs_fat.h"
 #include "sys/unistd.h"
@@ -12,9 +14,13 @@
 #include "process_mqtt_data.h"
 #include "sdcard_task.h"
 
-
 #define MORE_LOGS false
 #define MAX_LOG_LENGTH 160
+
+#define SDCARD_MOSI GPIO_NUM_23
+#define SDCARD_MISO GPIO_NUM_19
+#define SDCARD_CLK GPIO_NUM_18
+#define SDCARD_CS GPIO_NUM_5
 
 #define MOUNT_POINT "/sdcard"
 #define LOG_FILE MOUNT_POINT "/logs.txt"
@@ -26,8 +32,6 @@ typedef struct
     char *path;
     char message[MAX_LOG_LENGTH];
 } log_entry_t;
-
-
 
 extern sdmmc_card_t *sdcard;
 

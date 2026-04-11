@@ -9,17 +9,19 @@
 #include "esp_log.h"
 
 #define NUM_WEIGHT_SENSORS 4
-#define SCALE1_DOUT GPIO_NUM_13
-#define SCALE1_SCK GPIO_NUM_14
+
+#define SCALE1_DOUT GPIO_NUM_21
+#define SCALE1_SCK GPIO_NUM_22
 
 #define SCALE2_DOUT GPIO_NUM_16
-#define SCALE2_SCK GPIO_NUM_17
+#define SCALE2_SCK GPIO_NUM_14 // PIN 17 original, 14 na atual pq deu problema na solda
 
 #define SCALE3_DOUT GPIO_NUM_32
 #define SCALE3_SCK GPIO_NUM_33
 
 #define SCALE4_DOUT GPIO_NUM_25
 #define SCALE4_SCK GPIO_NUM_26
+
 #define HX711_INVALID_READING 0x80000000
 #define WEIGHT_NUMBER_TO_AVERAGE 5
 #define WEIGHT_NUMBER_TO_TARE 20

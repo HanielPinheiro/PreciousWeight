@@ -7,7 +7,6 @@ set(EXTRA_COMPONENT_DIRS
     "${CMAKE_CURRENT_SOURCE_DIR}/components/comm/mqtt"
     "${CMAKE_CURRENT_SOURCE_DIR}/components/comm"
     
-    "${CMAKE_CURRENT_SOURCE_DIR}/components/drivers/buzzer"
     "${CMAKE_CURRENT_SOURCE_DIR}/components/drivers/hx711"
     "${CMAKE_CURRENT_SOURCE_DIR}/components/drivers/sdcard"
     

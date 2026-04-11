@@ -3,18 +3,6 @@
 static const char *ROTULO_LOCAL = "BIOS";
 hx711_t sensors[NUM_WEIGHT_SENSORS] = {0};
 
-static void initialize_buzzers()
-{
-    buzzer_init();
-    buzzer_long_beep(); // Ligando
-
-    if (MODO_DEBUG)
-    { // confirma que hardware iniciou usando led azul
-        gpio_reset_pin(LED_GPIO);
-        gpio_set_direction(LED_GPIO, GPIO_MODE_OUTPUT);
-        gpio_set_level(LED_GPIO, 1);
-    }
-}
 
 static esp_err_t initialize_sdcard()
 {
@@ -32,14 +20,12 @@ static esp_err_t initialize_sdcard()
                 break;
 
             sdcard_notify_uart(ROTULO_LOCAL, "Problema ao escrever Logs!!");
-            buzzer_short_alert();
             vTaskDelay(pdMS_TO_TICKS(1000));
             retry_count++;
             continue;
         }
 
         sdcard_notify_uart(ROTULO_LOCAL, "Falha ao iniciar Cartao SD");
-        buzzer_short_alert();
         retry_count++;
         vTaskDelay(pdMS_TO_TICKS(1000));
     } while (retry_count < max_retries);
@@ -63,7 +49,8 @@ static esp_err_t initialize_weight_sensors()
 {
     int dout[4] = {SCALE1_DOUT, SCALE2_DOUT, SCALE3_DOUT, SCALE4_DOUT};
     int sck[4] = {SCALE1_SCK, SCALE2_SCK, SCALE3_SCK, SCALE4_SCK};
-    uint32_t calib_factor[4] = {86UL, 123UL, 74UL, 116UL}; // estimados manualmente
+    // uint32_t calib_factor[4] = {86UL, 123UL, 74UL, 116UL}; // estimados manualmente
+    uint32_t calib_factor[4] = {315UL, 315UL, 240UL, 315UL}; // estimados manualmente
     for (int i = 0; i < NUM_WEIGHT_SENSORS; i++)
     {
         sensors[i].id = i;
@@ -99,12 +86,9 @@ weight_t measure_weight()
 
 void init_hardware()
 {
-    initialize_buzzers();
-    sdcard_notify_uart(ROTULO_LOCAL, "Buzzer inicializado. Inicializando Cartao SD.");
+    sdcard_notify_uart(ROTULO_LOCAL, "Inicializando Cartao SD.");
 
-    esp_err_t ret = initialize_sdcard();
-    if (ret != ESP_OK)
-        buzzer_critical_alert();
+    esp_err_t ret = initialize_sdcard();    
 
     sdcard_log(LOG_INFO, "Cartao SD inicializado. Inicializando sensores HX711.", ROTULO_LOCAL);
     ESP_ERROR_CHECK(initialize_weight_sensors());

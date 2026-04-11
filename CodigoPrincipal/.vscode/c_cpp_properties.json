@@ -2,19 +2,16 @@
   "configurations": [
     {
       "name": "ESP-IDF",
-      "compilerPath": "${config:idf.toolsPathWin}\\tools\\xtensa-esp-elf\\esp-14.2.0_20241119\\xtensa-esp-elf\\bin\\xtensa-esp32-elf-gcc.exe",
+      "compilerPath": "c:\\Users\\Biruleibe\\EspressifVsCode\\Tools\\tools\\xtensa-esp-elf\\esp-14.2.0_20241119\\xtensa-esp-elf\\bin\\xtensa-esp32-elf-gcc.exe",
       "compileCommands": [
         "${config:idf.buildPath}/compile_commands.json"
       ],
       "includePath": [
-        "${config:idf.espIdfPath}/components/**",
         "${config:idf.espIdfPathWin}/components/**",
-        "${workspaceFolder}/**",
-        "${config:idf.espIdfPath}/components/core/system_manager"
+        "${workspaceFolder}/**"
       ],
       "browse": {
         "path": [
-          "${config:idf.espIdfPath}/components",
           "${config:idf.espIdfPathWin}/components",
           "${workspaceFolder}"
         ],

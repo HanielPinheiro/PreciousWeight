@@ -81,17 +81,26 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
 
 void mqtt_app_start(void)
 {
+    // const esp_mqtt_client_config_t mqtt_cfg = {
+    //     .broker = {
+    //         .address.uri = MQTT_ADDRESS,
+    //         .verification = {
+    //             .certificate = (const char *)ca_cert_pem_start,
+    //             .skip_cert_common_name_check = true}},
+    //     .credentials = {.authentication = {
+    //                         .certificate = (const char *)client_cert_pem_start,
+    //                         .key = (const char *)client_key_pem_start,
+    //                     },
+    //                     .client_id = WIFI_DEVICE_NAME},
+    //     .session = {.keepalive = MQTT_KEEPALIVE, .disable_clean_session = true, .last_will = {.topic = MQTT_TOPIC_CONN_DISCONN, .msg = "DISCONNECTED", .qos = 1, .retain = true}},
+    //     .network = {.reconnect_timeout_ms = 10000, .disable_auto_reconnect = false}};
+
     const esp_mqtt_client_config_t mqtt_cfg = {
         .broker = {
             .address.uri = MQTT_ADDRESS,
-            .verification = {
-                .certificate = (const char *)ca_cert_pem_start,
-                .skip_cert_common_name_check = true}},
-        .credentials = {.authentication = {
-                            .certificate = (const char *)client_cert_pem_start,
-                            .key = (const char *)client_key_pem_start,
-                        },
-                        .client_id = WIFI_DEVICE_NAME},
+            // NÃO colocar .verification
+        },
+        // NÃO colocar .credentials
         .session = {.keepalive = MQTT_KEEPALIVE, .disable_clean_session = true, .last_will = {.topic = MQTT_TOPIC_CONN_DISCONN, .msg = "DISCONNECTED", .qos = 1, .retain = true}},
         .network = {.reconnect_timeout_ms = 10000, .disable_auto_reconnect = false}};
 

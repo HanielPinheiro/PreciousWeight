@@ -3,7 +3,6 @@
 #define BIOS_H
 
 #include "comm_libs.h"
-#include "buzzer.h"
 #include "sdcard.h"
 #include "hx711.h"
 

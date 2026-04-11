@@ -71,31 +71,11 @@ static void sensor_data_process_task(void *pv_params)
                      sensor_data[2].sensor_id, sensor_data[2].weight,
                      sensor_data[3].sensor_id, sensor_data[3].weight);
 
-            // int32_t final_weight = 0UL;
-            // for (int i = 0; i < NUM_WEIGHT_SENSORS; i++)
-            //     final_weight += sensor_data[i].weight;
-            // final_weight /= NUM_WEIGHT_SENSORS;
-            // ESP_LOGI(ROTULO_LOCAL, "Peso{%ld}", final_weight);
-
-            // // Correcao do offset
-            // int32_t err = 0UL;
-            // int32_t tolerance = 3; // em gramas -> unidade do peso final
-
-            // for (int i = 0; i < NUM_WEIGHT_SENSORS; i++)
-            // {
-            //     err = final_weight - sensor_data[i].weight;
-            //     if (err < 0 && err < final_weight - tolerance)
-            //     {
-            //         count_err[i]++;
-            //         if (count_err[i] == 5)
-            //         {
-            //             int32_t new_factor = sensors[i].calib_factor-10;//sensor_data[i].units / final_weight;
-            //             ESP_LOGI(ROTULO_LOCAL, "TrocandoCalibFactor Sensor[%d];AntigoFator{%ld};NovoFator{%ld}", sensors[i].id, sensors[i].calib_factor, new_factor);
-            //             sensors[i].calib_factor = new_factor;
-            //             count_err[i] = 0;
-            //         }
-            //     }
-            // }
+            int32_t final_weight = 0UL;
+            for (int i = 0; i < NUM_WEIGHT_SENSORS; i++)
+                final_weight += sensor_data[i].weight;
+            final_weight /= NUM_WEIGHT_SENSORS;
+            ESP_LOGI(ROTULO_LOCAL, "Peso{%ld}", final_weight);           
         }
     }
 }
