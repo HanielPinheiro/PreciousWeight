@@ -98,12 +98,13 @@ class _LogsItensState extends State<LogsItens> {
   }
 
   Widget _buildBabiesCard(BabyModel baby) {
-    return ElementsOfViews.CardToList(context, LogModel.getLogIcon(widget.type), '${baby.name} - ${baby.motherName}', 'Date: ${dateFormatter_objToDb.format(baby.birthDate!)}', () {
+    return ElementsOfViews.CardToList(context, LogModel.getLogIcon(widget.type), '${baby.name}', 'Mãe: ${baby.motherName} | Nascimento: ${dateFormatter_objToDb.format(baby.birthDate!)}', () {
       Navigator.push(context, MaterialPageRoute(builder: (context) => LogsList(type: widget.type, babyId: baby.id)));
     });
   }
   Widget _buildScaleCard(ScaleModel scale) {
-    return ElementsOfViews.CardToList(context, LogModel.getLogIcon(widget.type), '${scale.id} - baby: ${scale.babyId}', 'Status: ${ScaleModel.ScaleOperation(scale.status)}', () {
+    final id = scale.babyId != null ? "${scale.id} - baby: ${scale.babyId}" :"${scale.id} - Sem bebê associado";
+    return ElementsOfViews.CardToList(context, LogModel.getLogIcon(widget.type), id, 'Status: ${ScaleModel.ScaleOperation(scale.status)}', () {
       Navigator.push(context, MaterialPageRoute(builder: (context) => LogsList(type: widget.type, scaleId: scale.id,)));
     });
   }

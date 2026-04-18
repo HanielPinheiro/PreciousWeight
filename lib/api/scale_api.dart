@@ -68,6 +68,17 @@ class ScaleApi {
     }
   }
 
+  Future<int?> getIdByHash(String hash) async {
+    try {
+      final _header = {'Content-Type': 'application/json', 'Authorization': 'Bearer ${UserApi().token!.accessToken}', 'Accept': 'application/json'};
+      final result = await ApiService.apiConn("${address_api}${api_scale_id_by_hash.replaceAll(api_pattern_hash, hash)}", header: _header);
+      if (result.isEmpty) return null;
+      return scaleFromJson(result).id;
+    } catch (error) {
+      throw error;
+    }
+  }
+
   Future<List<String>> getScaleDataFromHash(String hash) async {
     try {
       final _header = {'Content-Type': 'application/json', 'Authorization': 'Bearer ${UserApi().token!.accessToken}', 'Accept': 'application/json'};

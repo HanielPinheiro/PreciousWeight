@@ -23,7 +23,7 @@ class UserApi {
 
       _user = userFromJson(await ApiService.apiConn("${address_api}${api_user_login}", body: _body, header: _header));
     } catch (error) {
-      throw error;
+      throw new Exception("Usuario ou senha incorretos!");
     }
   }
   Future<void> Logout() async {

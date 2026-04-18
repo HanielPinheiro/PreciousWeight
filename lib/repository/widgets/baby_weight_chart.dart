@@ -50,7 +50,7 @@ class BabyWeightChart extends StatelessWidget {
                     LineChartData(
                       lineTouchData: LineTouchData(
                         touchTooltipData: LineTouchTooltipData(
-                          tooltipRoundedRadius: 8,
+                          tooltipBorderRadius: BorderRadius.circular(8),
                           getTooltipColor: (LineBarSpot touchedSpot) {
                             return Theme.of(context).colorScheme.surface;
                           },

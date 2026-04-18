@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:precious_weight/models/baby.dart';
 import 'package:provider/provider.dart';
+
+
 import '../../repository/design/button_styles.dart';
 import '../../repository/providers/scales_provider.dart';
 import '../../models/scales.dart';
+import '../../models/baby.dart';
 import '../../repository/design/fonts.dart';
 import '../../repository/helper/conversions.dart';
 import '../../repository/widgets/elements.dart';
@@ -59,16 +61,40 @@ class _ScaleDetailsState extends State<ScaleDetails> {
     }
   }
 
+  Future<void> _linkBabyToScale(BabyModel baby) async {
+    final result = await ElementsOfViews.showConfirmDialog(context, "Confirmação", "Você confirma a associação do bebê ${baby.name!} com a balança ${_currentScale!.id}");
+    if (!result) return;
+    await context.read<ScalesProvider>().setOrUnsetBaby(context, _currentScale!.id, baby_code: baby.id!.toString());
+    await _refreshBabyCacheAndScreen();
+  }
+
+  Future<void> _unlinkBabyFromScale() async {
+    final _baby = _currentScale!.assignedBaby!;
+    final result = await ElementsOfViews.showConfirmDialog(context, 'Bebê Associado', "Nome do bebê: ${_baby.name}\nNome da mãe: ${_baby.motherName}\nData de nascimento: ${dateFormatter_objToDb.format(_baby.birthDate!)}", btnCancelLbl: 'Fechar', btnConfirmLbl: "Desassociar");
+    if (!result) return;
+    await context.read<ScalesProvider>().setOrUnsetBaby(context, _baby.scaleId!);
+    await _refreshBabyCacheAndScreen();
+  }
+
+  Future<void> _refreshBabyCacheAndScreen() async {
+    await context.read<BabyProvider>().loadBabies(); //força atualizar o cache dos bebes
+    await _loadData();
+  }
+
   Widget _showFlex1() {
     return Row(mainAxisSize: MainAxisSize.max, crossAxisAlignment: CrossAxisAlignment.center, mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
       ElementsOfViews.SimpleButton(context, _scaleActive ? "Inativar Balança" : "Ativar Balança", () async {
         await context.read<ScalesProvider>().enableOrDisableScale(context, _currentScale!);
         await _loadData();
       }, false, _hasBaby),
-      ElementsOfViews.SimpleButton(context, _hasBaby ? "Trocar Bebê de Balança" : "Associar Bebê à Balança", () async {
-        await Navigator.push(context, MaterialPageRoute(builder: (context) => ScaleBabies(scale: _currentScale)));
-        await _loadData();
-      })
+      ElementsOfViews.SimpleButton(context, _hasBaby ? "Trocar Bebê de Balança" : "Associar Balança a um Bebê", () async {
+        if (!_hasBaby) {
+          final baby = await Navigator.push(context, MaterialPageRoute(builder: (context) => ScaleBabies(scale: _currentScale)));
+          if (baby != null) await _linkBabyToScale(baby);
+        } else {
+          await _unlinkBabyFromScale();
+        }
+      }, false, !_scaleActive)
     ]);
   }
 

@@ -21,6 +21,6 @@ class ApiErrorHandler {
   }
 
   static Future<void> _showGenericError(BuildContext context, String message) async {
-    await showDialog(context: context, builder: (context) => AlertDialog(title: Text("Erro de requisição"), content: Text(message)));
+    await showDialog(context: context, builder: (context) => AlertDialog(title: Text("Erro de requisição"), content: Text(message.replaceAll("Exception:", ""))));
   }
 }

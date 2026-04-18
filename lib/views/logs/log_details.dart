@@ -21,7 +21,7 @@ class LogDetails extends StatelessWidget {
       if (log.username != null) ElementsOfViews.CardToText(context, 'Usuário: ${log.username}'),
       const SizedBox(height: 40),
       ElementsOfViews.CardToText(context, 'Dados do Relatório:'),
-      const SizedBox(height: 20),
+      const SizedBox(height: 40),
     ];
   }
 
@@ -35,11 +35,8 @@ class LogDetails extends StatelessWidget {
       ElementsOfViews.CardToText(context, 'Nome da mãe: ${parsedBaby.motherName.toString()}'),
       ElementsOfViews.CardToText(context, 'Data de Nascimento: ${dateFormatter_objToDb.format(parsedBaby.birthDate!)}'),
       SizedBox(height: 40),
-      ElementsOfViews.CardToText(context, 'QR CODE:'),
-      SizedBox(height: 40),
-      parsedBaby.qrCodeImage!,
+      parsedBaby.hasQrCode ? ElementsOfViews.CardToText(context, 'Tem imagem para identificação') : ElementsOfViews.CardToText(context, 'Texto do Qr Code:\n ${parsedBaby.qrCodeText.toString()}'),
       SizedBox(height: 10),
-      ElementsOfViews.CardToText(context, 'Texto: ${parsedBaby.qrCodeText.toString()}')
     ];
   }
 

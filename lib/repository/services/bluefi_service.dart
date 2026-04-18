@@ -1,158 +1,269 @@
-import 'dart:ffi';
-
-import 'package:flutter/material.dart';
-import 'package:flutter_esp_ble_prov/flutter_esp_ble_prov.dart';
 import 'dart:async';
+import 'dart:io';
+import 'package:device_info_plus/device_info_plus.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_esp_ble_prov/flutter_esp_ble_prov.dart';
+import 'package:provider/provider.dart';
+import 'package:permission_handler/permission_handler.dart';
+
+import '../providers/scales_provider.dart';
+import '../design/fonts.dart';
 import '../helper/constants.dart';
 import '../widgets/elements.dart';
 
-class BluefiService extends StatefulWidget {
-  final String scannedText;
+class BluetoothHelper {
+  static const MethodChannel _channel = MethodChannel('bluetooth_helper');
+  static const EventChannel _eventChannel = EventChannel('bluetooth_helper_state');
 
-  const BluefiService(this.scannedText, {Key? key}) : super(key: key);
+  static Future<bool> isBluetoothOn() async {
+    final result = await _channel.invokeMethod<bool>('isBluetoothOn');
+    return result ?? false;
+  }
+
+  static Stream<bool> get bluetoothStateStream {
+    return _eventChannel.receiveBroadcastStream().map((event) => event as bool);
+  }
+}
+
+class BluefiService extends StatefulWidget {
+  final String scannedUUID;
+
+  const BluefiService(this.scannedUUID, {Key? key}) : super(key: key);
 
   @override
   State<BluefiService> createState() => _BluefiService();
 }
 
 class _BluefiService extends State<BluefiService> {
-  final wifiLogin = TextEditingController();
-  final wifiPassword = TextEditingController();
+  final _wifiLogin = TextEditingController();
+  final _wifiPassword = TextEditingController();
   final _flutterEspBleProvPlugin = FlutterEspBleProv();
-  late String esp32Name;
-  late final String esp32POP;
+  bool _isLoading = true;
+  bool _permission = false;
+  bool _bleOn = false;
+  String? _provName = null;
+  String? _pop = null;
+  String _statusMessage = "";
 
   @override
   void initState() {
     super.initState();
-    var splitString = widget.scannedText.split('*');
-    esp32Name = splitString[0];
-    esp32POP = splitString[1];
+    BluetoothHelper.isBluetoothOn().then((isOn) {
+      setState(() {
+        _bleOn = isOn;
+      });
+    });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      BluetoothHelper.bluetoothStateStream.listen((isOn) {
+        setState(() {
+          _bleOn = isOn;
+        });
+        if (_permission && _bleOn) {
+          setState(() {
+            _statusMessage = "";
+            _isLoading = false;
+          });
+        }
+      });
+      await _getScaleData();
+      setState(() {
+        _isLoading = false;
+      });
+    });
   }
 
   @override
   void dispose() {
-    wifiLogin.dispose();
-    wifiPassword.dispose();
+    _wifiLogin.dispose();
+    _wifiPassword.dispose();
     super.dispose();
   }
 
-  int _similarityScore(String input, String candidate) {
-    int score = 0;
-    for (int i = 0; i < input.length && i < candidate.length; i++) {
-      if (input[i] == candidate[i]) {
-        score++;
-      } else {
-        break;
+  Future<void> _getScaleData() async {
+    final scaleData = await context.read<ScalesProvider>().getScaleDataFromHash(context, widget.scannedUUID);
+    _provName = scaleData[0];
+    _pop = scaleData[1];
+
+    if (_provName == null || _pop == null) {
+      ElementsOfViews.showSimpleDialog(context, "Não é possível realizar o pareamento", "Não foi possível identificar o dispositivo através do BLE.");
+      Navigator.pop(context);
+    }
+  }
+
+  Future<void> _connectAction() async {
+    final success = await _provisionWifi();
+    if (success) {
+      bool status = true;
+      final id = await context.read<ScalesProvider>().getScaleIdFromHash(context, widget.scannedUUID);
+      if (id == null) {
+        final scale = await context.read<ScalesProvider>().setNewScale(context, widget.scannedUUID);
+        if (scale == null) {
+          status = false;
+          await ElementsOfViews.showSimpleDialog(context, "Erro!!", "Falha ao adicionar balança ao BD, reporte ao suporte!");
+          setState(() {
+            _statusMessage = "Falha ao adicionar balança ao BD, reporte ao suporte!";
+          });
+        }
       }
-    }
-    return score;
-  }
-
-  bool _findBestMatch(List<String> bleDevices) {
-    String target = esp32Name.substring(0, esp32Name.length - 7);
-    final threshold = target.length; // Set your minimum similarity requirement
-
-    String? bestMatch;
-    int highestScore = 0;
-
-    for (final item in bleDevices) {
-      final score = _similarityScore(target, item);
-      if (score > highestScore) {
-        highestScore = score;
-        bestMatch = item;
-      }
-    }
-
-    if (bestMatch != null && highestScore >= threshold) {
-      esp32Name = bestMatch;
-      return true;
-    }
-    return false;
-  }
-
-  Future checkConn() async {
-    List<String> bleDevices = await _flutterEspBleProvPlugin.scanBleDevices('');
-    if (!_findBestMatch(bleDevices)) {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          backgroundColor: Theme.of(context).colorScheme.surface,
-          title: Text("Balança já está conectada ao WiFi", style: TextStyle(color: Theme.of(context).colorScheme.primary)),
-          actions: [TextButton(onPressed: () => Navigator.pop(context), child: Text("Ok", style: TextStyle(color: Theme.of(context).colorScheme.primary)))],
-        ),
-      );
-    }
-  }
-
-  Future provisionWifi() async {
-    final login = wifiLogin.text;
-    if (login == "") {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          backgroundColor: Theme.of(context).colorScheme.surface,
-          title: Text("Login Inválido", style: TextStyle(color: Theme.of(context).colorScheme.primary)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [Text('Por favor, verifique o login.', style: TextStyle(color: Theme.of(context).colorScheme.primary))],
-          ),
-        ),
-      );
-      return;
-    }
-
-    final password = wifiPassword.text;
-    if (password == "") {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          backgroundColor: Theme.of(context).colorScheme.surface,
-          title: Text("Senha Inválida", style: TextStyle(color: Theme.of(context).colorScheme.primary)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [Text('Por favor, verifique a senha.', style: TextStyle(color: Theme.of(context).colorScheme.primary))],
-          ),
-        ),
-      );
-      return;
-    }
-
-    var success = await _flutterEspBleProvPlugin.provisionWifi(esp32Name, esp32POP, login, password);
-    // print(success);
-    if (success!) {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          backgroundColor: Theme.of(context).colorScheme.surface,
-          title: Text("Conexão Wifi Concluída!", style: TextStyle(color: Theme.of(context).colorScheme.primary)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [Text('Agora você poderá associar um bebê à balança', style: TextStyle(color: Theme.of(context).colorScheme.primary))],
-          ),
-          actions: [TextButton(onPressed: () => Navigator.pop(context), child: Text("Ok", style: TextStyle(color: Theme.of(context).colorScheme.primary)))],
-        ),
-      ).then((_) {
+      if (status) {
+        await ElementsOfViews.showSimpleDialog(context, "Conexão concluída!", 'Balança conectada ao Wi-Fi!');
         Navigator.pop(context);
+      }
+    }
+  }
+
+  _permissionsError(String error) {
+    setState(() {
+      _permission = false;
+      _isLoading = true;
+      _statusMessage = error;
+    });
+  }
+
+  Future<void> _requestPermissions() async {
+    setState(() {
+      _statusMessage = "Solicitando permissões...";
+      _isLoading = true;
+    });
+
+    final List<Permission> permissions = [];
+
+    try {
+      if (Platform.isAndroid) {
+        final androidInfo = await DeviceInfoPlugin().androidInfo;
+        final sdkVersion = androidInfo.version.sdkInt;
+
+        permissions.add(Permission.location);
+        if (sdkVersion >= 31) {
+          // Android 12+ - Novas permissões Bluetooth
+          permissions.add(Permission.bluetoothScan);
+          permissions.add(Permission.bluetoothConnect);
+          permissions.add(Permission.bluetoothAdvertise);
+        } else // Android 11 ou inferior - Permissões antigas
+          permissions.add(Permission.bluetooth);
+      } else if (Platform.isIOS) {
+        permissions.add(Permission.bluetooth);
+        permissions.add(Permission.locationWhenInUse);
+      }
+    } catch (e) {
+      _permissionsError('Erro ao solicitar permissões: $e');
+      return;
+    }
+
+    bool canProceed = true;
+    for (var permission in permissions) {
+      final permsStatus = await permission.request();
+      if (!permsStatus.isGranted) canProceed = false;
+    }
+
+    if (!canProceed) {
+      _permissionsError("Permissões negadas ou dispositivo não suporta app, informar suporte!!");
+      return;
+    }
+    if (!_bleOn) {
+      ElementsOfViews.showSimpleDialog(context, "Ative seu Bluetooth!!", "Por favor, habilite o Bluetooth do seu celular antes de prosseguir");
+      setState(() {
+        _permission = true;
+        _statusMessage = "Ative seu Bluetooth!!";
       });
     } else {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          backgroundColor: Theme.of(context).colorScheme.surface,
-          title: Text("Erro na Conexão Wifi", style: TextStyle(color: Theme.of(context).colorScheme.primary)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [Text('Por favor, verifique o nome da rede e a senha, e tente novamente.', style: TextStyle(color: Theme.of(context).colorScheme.primary))],
-          ),
-        ),
-      );
+      //can connect
+      setState(() {
+        _permission = true;
+        _isLoading = false;
+        _statusMessage = "Permissões ativadas!";
+      });
     }
+  }
+
+  Future<bool> _provisionWifi() async {
+    setState(() {
+      _isLoading = true;
+    });
+    final login = _wifiLogin.text;
+    final password = _wifiPassword.text;
+    if (login.isEmpty || password.isEmpty) {
+      await ElementsOfViews.showSimpleDialog(context, "Verifique as credenciais", 'Por favor, verifique se inseriu o nome da rede e a senha');
+      return false;
+    }
+
+    try {
+      setState(() {
+        _statusMessage = "Procurando dispositivos...";
+      });
+      final _prefix = "PW_";
+      List<String> bleDevices = await _flutterEspBleProvPlugin.scanBleDevices(_prefix);
+      print('Dispositivos encontrados: $bleDevices');
+      if (bleDevices.length < 0) return false;
+      setState(() {
+        _statusMessage = "Dispositivo encontrado.\n Iniciando conexão...";
+      });
+      bool? success = await _flutterEspBleProvPlugin.provisionWifi(bleDevices[0], _pop!, login, password);
+      if (success != true) {
+        setState(() {
+          _isLoading = false;
+          _statusMessage = "Falha ao conectar";
+        });
+        return false;
+      }
+
+      await ElementsOfViews.showSimpleDialog(context, "Conexão concluída!", 'Balança conectada ao Wi-Fi!');
+      return true;
+    } on PlatformException catch (e) {
+      print('Erro de plataforma: ${e.message}');
+      setState(() {
+        _statusMessage = "Erro: ${e.message}";
+        _isLoading = false;
+      });
+      return false;
+    } catch (e) {
+      print('Erro inesperado: $e');
+      setState(() {
+        _statusMessage = "Erro inesperado: $e";
+        _isLoading = false;
+      });
+      return false;
+    }
+  }
+
+  Widget _showConnData() {
+    return Container(
+      padding: EdgeInsets.all(10),
+      color: Theme.of(context).colorScheme.surface,
+      child: Column(mainAxisSize: MainAxisSize.max, mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+        Expanded(child: Text(lbl_wifi_data_br, style: displaySmall.copyWith(color: Theme.of(context).colorScheme.primary))),
+        Expanded(child: ElementsOfViews.InputWithController(context, _wifiLogin, lbl_wifi_login_br, lbl_wifi_login_lbl_br, Icon(Icons.person, color: Theme.of(context).colorScheme.primary))),
+        Expanded(child: ElementsOfViews.InputWithController(context, _wifiPassword, lbl_wifi_pass_br, lbl_login_senha_lbl_br, Icon(Icons.password, color: Theme.of(context).colorScheme.primary), true)),
+        Expanded(child: ElevatedButton.icon(icon: Icon(Icons.login, color: Theme.of(context).colorScheme.primary), label: Text(lbl_wifi_btn_connect_br, style: TextStyle(color: Theme.of(context).colorScheme.primary)), onPressed: () async => await _connectAction(), style: ElevatedButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.primary, backgroundColor: Theme.of(context).colorScheme.onSecondary, elevation: 4.0)))
+      ]),
+    );
+  }
+
+  _btnActivateBluetooth() {
+    return Container(
+      padding: EdgeInsets.all(10),
+      color: Theme.of(context).colorScheme.surface,
+      child: Column(mainAxisSize: MainAxisSize.max, mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+        Expanded(child: SizedBox(height: 100)),
+        Expanded(flex: 1, child: ElevatedButton.icon(icon: Icon(size: 25, Icons.bluetooth, color: Theme.of(context).colorScheme.primary), label: Text(lbl_wifi_btn_ble_permission_br, style: headlineSmall.copyWith(color: Theme.of(context).colorScheme.primary)), onPressed: () async => _requestPermissions(), style: ElevatedButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.primary, backgroundColor: Theme.of(context).colorScheme.onSecondary, elevation: 4.0))),
+        Expanded(child: SizedBox(height: 100))
+      ]),
+    );
+  }
+
+  _messageArea() {
+    return Container(padding: EdgeInsets.all(10), child: Center(child: Text(_statusMessage, textAlign: TextAlign.center, style: displayMedium.copyWith(color: Theme.of(context).colorScheme.primary))));
+  }
+
+  _loadScreen() {
+    return Scaffold(backgroundColor: Theme.of(context).colorScheme.surface, appBar: ElementsOfViews.SimpleAppBar(context, lbl_connect_scale_to_network_br), body: Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Expanded(flex: 2, child: SizedBox(height: 200)), CircularProgressIndicator(), SizedBox(height: 20), Expanded(flex: 4, child: Text(_statusMessage, textAlign: TextAlign.center, style: displayMedium.copyWith(color: Theme.of(context).colorScheme.primary)))])));
   }
 
   @override
   Widget build(BuildContext context) {
-    checkConn();
+    if (_isLoading) return _loadScreen();
     return SafeArea(
       child: Scaffold(
         backgroundColor: Theme.of(context).colorScheme.surface,
@@ -164,193 +275,10 @@ class _BluefiService extends State<BluefiService> {
             mainAxisSize: MainAxisSize.max,
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Flexible(
-                child: Container(
-                  padding: EdgeInsets.all(10),
-                  color: Theme.of(context).colorScheme.surface,
-                  child: Text(lbl_wifi_data_br, style: TextStyle(color: Theme.of(context).colorScheme.primary)),
-                ),
-              ),
-              Flexible(
-                child: Container(
-                  padding: EdgeInsets.all(10),
-                  color: Theme.of(context).colorScheme.surface,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.max,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Flexible(child: Text(lbl_wifi_login_br, style: TextStyle(color: Theme.of(context).colorScheme.primary))),
-                      Expanded(
-                        child: TextField(
-                          controller: wifiLogin,
-                          style: TextStyle(color: Theme.of(context).colorScheme.primary),
-                          decoration: InputDecoration(fillColor: Theme.of(context).colorScheme.surface, filled: true, border: OutlineInputBorder()),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              Flexible(
-                child: Container(
-                  padding: EdgeInsets.all(10),
-                  color: Theme.of(context).colorScheme.surface,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.max,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Flexible(child: Text(lbl_wifi_pass_br, style: TextStyle(color: Theme.of(context).colorScheme.primary))),
-                      Expanded(
-                        child: TextField(
-                          controller: wifiPassword,
-                          obscureText: true,
-                          style: TextStyle(color: Theme.of(context).colorScheme.primary),
-                          decoration: InputDecoration(fillColor: Theme.of(context).colorScheme.surface, filled: true, border: OutlineInputBorder()),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              Flexible(
-                child: Container(
-                  padding: EdgeInsets.all(10),
-                  color: Theme.of(context).colorScheme.surface,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.max,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      ElevatedButton.icon(
-                        icon: Icon(Icons.login, color: Theme.of(context).colorScheme.primary),
-                        label: Text(lbl_wifi_btn_connect_br, style: TextStyle(color: Theme.of(context).colorScheme.primary)),
-                        onPressed: provisionWifi,
-                        style: ElevatedButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.primary, backgroundColor: Theme.of(context).colorScheme.onSecondary, elevation: 4.0),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
+            children: [Expanded(flex: 2, child: _bleOn ? _showConnData() : _btnActivateBluetooth()), Expanded(flex: 2, child: _messageArea())],
           ),
         ),
       ),
     );
   }
 }
-// import 'package:flutter/material.dart';
-// import 'package:flutter_esp_ble_prov/flutter_esp_ble_prov.dart';
-// import 'dart:async';
-// import '../helper/constants.dart';
-// import '../widgets/elements.dart';
-//
-// class BluefiService extends StatefulWidget {
-//   final String scannedText;
-//
-//   const BluefiService(this.scannedText, {Key? key}) : super(key: key);
-//
-//   @override
-//   State<BluefiService> createState() => _BluefiService();
-// }
-//
-// class _BluefiService extends State<BluefiService> {
-//   final wifiLogin = TextEditingController();
-//   final wifiPassword = TextEditingController();
-//   final _flutterEspBleProvPlugin = FlutterEspBleProv();
-//   late final String esp32Name;
-//   late final String esp32POP;
-//
-//   @override
-//   void initState() {
-//     super.initState();
-//     var splitString = widget.scannedText.split('*');
-//     esp32Name = splitString[0];
-//     esp32POP = splitString[1];
-//   }
-//
-//   @override
-//   void dispose() {
-//     wifiLogin.dispose();
-//     wifiPassword.dispose();
-//     super.dispose();
-//   }
-//
-//   Future checkConn() async {
-//     var list = await _flutterEspBleProvPlugin.scanBleDevices('');
-//     if(!list.contains(esp32Name)) {
-//       showDialog(context: context, builder: (context) => AlertDialog(title: Text("Balança já está conectada ao WiFi"),
-//           actions: [TextButton(onPressed: () => Navigator.pop(context), child: Text("Ok"))]));
-//           // .then((_) {Navigator.pop(context);});
-//     }
-//   }
-//
-//   Future provisionWifi() async {
-//     final login = wifiLogin.text;
-//     if(login == ""){
-//       showDialog(context: context, builder: (context) => AlertDialog(title: Text("Login Inválido"), content: Column(mainAxisSize: MainAxisSize.min, children: [Text('Por favor, verifique o login.')])));
-//       return;
-//     }
-//
-//     final password = wifiPassword.text;
-//     if(password == ""){
-//       showDialog(context: context, builder: (context) => AlertDialog(title: Text("Senha Inválida"), content: Column(mainAxisSize: MainAxisSize.min, children: [Text('Por favor, verifique a senha.')])));
-//       return;
-//     }
-//
-//     var success = await _flutterEspBleProvPlugin.provisionWifi(esp32Name, esp32POP, login, password);
-//     print(success);
-//     if(success!) {
-//       showDialog(context: context, builder: (context) =>
-//           AlertDialog(title: Text("Conexão Wifi Concluída!"),
-//               content: Column(mainAxisSize: MainAxisSize.min, children: [Text('Agora você poderá associar um bebê à balança')]),
-//               actions: [TextButton(onPressed: () => Navigator.pop(context), child: Text("Ok"))]
-//           )).then((_) { Navigator.pop(context);});
-//     }
-//     else
-//       showDialog(context: context, builder: (context) => AlertDialog(title: Text("Erro na Conexão Wifi"), content: Column(mainAxisSize: MainAxisSize.min, children: [Text('Por favor, verifique o nome da rede e a senha, e tente novamente.')])));
-//   }
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     checkConn();
-//     return SafeArea(
-//       child: Scaffold(
-//         appBar:ElementsOfViews.SimpleAppBar(context, lbl_connect_scale_to_network_br),
-//         body: Container(
-//             padding: EdgeInsets.all(10),
-//             child: Column(
-//               mainAxisSize: MainAxisSize.max,
-//               mainAxisAlignment: MainAxisAlignment.start,
-//               crossAxisAlignment: CrossAxisAlignment.stretch,
-//               children: [
-//                 Flexible(child: Container(padding: EdgeInsets.all(10),child: const Text(lbl_wifi_data_br))),
-//                 Flexible(child: Container(padding: EdgeInsets.all(10),
-//                     child: Row(mainAxisSize: MainAxisSize.max, mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//                       children: [const Flexible(child: Text(lbl_wifi_login_br)), Expanded(child: TextField(controller: wifiLogin))],
-//                     ),
-//                   ),
-//                 ),
-//                 Flexible(
-//                   child: Container(padding: EdgeInsets.all(10),
-//                     child: Row(mainAxisSize: MainAxisSize.max, mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//                       children: [ const Flexible(child: Text(lbl_wifi_pass_br)), Expanded(child: TextField(controller: wifiPassword, obscureText: true))],
-//                     ),
-//                   ),
-//                 ),
-//                 Flexible(
-//                     child: Container(padding: EdgeInsets.all(10),child: Row(mainAxisSize: MainAxisSize.max, mainAxisAlignment: MainAxisAlignment.center,
-//                         children: [ElevatedButton.icon(icon: Icon(Icons.login,color: Theme.of(context).colorScheme.surface),
-//                                   label: const Text(lbl_wifi_btn_connect_br),onPressed: provisionWifi,
-//                                   style: ElevatedButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.surface,
-//                                                                   backgroundColor: Theme.of(context).colorScheme.onSecondary,
-//                                                                   elevation: 4.0),
-//                         ),
-//                   ]),
-//                 ))
-//               ],
-//             ),
-//           ),
-//         ),
-//     );
-//   }
-// }

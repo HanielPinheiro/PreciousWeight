@@ -1,11 +1,9 @@
 import 'dart:convert';
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:precious_weight/api/weight_api.dart';
-import 'package:precious_weight/models/scales.dart';
-import 'package:precious_weight/models/weight.dart';
 
-import '../api/baby_api.dart';
+import 'scales.dart';
+import 'weight.dart';
+import '../api/weight_api.dart';
 import '../repository/helper/conversions.dart';
 
 const String patient_id = "babyId";
@@ -34,10 +32,10 @@ class BabyModel {
   final String? motherName;
   final DateTime? birthDate;
   final bool? isActive;
-  Image? qrCodeImage;
+  final Image? qrCodeImage;
   final String? qrCodeText;
   final int? scaleId;
-  ScaleModel? assignedScale;
+  final ScaleModel? assignedScale;
   final String? weightHour;
   final bool hasQrCode;
 
@@ -73,7 +71,6 @@ class BabyModel {
 
   Map<String, dynamic> toJson() => {
         if (id != null) patient_id: id,
-        if (qrCodeImage != null) patient_qrCode: qrCodeImage,
         patient_hospitalRegister: hospitalRegister,
         patient_name: name!,
         patient_motherName: motherName!,
@@ -90,6 +87,7 @@ class BabyModel {
     return await api.getBabyWeigths(myId);
   }
 
+  final _sentinel = Object();
   BabyModel copyWith({
     String? hospitalRegister,
     int? id,
@@ -98,10 +96,11 @@ class BabyModel {
     DateTime? birthDate,
     bool? isActive,
     Image? qrCodeImage,
-    String? qrCodeText,
+    Nullable<String?>? qrCodeText,
     ScaleModel? assignedScale,
     String? weightHour,
     bool? hasQr,
+
     int? scaleId,
   }) {
     return BabyModel(
@@ -111,8 +110,10 @@ class BabyModel {
       motherName: motherName ?? this.motherName,
       birthDate: birthDate ?? this.birthDate,
       isActive: isActive ?? this.isActive,
-      qrCodeImage: qrCodeImage ?? this.qrCodeImage,
-      qrCodeText: qrCodeText ?? this.qrCodeText,
+      //Se eu tenho imagem é porque não li código do qr code
+      qrCodeImage: qrCodeText != null ? null :qrCodeImage ?? this.qrCodeImage,
+      //Se eu tenho código do qr code, não vou usar imagem
+      qrCodeText: qrCodeImage != null ? null : qrCodeText == null ? this.qrCodeText : qrCodeText.value,
       assignedScale: assignedScale ?? this.assignedScale,
       weightHour: weightHour ?? this.weightHour,
       hasQrCode: hasQr ?? this.hasQrCode,
@@ -120,3 +121,4 @@ class BabyModel {
     );
   }
 }
+

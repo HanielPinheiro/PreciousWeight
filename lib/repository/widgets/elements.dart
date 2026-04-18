@@ -24,20 +24,21 @@ class ElementsOfViews {
     );
   }
 
-  static showSimpleDialog(BuildContext context, String title, String content,{String? btnCancelLbl, String? btnConfirmLbl, }) async {
-    showDialog(
+  static showSimpleDialog(BuildContext context, String title, String content, {String? btnCancelLbl, String? btnConfirmLbl}) async {
+    await showDialog(
       context: context,
       barrierDismissible: false, // user must tap a button
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(title),
-          content: Text(content),
-        );
+        return AlertDialog(title: Text(title), content: Text(content), actions: [
+          SimpleButton(context, "Ok", () {
+            Navigator.of(context).pop();
+          })
+        ]);
       },
     );
   }
 
-  static Future<bool> showConfirmDialog(BuildContext context, String title, String content,{String? btnCancelLbl, String? btnConfirmLbl, }) async {
+  static Future<bool> showConfirmDialog(BuildContext context, String title, String content, {String? btnCancelLbl, String? btnConfirmLbl}) async {
     final ans = await showDialog(
       context: context,
       barrierDismissible: false, // user must tap a button
@@ -46,8 +47,12 @@ class ElementsOfViews {
           title: Text(title),
           content: Text(content),
           actions: [
-            SimpleButton(context, btnCancelLbl ?? "Cancelar", () {Navigator.of(context).pop(false);}),
-            SimpleButton(context, btnCancelLbl ?? "Confirmar", () {Navigator.of(context).pop(true);}),
+            SimpleButton(context, btnCancelLbl ?? "Cancelar", () {
+              Navigator.of(context).pop(false);
+            }),
+            SimpleButton(context, btnConfirmLbl ?? "Confirmar", () {
+              Navigator.of(context).pop(true);
+            }),
           ],
         );
       },
@@ -94,7 +99,7 @@ class ElementsOfViews {
             )));
   }
 
-  static Widget CardToText(BuildContext context,  String label, {Color? bgColor, Color? fgColor, double? fontSize}) {
+  static Widget CardToText(BuildContext context, String label, {Color? bgColor, Color? fgColor, double? fontSize}) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 25),
       child: Card(
@@ -144,10 +149,7 @@ class ElementsOfViews {
 
   static PreferredSizeWidget SimpleAppBar(BuildContext context, String title) {
     return AppBar(
-      title: Text(
-        title,
-        style: displayMedium.copyWith(color: Theme.of(context).colorScheme.primary),
-      ),
+      title: Text(title, style: displayMedium.copyWith(color: Theme.of(context).colorScheme.primary)),
       shape: Border(bottom: BorderSide(color: Theme.of(context).colorScheme.primary, width: 1.0, style: BorderStyle.solid)),
       foregroundColor: Theme.of(context).colorScheme.primary,
       backgroundColor: Theme.of(context).colorScheme.surface,

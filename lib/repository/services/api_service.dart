@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:http_parser/http_parser.dart';
@@ -9,11 +10,16 @@ import '../helper/api_error_handler.dart';
 import '../helper/constants.dart';
 
 class ApiService {
-  static Future<String> apiConn(String url, {String? body, Map<String, String>? header}) async {
+  static Future<String> apiConn(String url, {String? body, Map<String, String>? header, int? timeout}) async {
     final client = http.Client();
+    timeout = timeout == null ? 2 : timeout;
     try {
       final uri = Uri.parse(url);
-      final response = await client.post(uri, body: body, headers: header ?? {});
+      final response = await client.post(uri, body: body, headers: header ?? {})
+          //     .timeout(Duration(seconds: timeout), onTimeout: () {
+          //   throw TimeoutException('The request timed out after ${timeout} seconds.');
+          // })
+          ;
 
       final responseBody = Utf8Decoder().convert(response.bodyBytes);
 
@@ -29,15 +35,22 @@ class ApiService {
       }
     } on http.ClientException catch (e) {
       throw ApiException(statusCode: 0, message: 'Network error: ${e.message}', details: e.toString());
+    } on TimeoutException catch (e) {
+      throw ApiException(statusCode: 0, message: 'Timeout error: ${e.message}', details: e.toString());
     } finally {
       client.close();
     }
   }
 
   static Future<Uint8List?> getQrCode(String url) async {
+    int timeout = 2;
     final client = http.Client();
     try {
-      final response = await client.post(Uri.parse(url), headers: {'Authorization': 'Bearer ${UserApi().token!.accessToken}'});
+      final response = await client.post(Uri.parse(url), headers: {'Authorization': 'Bearer ${UserApi().token!.accessToken}'})
+          //     .timeout(Duration(seconds: timeout), onTimeout: () {
+          //   throw TimeoutException('The request timed out after ${timeout} seconds.');
+          // })
+          ;
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         return response.bodyBytes;
@@ -56,7 +69,12 @@ class ApiService {
     request.files.add(http.MultipartFile.fromBytes('file', (image != null) ? image : [], filename: '${babyCode}_qr.png', contentType: MediaType('image', 'png')));
     request.headers['Authorization'] = 'Bearer ${UserApi().token!.accessToken}';
 
-    final response = await request.send();
+    int timeout = 2;
+    final response = await request.send()
+        //     .timeout(Duration(seconds: timeout), onTimeout: () {
+        //   throw TimeoutException('The request timed out after ${timeout} seconds.');
+        // })
+        ;
     final responseBody = await response.stream.bytesToString();
 
     if (response.statusCode != 200) {
@@ -69,7 +87,7 @@ class ApiService {
 class SafeApi {
   static Future<T> call<T>({required BuildContext context, required Future<T> Function() apiCall, Future<void> Function()? onSuccess}) async {
     try {
-      final result = await apiCall();
+      final T result = await apiCall();
       if (onSuccess != null) await onSuccess();
       return result;
     } catch (error) {

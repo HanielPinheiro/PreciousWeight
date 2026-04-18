@@ -3,7 +3,6 @@ import 'package:precious_weight/repository/widgets/elements.dart';
 import '../../api/user_api.dart';
 import '../../repository/design/fonts.dart';
 import '../../repository/services/api_service.dart';
-import '../../repository/widgets/menu.dart';
 
 class ResetPasswordPage extends StatefulWidget {
   const ResetPasswordPage({super.key});

@@ -103,8 +103,8 @@ class _BabiesRegisterState extends State<BabiesRegister> {
               if (_currentImage == null && _currentText == null) Placeholder(color: Colors.grey, strokeWidth: 2.0, fallbackWidth: 120, fallbackHeight: 120),
               SizedBox(height: 10),
               Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-                if (_currentImage == null) ElementsOfViews.SimpleButton(context, "Enviar Foto", _pickImage),
-                if (_currentImage != null) ElementsOfViews.SimpleButton(context, "Alterar", _showImageSourceDialog),
+                // if (_currentImage == null) ElementsOfViews.SimpleButton(context, "Enviar Foto", _pickImage),
+                /*if (_currentImage != null) */ElementsOfViews.SimpleButton(context, "Alterar", _showImageSourceDialog),
               ]),
             ],
           ),
@@ -200,7 +200,7 @@ class _BabiesRegisterState extends State<BabiesRegister> {
                             motherName: _nameMotherController.text,
                             birthDate: dateFormatter_objToDb.parse(_birthDateController.text),
                             isActive: true,
-                            qrCodeText: widget.scannedText,
+                            qrCodeText: _currentText,
                             weightHour: _weightTimeController.text,
                           );
 
@@ -208,8 +208,8 @@ class _BabiesRegisterState extends State<BabiesRegister> {
                           final addedBaby = await _babyProvider.addBaby(context, newBaby);
 
                           // Update QR code if needed
-                          if (widget.scannedText == null && widget.scannedImage != null) {
-                            await _babyProvider.updateQrCode(context, addedBaby.id!, widget.scannedImage);
+                          if (_currentText == null && _currentImage != null) {
+                            await _babyProvider.updateQrCode(context, addedBaby.id!, _currentImage);
                           }
 
                           // Show success message

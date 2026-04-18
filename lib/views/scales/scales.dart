@@ -22,6 +22,14 @@ class ScalesPage extends StatefulWidget {
 class _ScalesPageState extends State<ScalesPage> {
   int isEnabled = 1;
 
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await context.read<ScalesProvider>().loadScales();
+    });
+  }
+
   void _changeState(bool b) {
     final v = b == true ? 1 : 0;
     setState(() => isEnabled = v);

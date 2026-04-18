@@ -35,7 +35,7 @@ class _BabiesEditState extends State<BabiesEdit> {
   @override
   void initState() {
     super.initState();
-    _hospIdController = TextEditingController(text: widget.baby.hospitalRegister ?? '');
+    _hospIdController = TextEditingController(text: widget.baby.hospitalRegister);
     _nameIdController = TextEditingController(text: widget.baby.name ?? '');
     _nameMotherController = TextEditingController(text: widget.baby.motherName ?? '');
     _weightTimeController = TextEditingController(text: widget.baby.weightHour != null ? widget.baby.weightHour! : 'Sem horário definido');
@@ -119,7 +119,7 @@ class _BabiesEditState extends State<BabiesEdit> {
           child: Column(
             children: [
               // Show current image
-              if (_currentImage != null) // Show scanned text if available
+              if (_currentImage != null && _currentText == null) // Show scanned text if available
                 Container(constraints: BoxConstraints(maxHeight: 120, maxWidth: 120), child: Image.memory(_currentImage!)),
               // Show scanned text if available
               if (_currentText != null && _currentText!.isNotEmpty) _qrIdData(),
@@ -167,10 +167,48 @@ class _BabiesEditState extends State<BabiesEdit> {
     );
   }
 
+  void _resetControllers() {
+    _hospIdController.clear();
+    _nameIdController.clear();
+    _nameMotherController.clear();
+    _birthDateController.clear();
+    _weightTimeController.clear();
+  }
+
+  Future<void> _update() async {
+    if (_hospIdController.text.isEmpty || _nameIdController.text.isEmpty || _nameMotherController.text.isEmpty || _birthDateController.text.isEmpty || _weightTimeController.text.isEmpty) {
+      await showDialog(context: context, builder: (context) => AlertDialog(title: Text("Erro de requisição"), content: Text("Há campos vazios!")));
+      return;
+    }
+
+    try {
+      final newBaby = widget.baby.copyWith(
+        id: widget.baby.id,
+        hospitalRegister: _hospIdController.text,
+        name: _nameIdController.text,
+        motherName: _nameMotherController.text,
+        birthDate: dateFormatter_objToDb.parse(_birthDateController.text),
+        qrCodeText: Nullable(_currentText),
+        weightHour: _weightTimeController.text,
+      );
+
+      final _babyProvider = context.read<BabyProvider>();
+      await _babyProvider.updateBaby(context, newBaby);
+
+      if (_currentText == null && _currentImage != null) {
+        await _babyProvider.updateQrCode(context, widget.baby.id!, _currentImage);
+      } else if (_currentText != null && _currentImage == null) {
+        await _babyProvider.updateQrCode(context, widget.baby.id!, null);
+      }
+      await showDialog(context: context, builder: (context) => AlertDialog(content: Text("Dados do Bebê [${widget.baby.id}] atualizados com sucesso!")));
+      Navigator.pop(context);
+    } catch (e) {
+      await showDialog(context: context, builder: (context) => AlertDialog(title: Text("Erro de requisição"), content: Text(e.toString())));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final _babyProvider = context.watch<BabyProvider>();
-
     return SafeArea(
         child: Scaffold(
             appBar: ElementsOfViews.SimpleAppBar(context, 'Dados do Bebê'),
@@ -188,59 +226,11 @@ class _BabiesEditState extends State<BabiesEdit> {
                 ElementsOfViews.DateInput(context, _birthDateController, 'Data de Nascimento do Paciente', 'Digite os números'),
                 const SizedBox(height: 12.0),
                 ElementsOfViews.InputWithController(context, _weightTimeController, 'Horário(s) da(s) coleta(s) do peso', '', Icon(Icons.abc, color: Theme.of(context).colorScheme.primary), false, true),
-                Row(children: [
-                  SizedBox(width: 15),
-                  ElementsOfViews.SimpleButton(context, "Gerenciar Horários", () async {
-                    await ElementsOfViews.ShowTimeManager(context, (newTimes) => setState(() => _weightTimeController.text = newTimes), initialTimes: _weightTimeController.text);
-                  }, false)
-                ]),
+                Row(children: [SizedBox(width: 15), ElementsOfViews.SimpleButton(context, "Gerenciar Horários", () async => await ElementsOfViews.ShowTimeManager(context, (newTimes) => setState(() => _weightTimeController.text = newTimes), initialTimes: _weightTimeController.text), false)]),
                 const SizedBox(height: 20.0),
                 OverflowBar(
                   alignment: MainAxisAlignment.end,
-                  children: <Widget>[
-                    ElementsOfViews.SimpleButton(context, "LIMPAR CAMPOS", () {
-                      _hospIdController.clear();
-                      _nameIdController.clear();
-                      _nameMotherController.clear();
-                      _birthDateController.clear();
-                      _weightTimeController.clear();
-                    }),
-                    const SizedBox(width: 8.0),
-                    ElementsOfViews.ContrastButton(
-                      context,
-                      Icon(Icons.cloud_upload, color: Colors.black),
-                      "ATUALIZAR",
-                      () async {
-                        if (_hospIdController.text.isEmpty || _nameIdController.text.isEmpty || _nameMotherController.text.isEmpty || _birthDateController.text.isEmpty || _weightTimeController.text.isEmpty) {
-                          await showDialog(context: context, builder: (context) => AlertDialog(title: Text("Erro de requisição"), content: Text("Há campos vazios!")));
-                          return;
-                        }
-
-                        try {
-                          final newBaby = BabyModel(
-                            id: widget.baby.id,
-                            hospitalRegister: _hospIdController.text,
-                            name: _nameIdController.text,
-                            motherName: _nameMotherController.text,
-                            birthDate: dateFormatter_objToDb.parse(_birthDateController.text),
-                            isActive: true,
-                            qrCodeText: _currentText,
-                            weightHour: _weightTimeController.text,
-                          );
-
-                          await _babyProvider.updateBaby(context, newBaby);
-
-                          if (_currentText == null && _currentImage != null)
-                            await _babyProvider.updateQrCode(context, widget.baby.id!, _currentImage);
-                          else if (_currentText != null && _currentImage == null) await _babyProvider.updateQrCode(context, widget.baby.id!, null);
-                          await showDialog(context: context, builder: (context) => AlertDialog(content: Text("Dados do Bebê [${widget.baby.id}] atualizados com sucesso!")));
-                          Navigator.pop(context);
-                        } catch (e) {
-                          await showDialog(context: context, builder: (context) => AlertDialog(title: Text("Erro de requisição"), content: Text(e.toString())));
-                        }
-                      },
-                    )
-                  ],
+                  children: <Widget>[ElementsOfViews.SimpleButton(context, "LIMPAR CAMPOS", () => _resetControllers()), const SizedBox(width: 8.0), ElementsOfViews.ContrastButton(context, Icon(Icons.cloud_upload, color: Colors.black), "ATUALIZAR", () async => await _update())],
                 ),
               ])
             ])));
