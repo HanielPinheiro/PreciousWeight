@@ -22,9 +22,7 @@ public class AdminUserConfig implements CommandLineRunner {
     private final iUser authUserInterface;
     private final BCryptPasswordEncoder passwordEncoder;
 
-    public AdminUserConfig(iRole authRoleInterface,
-                           iUser authUserInterface,
-                           BCryptPasswordEncoder passwordEncoder) {
+    public AdminUserConfig(iRole authRoleInterface, iUser authUserInterface, BCryptPasswordEncoder passwordEncoder) {
         this.authRoleInterface = authRoleInterface;
         this.authUserInterface = authUserInterface;
         this.passwordEncoder = passwordEncoder;

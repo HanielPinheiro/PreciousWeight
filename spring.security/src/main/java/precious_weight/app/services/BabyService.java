@@ -75,22 +75,13 @@ public class BabyService {
     public BabyModel update(Integer id, BabyRequest request) throws Exception {
         BabyModel babyModel = searchById(id);
 
-        if (request.getBabyHospitalId() != null)
-            babyModel.setBabyHospitalId(request.getBabyHospitalId());
+        babyModel.setBabyHospitalId(request.getBabyHospitalId());
+        babyModel.setBabyName(request.getBabyName());
+        babyModel.setBabyMotherName(request.getBabyMotherName());
+        babyModel.setBabyBirthDate(request.getBabyBirthDate());
+        babyModel.setBabyImageText(request.getBabyImageText());
 
-        if (request.getBabyName() != null)
-            babyModel.setBabyName(request.getBabyName());
-
-        if (request.getBabyMotherName() != null)
-            babyModel.setBabyMotherName(request.getBabyMotherName());
-
-        if (request.getBabyBirthDate() != null)
-            babyModel.setBabyBirthDate(request.getBabyBirthDate());
-
-        if (request.getBabyImageText() != null)
-            babyModel.setBabyImageText(request.getBabyImageText());
-
-        if (request.getBabyWeightTime() != null) {
+        if (request.getBabyWeightTime() != null && !Objects.equals(babyModel.getBabyWeightTime(), request.getBabyWeightTime())) {
             babyModel.setBabyWeightTime(request.getBabyWeightTime());
             if (babyModel.getAssignedScale() != null)
                 scaleService.SendNewWeightTimesToScale(id, request.getBabyWeightTime());

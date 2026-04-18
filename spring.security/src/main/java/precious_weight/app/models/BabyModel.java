@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import org.hibernate.envers.Audited;
+import org.hibernate.envers.NotAudited;
 import precious_weight.app.models.request.BabyRequest;
 
 import java.io.Serializable;
@@ -58,6 +59,7 @@ public class BabyModel implements Serializable {
     @Column(name = App_BabyTable_ImageText)
     private String babyImageText;
 
+    @NotAudited
     @JsonIgnore
     @Column(name = App_BabyTable_Image, nullable = true, unique = true)
     private Blob babyImage;

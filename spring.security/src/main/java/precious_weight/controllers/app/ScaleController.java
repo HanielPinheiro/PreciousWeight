@@ -10,6 +10,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import precious_weight.auth.models.ScaleDataModel;
+import precious_weight.auth.services.ScaleDataService;
 
 import java.util.*;
 
@@ -38,7 +40,19 @@ public class ScaleController {
     public ResponseEntity<?> getById(@PathVariable Integer id) {
         try {
             ScaleModel model = scaleService.GetScaleFromId(id);
-            return model != null ? ResponseEntity.ok(new ScaleResponse(model)) : ResponseEntity.badRequest().build();
+            return model != null ? ResponseEntity.ok(new ScaleResponse(model)) : ResponseEntity.notFound().build();
+        } catch (Exception ex) {
+            Map<String, String> error = Map.of("error", ex.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        }
+    }
+
+    @PreAuthorize("isAuthenticated()")
+    @PostMapping(ScaleController_SearchByHash)
+    public ResponseEntity<?> getByHash(@PathVariable UUID hashId) {
+        try {
+            ScaleModel model = scaleService.GetScaleFromHash(hashId.toString());
+            return model != null ?ResponseEntity.ok(new ScaleResponse(model)): ResponseEntity.notFound().build();
         } catch (Exception ex) {
             Map<String, String> error = Map.of("error", ex.getMessage());
             return ResponseEntity.badRequest().body(error);

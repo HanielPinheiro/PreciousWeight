@@ -48,7 +48,7 @@ public class AppDataSourceConfig {
 
         Map<String, Object> jpaProperties = new HashMap<>();
         jpaProperties.put("hibernate.hbm2ddl.auto", "update");
-        jpaProperties.put("hibernate.dialect", "org.hibernate.dialect.MySQL8Dialect");
+//        jpaProperties.put("hibernate.dialect", "org.hibernate.dialect.MySQL8Dialect");
         em.setJpaPropertyMap(jpaProperties);
 
         return em;

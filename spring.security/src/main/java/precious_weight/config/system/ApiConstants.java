@@ -17,6 +17,7 @@ public class ApiConstants {
     public static final String ScaleController_SetScaleToUser = "/set/{id}";
     public static final String ScaleController_SetBaby = "/baby/set";
     public static final String ScaleController_UnsetBaby = "/baby/unset";
+    public static final String ScaleController_SearchByHash = "/hash/{hashId}";
 
     public static final String WeightController = "/weight";
     public static final String WeightController_Babies = "/babies/{babyId}";

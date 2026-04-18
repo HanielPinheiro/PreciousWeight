@@ -26,7 +26,7 @@ public class BabyResponse {
         this.babyWeightTime = model.getBabyWeightTime();
         this.babyHospitalId = model.getBabyHospitalId();
         this.babyImageText = model.getBabyImageText();
-        this.babyImageQr = model.getBabyImage() != null;
+        this.babyImageQr = model.getBabyImageText() == null;
         this.scaleId = model.getAssignedScale() != null ? model.getAssignedScale().getScaleId() : null;
     }
 
