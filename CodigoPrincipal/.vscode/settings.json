@@ -83,7 +83,8 @@
     "utility": "c",
     "compare": "c",
     "text_encoding": "c",
-    "thread": "c"
+    "thread": "c",
+    "portmacro.h": "c"
   },
   "idf.flashType": "UART",
   "idf.portWin": "COM4",

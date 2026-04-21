@@ -3,7 +3,6 @@
 static const char *ROTULO_LOCAL = "BIOS";
 hx711_t sensors[NUM_WEIGHT_SENSORS] = {0};
 
-
 static esp_err_t initialize_sdcard()
 {
     uint8_t retry_count = 0;
@@ -11,7 +10,7 @@ static esp_err_t initialize_sdcard()
     esp_err_t ret = ESP_FAIL;
     do
     {
-        sdcard_notify_uart(ROTULO_LOCAL, "Loop While");
+        esp_log_at_terminal(ROTULO_LOCAL, "Loop While");
         ret = sdcard_init();
         if (ret == ESP_OK)
         {
@@ -19,13 +18,13 @@ static esp_err_t initialize_sdcard()
             if (ret == ESP_OK)
                 break;
 
-            sdcard_notify_uart(ROTULO_LOCAL, "Problema ao escrever Logs!!");
+            esp_log_at_terminal(ROTULO_LOCAL, "Problema ao escrever Logs!!");
             vTaskDelay(pdMS_TO_TICKS(1000));
             retry_count++;
             continue;
         }
 
-        sdcard_notify_uart(ROTULO_LOCAL, "Falha ao iniciar Cartao SD");
+        esp_log_at_terminal(ROTULO_LOCAL, "Falha ao iniciar Cartao SD");
         retry_count++;
         vTaskDelay(pdMS_TO_TICKS(1000));
     } while (retry_count < max_retries);
@@ -86,9 +85,9 @@ weight_t measure_weight()
 
 void init_hardware()
 {
-    sdcard_notify_uart(ROTULO_LOCAL, "Inicializando Cartao SD.");
+    esp_log_at_terminal(ROTULO_LOCAL, "Inicializando Cartao SD.");
 
-    esp_err_t ret = initialize_sdcard();    
+    initialize_sdcard();
 
     sdcard_log(LOG_INFO, "Cartao SD inicializado. Inicializando sensores HX711.", ROTULO_LOCAL);
     ESP_ERROR_CHECK(initialize_weight_sensors());

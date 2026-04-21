@@ -180,7 +180,7 @@ void sdcard_clear_file(const char *filename)
 
 esp_err_t sdcard_log(log_type_t log_type, char *message, const char *trace)
 {
-    sdcard_notify_uart(trace, message);
+    esp_log_at_terminal(trace, message);
 
     log_entry_t entry;
     entry.path = LOG_FILE;
@@ -203,7 +203,7 @@ esp_err_t sdcard_log(log_type_t log_type, char *message, const char *trace)
     return ESP_OK;
 }
 
-void sdcard_notify_uart(const char *stack_trace, char *message)
+void esp_log_at_terminal(const char *stack_trace, char *message)
 {
     if (!MODO_DEBUG)
         return;

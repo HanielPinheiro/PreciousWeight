@@ -39,7 +39,7 @@ esp_err_t sdcard_init(void);
 esp_err_t sdcard_write_file(char *path, char *data);
 esp_err_t sdcard_create_file(char *path);
 esp_err_t sdcard_log(log_type_t log_type, char *message, const char *trace);
-void sdcard_notify_uart(const char *stack_trace, char *message);
+void esp_log_at_terminal(const char *stack_trace, char *message);
 
 esp_err_t sdcard_load_weight_times();
 void sdcard_clear_file(const char *filename);
