@@ -23,7 +23,7 @@ typedef struct
 {
     uint8_t hour;
     uint8_t minutes;
-} horario_pesagem_t;
+} weight_time_t;
 
 typedef struct
 {
@@ -34,7 +34,7 @@ typedef struct
 } CommandHandler;
 
 extern uint8_t number_of_weight_times;
-extern horario_pesagem_t weight_times[MAX_WEIGHT_TIMES];
+extern weight_time_t weight_times[MAX_WEIGHT_TIMES];
 extern char baby_id[12];
 
 void process_mqtt_data(const char *mqtt_data);

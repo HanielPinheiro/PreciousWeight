@@ -23,8 +23,8 @@
 #define SCALE4_SCK GPIO_NUM_26
 
 #define HX711_INVALID_READING 0x80000000
-#define WEIGHT_NUMBER_TO_AVERAGE 5
-#define WEIGHT_NUMBER_TO_TARE 20
+#define WEIGHT_NUMBER_TO_AVERAGE 20
+#define WEIGHT_NUMBER_TO_TARE 200
 
 typedef enum
 {
@@ -40,7 +40,7 @@ typedef struct
     gpio_num_t sck_pin;
     int clock_cycles_from_mode;
     int32_t offset; // tara
-    int32_t calib_factor;
+    double calib_factor;
 } hx711_t;
 
 typedef struct
@@ -49,8 +49,20 @@ typedef struct
     float value;
 } weight_t;
 
+typedef struct
+{
+    int dout_pin;       // Pino DT (Data Out)
+    int sck_pin;        // Pino SCK (Clock)
+    float calib_factor; // Fator de calibração
+    long zero_offset;   // Offset de tara (vZero)
+    int invalid_limit;  // Limite para leitura inválida (gramas)
+    bool connected;     // Status de conexão
+    const char *name;   // Nome do sensor
+} SensorConfig;
+
 extern float scale_in_grams;
 esp_err_t hx711_init(hx711_t *sensor, gpio_num_t dout, gpio_num_t sck, hx711_mode_t mode);
-int32_t hx711_read_average(hx711_t *sensor, uint8_t samples);
-void hx711_tare(hx711_t *sensor, uint8_t samples);
+int32_t hx711_read_average(hx711_t *sensor);
+void hx711_tare(hx711_t *sensor);
+
 #endif // HX711_H

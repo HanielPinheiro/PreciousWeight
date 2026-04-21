@@ -5,7 +5,7 @@ static bool has_baby = false;
 
 char baby_id[12] = {0};
 SemaphoreHandle_t has_baby_mutex = NULL;
-horario_pesagem_t weight_times[MAX_WEIGHT_TIMES];
+weight_time_t weight_times[MAX_WEIGHT_TIMES];
 uint8_t number_of_weight_times = 0;
 int calibration_steps = 0;
 
@@ -119,7 +119,7 @@ static esp_err_t baby_routine(const char *data)
 
 static esp_err_t weight_times_routine(const char *data)
 {
-    horario_pesagem_t weight;
+    weight_time_t weight;
     // Verifica se a string tem formato HH:MM (ex: "08:00")
     if (strlen(data) >= 5 && data[2] == ':')
     {

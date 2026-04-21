@@ -1,24 +1,5 @@
 #pragma once
-#ifndef COMM_LIBS_H
-#define COMM_LIBS_H
-
-#include "stdio.h"
-#include "stdint.h"
-#include "stddef.h"
-#include "string.h"
-
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "freertos/event_groups.h"
-#include "freertos/semphr.h"
-#include "freertos/queue.h"
-
-#include "esp_log.h"
-#include "esp_wifi.h"
-#include "esp_mac.h"
-
-#include "nvs_flash.h"
-
+#ifndef SETUP_H
 // Prioridades das tasks
 typedef enum
 {
@@ -39,5 +20,7 @@ typedef enum
 #define MQTT_SERVICE_NAME "D0EF76590B7C"
 #define MQTT_POP "KwS2@y6G"
 #define MODO_DEBUG true
+
+#define LED_GPIO GPIO_NUM_2
 
 #endif // COMM_LIBS_H

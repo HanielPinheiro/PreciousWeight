@@ -1,11 +1,23 @@
 #include "sensors_task.h"
 
 static const char *ROTULO_LOCAL = "SENSOR_TASK";
+static SemaphoreHandle_t barrier_semaphore = {0};
 static QueueHandle_t sensor_data_queue = {0};
 static TaskHandle_t reader_tasks[NUM_WEIGHT_SENSORS] = {0};
-static SemaphoreHandle_t barrier_semaphore = {0};
 static sensor_data_t sensor_readings[NUM_WEIGHT_SENSORS] = {0};
 static int readings_count = 0;
+
+static void sensor_coordinator_task(void *pv_params)
+{
+    while (1)
+    {
+        for (int i = 0; i < NUM_WEIGHT_SENSORS; i++)
+        { // Notifica todas as tasks de leitura
+            xTaskNotifyGive(reader_tasks[i]);
+        }
+        vTaskDelay(pdMS_TO_TICKS(1000)); // leituras a cada 1s
+    }
+}
 
 static void sensor_reader_task(void *pv_params)
 {
@@ -16,7 +28,7 @@ static void sensor_reader_task(void *pv_params)
     {
         // Aguarda sinal para iniciar leitura sincronizada
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-
+        a => avaliar a responsabilidade, isso deveria estar aqui ou em hx711.c?
         sensor_data_t data = {.sensor_id = sensor_id, .raw_value = hx711_read_average(&sensor, WEIGHT_NUMBER_TO_AVERAGE)};
         int32_t diff = data.raw_value - sensor.offset;
         data.units = diff < 0 ? diff * -1 : diff;
@@ -38,26 +50,14 @@ static void sensor_reader_task(void *pv_params)
     }
 }
 
-static void sensor_coordinator_task(void *pv_params)
-{
-    while (1)
-    {
-        for (int i = 0; i < NUM_WEIGHT_SENSORS; i++) // Notifica todas as tasks de leitura simultaneamente
-        {
-            xTaskNotifyGive(reader_tasks[i]);
-        }
-        vTaskDelay(pdMS_TO_TICKS(1000));
-    }
-}
-
-static void sensor_data_process_task(void *pv_params)
+static void sensor_data_process_queue(void *pv_params)
 {
     sensor_data_t sensor_data[NUM_WEIGHT_SENSORS] = {0};
-    // int count_err[NUM_WEIGHT_SENSORS] = {0, 0, 0, 0};
+
     while (1)
     {
         if (xQueueReceive(sensor_data_queue, &sensor_data, portMAX_DELAY))
-        {
+        { // recebeu sinal da leitura, processa
             ESP_LOGW(ROTULO_LOCAL, "Sensor[%d]:Raw{%ld}|Diff{%ld};Sensor[%d]:Raw{%ld}|Diff{%ld};Sensor[%d]:Raw{%ld}|Diff{%ld};Sensor[%d]:Raw{%ld}|Diff{%ld}",
                      sensor_data[0].sensor_id, sensor_data[0].raw_value, sensor_data[0].units,
                      sensor_data[1].sensor_id, sensor_data[1].raw_value, sensor_data[1].units,
@@ -73,15 +73,19 @@ static void sensor_data_process_task(void *pv_params)
 
             int32_t final_weight = 0UL;
             for (int i = 0; i < NUM_WEIGHT_SENSORS; i++)
+            {
+                if (i == 2)
+                    continue;
                 final_weight += sensor_data[i].weight;
-            final_weight /= NUM_WEIGHT_SENSORS;
-            ESP_LOGI(ROTULO_LOCAL, "Peso{%ld}", final_weight);           
+            }
+            final_weight /= (NUM_WEIGHT_SENSORS - 1);
+            ESP_LOGI(ROTULO_LOCAL, "Peso{%ld}", final_weight);
         }
     }
 }
 
 esp_err_t init_sensors_task()
-{
+{asd
     for (int i = 0; i < NUM_WEIGHT_SENSORS; i++)
     {
         ESP_LOGI(ROTULO_LOCAL, "Tare - Sensor[%d]", i);
@@ -100,7 +104,7 @@ esp_err_t init_sensors_task()
 
     // Cria tasks de coordenação e processamento
     xTaskCreate(sensor_coordinator_task, "coordinator", 2048, NULL, TASK_PRIORITY_HIGH, NULL);
-    xTaskCreate(sensor_data_process_task, "processor", 4096, NULL, TASK_PRIORITY_MEDIUM, NULL);
+    xTaskCreate(sensor_data_process_queue, "processor", 4096, NULL, TASK_PRIORITY_MEDIUM, NULL);
 
     return ESP_OK;
 }
