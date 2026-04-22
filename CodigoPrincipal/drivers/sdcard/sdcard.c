@@ -3,7 +3,7 @@
  * Por Haniel Pinheiro em 12/07/2025
  */
 
-#include "sdcard.h"
+#include "../../config/config.h"
 
 static const char *ROTULO_LOCAL = "SD_CARD";
 
@@ -226,7 +226,7 @@ esp_err_t sdcard_log(log_type_t log_type, char *message, const char *trace)
             return ESP_FAIL;
         }
     }
-    else // task_init não executada no main.c
+    else // task_init não executada no config.c
         sdcard_write_file(LOG_FILE, entry.message);
 
     return ESP_OK;

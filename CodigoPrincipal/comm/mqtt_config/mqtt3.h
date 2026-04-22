@@ -2,8 +2,6 @@
 #ifndef MQTT3_H
 #define MQTT3_H
 
-#include "../../main/main.h"
-
 // #define MQTT_ADDRESS "mqtts://192.168.0.15:8883"
 #define MQTT_ADDRESS "mqtt://192.168.116.26:1883"
 #define MQTT_RECONNECT_DELAY_MS 5000

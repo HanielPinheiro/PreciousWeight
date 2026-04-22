@@ -3,7 +3,7 @@
     por Haniel Pinheiro
 */
 
-#include "wifi_prov_ble.h"
+#include "../../config/config.h"
 
 #pragma region DATE_TIME
 
@@ -205,7 +205,7 @@ static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_
     {
         ip_event_got_ip_t *event = (ip_event_got_ip_t *)event_data;
         ESP_LOGI(ROTULO_LOCAL, "Connected with IP Address:" IPSTR, IP2STR(&event->ip_info.ip));
-        xEventGroupSetBits(wifi_event_group, BIT0); /* Signal main application to continue execution */
+        xEventGroupSetBits(wifi_event_group, BIT0); /* Signal config application to continue execution */
     }
     else if (event_base == PROTOCOMM_TRANSPORT_BLE_EVENT)
     {

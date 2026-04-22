@@ -1,4 +1,4 @@
-#include "sdcard_task.h"
+#include "../../config/config.h"
 
 static const char *ROTULO_LOCAL = "SDCARD_TASK";
 static uint8_t sd_failure_counter = 0;

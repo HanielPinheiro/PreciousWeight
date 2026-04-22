@@ -22,6 +22,7 @@
 #include "freertos/portmacro.h"
 
 // --- ESP-IDF Core & Drivers ---
+#include "esp_err.h"
 #include "esp_log.h"
 #include "esp_system.h"
 #include "esp_timer.h"
@@ -74,5 +75,7 @@ typedef enum
 
 extern int32_t weight;
 extern hx711_t sensors[NUM_WEIGHT_SENSORS];
+
+/*Esse arquivo é necessário pra evitar referencia circular nas dependencias*/
 
 #endif // SETUP_H

@@ -4,7 +4,7 @@
  * https://www.youtube.com/watch?v=JzQTPnCspNM -> Outro exemplo de semaforo
  */
 
-#include "main.h"
+#include "../config/config.h"
 
 char *ROTULO_LOCAL = "MAIN";
 int32_t weight;
@@ -57,7 +57,7 @@ void app_main()
     ESP_ERROR_CHECK(init_mqtt_task());
     sdcard_log(LOG_INFO, "Task MQTT inicializada com sucesso. Iniciando leitores HX711,", ROTULO_LOCAL);
 
-    ESP_ERROR_CHECK(initialize_weight_sensors());
+    ESP_ERROR_CHECK(initialize_hx711_sensors());
     sdcard_log(LOG_INFO, "Sensores inicializados. Iniciando Tasks de SD Card e Sensores,", ROTULO_LOCAL);
 
     ESP_ERROR_CHECK(init_sdcard_task());

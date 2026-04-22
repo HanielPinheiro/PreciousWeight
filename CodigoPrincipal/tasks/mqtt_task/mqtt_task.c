@@ -1,4 +1,4 @@
-#include "mqtt_task.h"
+#include "../../config/config.h"
 
 static TaskHandle_t mqtt_manager_task_handle = NULL;
 static SemaphoreHandle_t mqtt_restart_sem = NULL;

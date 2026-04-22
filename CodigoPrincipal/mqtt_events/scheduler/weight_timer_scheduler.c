@@ -1,4 +1,4 @@
-#include "weight_timer_scheduler.h"
+#include "../../config/config.h"
 
 static const char *ROTULO_LOCAL = "SENSOR_TASK";
 static TimerHandle_t schedule_weight_measure_timer = {0};
@@ -10,7 +10,7 @@ static char log_msg[150] = {0};
 
 static void execute_scheduled_task()
 {
-    weight_t w = measure_weight();
+    weight_t w = measure_scale_weight();
     xQueueSend(weight_measure, &w, 0);
 }
 
@@ -31,7 +31,7 @@ static void task_worker(void *pvParams)
         weight_t w = {0};
         if (xQueueReceive(weight_measure, &w, portMAX_DELAY))
         {
-            snprintf(log_msg, sizeof(log_msg), "Raw{%ld}_Calibrated{%.2f}", w.raw_value, w.value);
+            snprintf(log_msg, sizeof(log_msg), "Raw{%ld}_Calibrated{%ld}", w.raw_value, w.value);
             sdcard_log(LOG_INFO, log_msg, ROTULO_LOCAL);
             mqtt_publish(MQTT_TOPIC_PUB_SENSOR, log_msg, 2);
         }

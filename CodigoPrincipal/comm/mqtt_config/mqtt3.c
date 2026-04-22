@@ -24,7 +24,7 @@
  *  visto que será impossível satisfazer o CN do certificado = CN do servidor, pois o servidor tem dominio = IP e não DHCP
  *  Em ambiente de produção, o ideal é: 1. Usar nomes de domínio válidos (FQDN); 2. Certificados com CN = nome do domínio; 3. E não usar .skip_cert_common_name_check = true para garantir segurança contra ataques man-in-the-middle (MITM) */
 
-#include "mqtt3.h"
+#include "../../config/config.h"
 
 static const char *ROTULO_LOCAL = "MQTT";
 static bool connected = false;
@@ -74,7 +74,7 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
         break;
     }
 
-    // trigger callback in main.c
+    // trigger callback in config.c
     if (connection_cb)
         connection_cb(mqtt_event);
 }

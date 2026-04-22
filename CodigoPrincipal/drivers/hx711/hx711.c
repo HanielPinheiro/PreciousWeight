@@ -1,4 +1,4 @@
-#include "hx711.h"
+#include "../../config/config.h"
 
 static const char *ROTULO_LOCAL = "HX711 DRIVER";
 static portMUX_TYPE s_hx711_mux = portMUX_INITIALIZER_UNLOCKED;
@@ -34,18 +34,19 @@ static esp_err_t setup_hx711(hx711_t *sensor)
     return ESP_OK;
 }
 
-esp_err_t initialize_weight_sensors()
+esp_err_t initialize_hx711_sensors()
 {
     for (int i = 0; i < NUM_WEIGHT_SENSORS; i++)
     {
         if (setup_hx711(&sensors[i]) != ESP_OK)
         {
             char msg[80];
-            snprintf(msg, 80, "Falha ao inicializar sensor %d, portas: %d [DOUT] e %d [SCK].", i, &sensors[i]->dout_pin, &sensors[i]->sck_pin);
+            snprintf(msg, sizeof(msg),
+                     "Falha ao inicializar sensor %d, portas: %d [DOUT] e %d [SCK].",
+                     i, (int)sensors[i].dout_pin, (int)sensors[i].sck_pin);
             sdcard_log(LOG_ERROR, msg, ROTULO_LOCAL);
             return ESP_FAIL;
         }
-        return ESP_OK;
     }
     // Aguarda dois segundos para estabilização térmica dos sensores
     vTaskDelay(pdMS_TO_TICKS(2000));
@@ -76,6 +77,8 @@ static esp_err_t hx711_wait_ready_timeout(hx711_t *sensor, uint32_t timeout_ms)
 }
 
 #pragma endregion
+
+#pragma region Read Raw, Average, Tare
 
 static int32_t hx711_read_raw(hx711_t *sensor)
 {
@@ -137,22 +140,6 @@ static int32_t hx711_read_average(hx711_t *sensor, uint8_t samples)
     return (count == samples) ? mean : HX711_INVALID_READING;
 }
 
-static int32_t hx711_read_weight(hx711_t *sensor)
-{
-    int32_t diff = hx711_read_average(sensor, AVERAGE_NUMBER) - sensor->offset;
-    ESP_LOGI(ROTULO_LOCAL, "Sensor:%d;CalibFactor:%f", sensor->id, sensor->calib_factor);
-    ESP_LOGI(ROTULO_LOCAL, "Sensor:%d;Diff:%ld", sensor->id, diff);
-
-    double weight = diff / sensor->calib_factor;
-    if (weight >= 3000.0)
-        weight *= 0.99; // coreção de fator exponencial / logaritmico
-
-    // if (weight < sensor->invalid_limit)
-    //     return 0;
-
-    return (int32_t)weight;
-}
-
 void hx711_tare(hx711_t *sensor)
 {
     int8_t try = 0;
@@ -166,31 +153,51 @@ void hx711_tare(hx711_t *sensor)
     ESP_LOGI(ROTULO_LOCAL, "Tara da Balança:Samples=%d, Offset=%ld", TARE_NUMBER, sensor->offset);
 }
 
-int32_t measure_weight()
+#pragma endregion
+
+#pragma region Weight
+
+weight_t hx711_read_sensor_weight(hx711_t *sensor)
 {
-    ESP_LOGW(ROTULO_LOCAL, "Sensor[%d]:Raw{%ld}|Diff{%ld};Sensor[%d]:Raw{%ld}|Diff{%ld};Sensor[%d]:Raw{%ld}|Diff{%ld};Sensor[%d]:Raw{%ld}|Diff{%ld}",
-             sensor_data[0].sensor_id, sensor_data[0].raw_value, sensor_data[0].units,
-             sensor_data[1].sensor_id, sensor_data[1].raw_value, sensor_data[1].units,
-             sensor_data[2].sensor_id, sensor_data[2].raw_value, sensor_data[2].units,
-             sensor_data[3].sensor_id, sensor_data[3].raw_value, sensor_data[3].units);
+    int32_t raw = hx711_read_average(sensor, AVERAGE_NUMBER);
+    if (raw == HX711_INVALID_READING)
+    {
+        weight_t invalid = {.raw_value = HX711_INVALID_READING, .value = 0};
+        return invalid;
+    }
+    int32_t diff = raw - sensor->offset;
 
-    // Aqui você pode adicionar o processamento conjunto dos dados
-    ESP_LOGE(ROTULO_LOCAL, "Sensor[%d]:Weight{%ld};Sensor[%d]:Weight{%ld};Sensor[%d]:Weight{%ld};Sensor[%d]:Weight{%ld}",
-             sensor_data[0].sensor_id, sensor_data[0].weight,
-             sensor_data[1].sensor_id, sensor_data[1].weight,
-             sensor_data[2].sensor_id, sensor_data[2].weight,
-             sensor_data[3].sensor_id, sensor_data[3].weight);
+    double weight = diff / sensor->calib_factor;
+    if (weight >= 3000.0)
+        weight *= 0.99; // coreção de fator exponencial / logaritmico
+    // if (weight < sensor->invalid_limit)
+    //     return 0;
 
-    int32_t final_weight = 0UL;
+    ESP_LOGW(ROTULO_LOCAL, "Sensor[%d]:Raw{%ld}|Offset{%ld}|Diff{%ld}|Weight{%f}",
+             sensor->id, raw, sensor->offset, diff, weight);
+
+    weight_t sensor_weight = {.raw_value = diff, .value = (int32_t)weight};
+    return sensor_weight;
+}
+
+weight_t measure_scale_weight()
+{
+    weight_t final_weight = {0};
     for (int i = 0; i < NUM_WEIGHT_SENSORS; i++)
     {
+        weight_t sensor_weight = hx711_read_sensor_weight(&sensors[i]);
         if (i == 2)
             continue;
-        final_weight += sensor_data[i].weight;
+        final_weight.raw_value += sensor_weight.raw_value;
+        final_weight.value += sensor_weight.value;
     }
-    final_weight /= (NUM_WEIGHT_SENSORS - 1);
-    ESP_LOGI(ROTULO_LOCAL, "Peso{%ld}", final_weight);
+    final_weight.raw_value /= (NUM_WEIGHT_SENSORS - 1);
+    final_weight.value /= (NUM_WEIGHT_SENSORS - 1);
+    ESP_LOGI(ROTULO_LOCAL, "Peso: Bruto{%ld} Fator{%ld}", final_weight.raw_value, final_weight.value);
+    return final_weight;
 }
+
+#pragma endregion
 
 #pragma region Control Power State
 

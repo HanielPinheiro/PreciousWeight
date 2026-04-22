@@ -2,8 +2,6 @@
 #ifndef CONFIG_SYSTEM_H
 #define CONFIG_SYSTEM_H
 
-#include "../../main/main.h"
-
 #define DEBOUNCE_COUNT 4
 #define MAX_WEIGHT_TIMES 10
 #define RECEIVED_RUN "[RUN]"

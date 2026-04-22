@@ -26,27 +26,30 @@
 #define HX711_INVALID_READING 0x80000000
 #define AVERAGE_NUMBER 20
 #define TARE_NUMBER 200
+#define HX711_CHANNEL_A_128 25
 
-#include "../../main/main.h"
-
-typedef enum
-{
-    HX711_CHANNEL_A_128 = 25,
-    HX711_CHANNEL_B_32 = 26,
-    HX711_CHANNEL_A_64 = 27
-} hx711_mode_t;
+#include <stdint.h>
+#include "driver/gpio.h"
+#include "esp_err.h"
 
 typedef struct
 {
     uint8_t id;
     gpio_num_t dout_pin;
     gpio_num_t sck_pin;
-    int32_t offset; // tara
+    int32_t offset;
     double calib_factor;
 } hx711_t;
 
-esp_err_t initialize_weight_sensors(void);
+typedef struct
+{
+    int32_t raw_value;
+    int32_t value;
+} weight_t;
+
+esp_err_t initialize_hx711_sensors(void);
 void hx711_tare(hx711_t *sensor);
-int32_t measure_weight(void);
+weight_t hx711_read_sensor_weight(hx711_t *sensor);
+weight_t measure_scale_weight(void);
 
 #endif // HX711_H

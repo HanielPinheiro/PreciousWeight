@@ -1,4 +1,4 @@
-#include "process_mqtt_data.h"
+#include "../../config/config.h"
 
 static char *ROTULO_LOCAL = "BABY_CONTROL";
 static bool has_baby = false;
@@ -9,45 +9,7 @@ weight_time_t weight_times[MAX_WEIGHT_TIMES];
 uint8_t number_of_weight_times = 0;
 int calibration_steps = 0;
 
-void update_has_baby_flag(bool state)
-{ // Restringe o acesso à flag para evitar concorrencia
-    if (has_baby_mutex == NULL)
-        has_baby = state;
-    else
-    {
-        while (true)
-        {
-            if (xSemaphoreTake(has_baby_mutex, pdMS_TO_TICKS(100)) == pdTRUE)
-            {
-                has_baby = state;
-                xSemaphoreGive(has_baby_mutex);
-                break;
-            }
-            vTaskDelay(pdMS_TO_TICKS(300));
-        }
-    }
-}
-
-bool scale_has_baby()
-{ // Restringe o acesso à flag para evitar concorrencia
-    bool result = false;
-    if (has_baby_mutex == NULL)
-        result = has_baby;
-    else
-    {
-        while (true)
-        {
-            if (xSemaphoreTake(has_baby_mutex, pdMS_TO_TICKS(100)) == pdTRUE)
-            {
-                result = has_baby;
-                xSemaphoreGive(has_baby_mutex);
-                break;
-            }
-            vTaskDelay(pdMS_TO_TICKS(300));
-        }
-    }
-    return result;
-}
+#pragma region Static
 
 static int extract_number(const char *str)
 {
@@ -138,9 +100,9 @@ static esp_err_t weight_times_routine(const char *data)
 
 static esp_err_t measure_routine()
 {
-    weight_t weight = measure_weight();
+    weight_t weight = measure_scale_weight();
     char m[50];
-    snprintf(m, 50, "%s;Raw{%ld};Grams{%.2f}", RECEIVED_MEASURE, weight.raw_value, weight.value);
+    snprintf(m, 50, "%s;Raw{%ld};Grams{%ld}", RECEIVED_MEASURE, weight.raw_value, weight.value);
     sdcard_log(LOG_INFO, m, ROTULO_LOCAL);
     while (true)
     {
@@ -164,7 +126,7 @@ static esp_err_t calibrate_routine(const char *data)
     if (calibration_steps == 0)
     {
         for (int i = 0; i < NUM_WEIGHT_SENSORS; i++)
-            hx711_tare(&sensors[i], WEIGHT_NUMBER_TO_TARE);
+            hx711_tare(&sensors[i]);
         while (true)
         {
             if (mqtt_publish(MQTT_TOPIC_PUB_WEIGHT, RECEIVED_CALIBRATE, 2))
@@ -196,13 +158,13 @@ static esp_err_t calibrate_routine(const char *data)
 
             char m[100];
             snprintf(m, 100, "Novo peso de referencia: {%.2f}", known_weight_grams);
-            scale_in_grams = known_weight_grams;
+            // scale_in_grams = known_weight_grams;
             sdcard_log(LOG_INFO, m, ROTULO_LOCAL);
 
             for (int i = 0; i < NUM_WEIGHT_SENSORS; i++)
             {
-                sensors[i].calib_factor = hx711_read_average(&sensors[i], AVERAGE_NUMBER);
-                snprintf(m, 100, "Novo valor bruto de referencia - Sensor[%d]:%ld", i, sensors[i].calib_factor);
+                // sensors[i].calib_factor = hx711_read_average(&sensors[i], AVERAGE_NUMBER);
+                snprintf(m, 100, "Novo valor bruto de referencia - Sensor[%d]:%ld", i, (int32_t)sensors[i].calib_factor);
                 sdcard_log(LOG_INFO, m, ROTULO_LOCAL);
             }
 
@@ -260,6 +222,48 @@ static const CommandHandler handlers[] = {
     {RECEIVED_CALIBRATE, calibrate_routine, "Calibração realizada", "ERRO AO LER CALIBRATE"},
     {RECEIVED_WIFI, wifi_routine, "Reset de WiFi realizado", "ERRO AO LER WIFI"},
 };
+
+#pragma endregion
+
+void update_has_baby_flag(bool state)
+{ // Restringe o acesso à flag para evitar concorrencia
+    if (has_baby_mutex == NULL)
+        has_baby = state;
+    else
+    {
+        while (true)
+        {
+            if (xSemaphoreTake(has_baby_mutex, pdMS_TO_TICKS(100)) == pdTRUE)
+            {
+                has_baby = state;
+                xSemaphoreGive(has_baby_mutex);
+                break;
+            }
+            vTaskDelay(pdMS_TO_TICKS(300));
+        }
+    }
+}
+
+bool scale_has_baby()
+{ // Restringe o acesso à flag para evitar concorrencia
+    bool result = false;
+    if (has_baby_mutex == NULL)
+        result = has_baby;
+    else
+    {
+        while (true)
+        {
+            if (xSemaphoreTake(has_baby_mutex, pdMS_TO_TICKS(100)) == pdTRUE)
+            {
+                result = has_baby;
+                xSemaphoreGive(has_baby_mutex);
+                break;
+            }
+            vTaskDelay(pdMS_TO_TICKS(300));
+        }
+    }
+    return result;
+}
 
 void process_mqtt_data(const char *mqtt_data)
 {
