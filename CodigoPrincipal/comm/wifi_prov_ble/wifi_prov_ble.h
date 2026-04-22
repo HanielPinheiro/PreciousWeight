@@ -1,17 +1,7 @@
 #pragma once
 #ifndef WIFI_H
 #define WIFI_H
-
-#include "comm_libs.h"
-
-#include "time.h"
-#include "sys/time.h"
-#include "esp_timer.h"
-#include "esp_netif_sntp.h"
-
-#include "wifi_provisioning/manager.h"
-#include "wifi_provisioning/scheme_ble.h"
-
+#include "../../config/include/setup.h"
 #define SIZE_TIME 50
 extern char current_time[SIZE_TIME];
 

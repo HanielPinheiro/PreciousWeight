@@ -28,7 +28,7 @@ static void sensor_reader_task(void *pv_params)
     {
         // Aguarda sinal para iniciar leitura sincronizada
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-        a => avaliar a responsabilidade, isso deveria estar aqui ou em hx711.c?
+        // a => avaliar a responsabilidade, isso deveria estar aqui ou em hx711.c?
         sensor_data_t data = {.sensor_id = sensor_id, .raw_value = hx711_read_average(&sensor, WEIGHT_NUMBER_TO_AVERAGE)};
         int32_t diff = data.raw_value - sensor.offset;
         data.units = diff < 0 ? diff * -1 : diff;
@@ -85,8 +85,8 @@ static void sensor_data_process_queue(void *pv_params)
 }
 
 esp_err_t init_sensors_task()
-{asd
-    for (int i = 0; i < NUM_WEIGHT_SENSORS; i++)
+{
+    asd for (int i = 0; i < NUM_WEIGHT_SENSORS; i++)
     {
         ESP_LOGI(ROTULO_LOCAL, "Tare - Sensor[%d]", i);
         hx711_tare(&sensors[i], WEIGHT_NUMBER_TO_TARE);

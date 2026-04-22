@@ -1,3 +1,3 @@
 idf_component_register(SRCS "wifi_prov_ble.c"
-                       REQUIRES  wifi_provisioning comm
+                       REQUIRES  config
                        INCLUDE_DIRS ".")

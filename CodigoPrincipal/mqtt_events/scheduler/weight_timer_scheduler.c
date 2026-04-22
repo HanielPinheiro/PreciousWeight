@@ -113,11 +113,3 @@ void init_weight_sensors_timer()
     if (scale_has_baby() && number_of_weight_times > 0)
         schedule_next_measure();
 }
-
-/**
- * void loop() {
-  if (!mqtt_connected() && has_schedule) {
-    xTimerStop(schedule_weight_measure_timer, portMAX_DELAY); // Pause if connection lost
-  }
-}
- */

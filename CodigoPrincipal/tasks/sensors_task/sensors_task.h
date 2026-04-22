@@ -2,7 +2,7 @@
 #ifndef SENSORS_TASK_H
 #define SENSORS_TASK_H
 
-#include "bios.h"
+#include "../../config/include/setup.h"
 
 typedef struct
 {

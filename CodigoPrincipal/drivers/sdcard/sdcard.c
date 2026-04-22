@@ -30,7 +30,7 @@ sdmmc_card_t *sdcard = NULL;
 
 #pragma region Init
 
-esp_err_t sdcard_init(void)
+static esp_err_t run_sdcard(void)
 {
     // Montagem remete a criação virtual (dentro do sofware) do driver de comunicação
     esp_vfs_fat_sdmmc_mount_config_t mount_config = {
@@ -95,6 +95,35 @@ esp_err_t sdcard_init(void)
     sdcard_load_weight_times();
     sd_mutex = xSemaphoreCreateMutex();
     return ESP_OK;
+}
+
+esp_err_t initialize_sdcard()
+{
+    uint8_t retry_count = 0;
+    const uint8_t max_retries = 3;
+    esp_err_t ret = ESP_FAIL;
+    do
+    {
+        esp_log_at_terminal(ROTULO_LOCAL, "Loop While");
+        ret = run_sdcard();
+        if (ret == ESP_OK)
+        {
+            ret = sdcard_log(LOG_INFO, "Testando Logs no Cartao SD ", ROTULO_LOCAL);
+            if (ret == ESP_OK)
+                break;
+
+            esp_log_at_terminal(ROTULO_LOCAL, "Problema ao escrever Logs!!");
+            vTaskDelay(pdMS_TO_TICKS(1000));
+            retry_count++;
+            continue;
+        }
+
+        esp_log_at_terminal(ROTULO_LOCAL, "Falha ao iniciar Cartao SD");
+        retry_count++;
+        vTaskDelay(pdMS_TO_TICKS(1000));
+    } while (retry_count < max_retries);
+
+    return ret;
 }
 
 #pragma endregion

@@ -2,12 +2,7 @@
 #ifndef CONFIG_SYSTEM_H
 #define CONFIG_SYSTEM_H
 
-#include "esp_system.h"
-#include "sdcard.h"
-#include "mqtt3.h"
-#include "sdcard_task.h"
-#include "wifi_prov_ble.h"
-#include "weight_timer_scheduler.h"
+#include "../../config/include/setup.h"
 
 #define DEBOUNCE_COUNT 4
 #define MAX_WEIGHT_TIMES 10
@@ -38,7 +33,6 @@ extern weight_time_t weight_times[MAX_WEIGHT_TIMES];
 extern char baby_id[12];
 
 void process_mqtt_data(const char *mqtt_data);
-char *get_reset_reason_string(esp_reset_reason_t reason);
 void update_has_baby_flag(bool state);
 bool scale_has_baby();
 

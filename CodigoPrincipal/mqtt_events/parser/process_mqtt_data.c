@@ -313,30 +313,3 @@ void process_mqtt_data(const char *mqtt_data)
         }
     }
 }
-
-char *get_reset_reason_string(esp_reset_reason_t reason)
-{
-    switch (reason)
-    {
-    case ESP_RST_POWERON:
-        return "Razao do último reset: Power-On Reset";
-    case ESP_RST_SW:
-        return "Razao do último reset: Software Reset (esp_restart)";
-    case ESP_RST_PANIC:
-        return "Razao do último reset: Panic/Crash Reset";
-    case ESP_RST_INT_WDT:
-        return "Razao do último reset: Interrupt Watchdog Reset";
-    case ESP_RST_TASK_WDT:
-        return "Razao do ultimo reset: Task Watchdog Reset";
-    case ESP_RST_WDT:
-        return "Razao do ultimo reset: Other Watchdog Reset";
-    case ESP_RST_DEEPSLEEP:
-        return "Razao do ultimo reset: Deep Sleep Wakeup";
-    case ESP_RST_BROWNOUT:
-        return "Razao do ultimo reset: Brownout Reset";
-    case ESP_RST_SDIO:
-        return "Razao do ultimo reset: SDIO Reset";
-    default:
-        return "Razao do ultimo reset: Unknown Reset Reason";
-    }
-}

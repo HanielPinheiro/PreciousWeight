@@ -2,17 +2,7 @@
 #ifndef SDCARD_H
 #define SDCARD_H
 
-#include "stdio.h"
-#include "xtensa_api.h"
-#include "xt_utils.h"
-#include "sdmmc_cmd.h"
-#include "esp_vfs_fat.h"
-#include "sys/unistd.h"
-#include "sys/stat.h"
-#include "string.h"
-#include "errno.h"
-#include "process_mqtt_data.h"
-#include "sdcard_task.h"
+#include "../../config/include/setup.h"
 
 #define MORE_LOGS false
 #define MAX_LOG_LENGTH 160
@@ -33,9 +23,16 @@ typedef struct
     char message[MAX_LOG_LENGTH];
 } log_entry_t;
 
+typedef enum
+{
+    LOG_INFO = 0,
+    LOG_WARN = 1,
+    LOG_ERROR = 2
+} log_type_t;
+
 extern sdmmc_card_t *sdcard;
 
-esp_err_t sdcard_init(void);
+esp_err_t initialize_sdcard(void);
 esp_err_t sdcard_write_file(char *path, char *data);
 esp_err_t sdcard_create_file(char *path);
 esp_err_t sdcard_log(log_type_t log_type, char *message, const char *trace);

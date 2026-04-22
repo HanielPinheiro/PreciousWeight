@@ -4,129 +4,73 @@
  * https://www.youtube.com/watch?v=JzQTPnCspNM -> Outro exemplo de semaforo
  */
 
-#include "bios.h"
-#include "weight_timer_scheduler.h"
-#include "sdcard_task.h"
-#include "wifi_prov_ble.h"
-#include "mqtt_task.h"
-#include "process_mqtt_data.h"
-#include "sensors_task.h"
+#include "../config/include/setup.h"
 
-QueueHandle_t sensor_queues[NUM_WEIGHT_SENSORS] = {0};
-TaskHandle_t sensor_tasks[NUM_WEIGHT_SENSORS] = {0};
-TaskHandle_t display_task_handle = {0};
+char *ROTULO_LOCAL = "MAIN";
 
-hx711_t sensors[NUM_WEIGHT_SENSORS] = {0};
-SensorConfig sensors_config[NUM_WEIGHT_SENSORS] = {
-    {21, 22, 88.848, 0, -1, false, "Sensor 1"},
-    {16, 14, 11.694, 0, -1, false, "Sensor 2"},
-    {32, 33, 82.316, 0, -1, false, "Sensor 3"},
-    {25, 26, 107.285, 0, -1, false, "Sensor 4"}};
+// QueueHandle_t sensor_queues[NUM_WEIGHT_SENSORS] = {0};
+// TaskHandle_t sensor_tasks[NUM_WEIGHT_SENSORS] = {0};
+// TaskHandle_t display_task_handle = {0};
+
+hx711_t sensors[NUM_WEIGHT_SENSORS] = {
+    {.id = 0, .dout_pin = SCALE1_DOUT, .sck_pin = SCALE1_SCK, .offset = DEFAULT_OFFSET, .calib_factor = SCALE1_FACTOR},
+    {.id = 1, .dout_pin = SCALE2_DOUT, .sck_pin = SCALE1_SCK, .offset = DEFAULT_OFFSET, .calib_factor = SCALE2_FACTOR},
+    {.id = 2, .dout_pin = SCALE2_SCK, .sck_pin = SCALE1_SCK, .offset = DEFAULT_OFFSET, .calib_factor = SCALE3_FACTOR},
+    {.id = 3, .dout_pin = SCALE1_DOUT, .sck_pin = SCALE1_SCK, .offset = DEFAULT_OFFSET, .calib_factor = SCALE4_FACTOR}};
+
+static char *get_reset_reason_string(esp_reset_reason_t reason)
+{
+    switch (reason)
+    {
+    case ESP_RST_POWERON:
+        return "Razao do último reset: Power-On Reset";
+    case ESP_RST_SW:
+        return "Razao do último reset: Software Reset (esp_restart)";
+    case ESP_RST_PANIC:
+        return "Razao do último reset: Panic/Crash Reset";
+    case ESP_RST_INT_WDT:
+        return "Razao do último reset: Interrupt Watchdog Reset";
+    case ESP_RST_TASK_WDT:
+        return "Razao do ultimo reset: Task Watchdog Reset";
+    case ESP_RST_WDT:
+        return "Razao do ultimo reset: Other Watchdog Reset";
+    case ESP_RST_DEEPSLEEP:
+        return "Razao do ultimo reset: Deep Sleep Wakeup";
+    case ESP_RST_BROWNOUT:
+        return "Razao do ultimo reset: Brownout Reset";
+    case ESP_RST_SDIO:
+        return "Razao do ultimo reset: SDIO Reset";
+    default:
+        return "Razao do ultimo reset: Unknown Reset Reason";
+    }
+}
 
 void app_main()
 {
-    char *ROTULO_LOCAL = "MAIN";
-    init_hardware();
+    esp_log_at_terminal(ROTULO_LOCAL, "Inicializando Cartao SD.");
+
+    ESP_ERROR_CHECK(initialize_sdcard());
+
+    sdcard_log(LOG_INFO, "Cartao SD inicializado.", ROTULO_LOCAL);
+
     sdcard_log(LOG_WARN, get_reset_reason_string(esp_reset_reason()), ROTULO_LOCAL);
-    sdcard_log(LOG_INFO, "Rotina da BIOS executada com sucesso.", ROTULO_LOCAL);
 
-    // init_wifi();
-    // sdcard_log(LOG_INFO, "Wi-Fi inicializado com sucesso. Inicializando MQTT.", ROTULO_LOCAL);
+    init_wifi();
+    sdcard_log(LOG_INFO, "Wi-Fi inicializado com sucesso. Inicializando MQTT.", ROTULO_LOCAL);
 
-    // if (init_mqtt_task() != ESP_OK)
-    // {
-    //     sdcard_log(LOG_ERROR, "Falha ao inicializar init_mqtt_task", ROTULO_LOCAL);
-    //     return;
-    // }
-    // sdcard_log(LOG_INFO, "Task MQTT Manager com Callback inicializada com sucesso. Iniciando Taks", ROTULO_LOCAL);
+    ESP_ERROR_CHECK(init_mqtt_task());
+    sdcard_log(LOG_INFO, "Task MQTT inicializada com sucesso. Iniciando leitores HX711,", ROTULO_LOCAL);
 
-    if (init_sdcard_task() != ESP_OK)
-    {
-        sdcard_log(LOG_ERROR, "Falha ao inicializar init_sdcard_task", ROTULO_LOCAL);
-        return;
-    }
+    ESP_ERROR_CHECK(initialize_weight_sensors());
+    sdcard_log(LOG_INFO, "Sensores inicializados. Iniciando Tasks de SD Card e Sensores,", ROTULO_LOCAL);
 
-    if (init_sensors_task() != ESP_OK)
-    {
-        sdcard_log(LOG_ERROR, "Falha ao inicializar init_sensors_task", ROTULO_LOCAL);
-        return;
-    }
+    ESP_ERROR_CHECK(init_sdcard_task());
+    ESP_ERROR_CHECK(init_sensors_task());      
 
-    // init_weight_sensors_timer();
-    measure_weight();
+    init_weight_sensors_timer();
+    update_current_time();
 
     char m[90] = {0};
-    update_current_time();
     snprintf(m, 90, "Sistema inicializado com sucesso em %s \r\n", current_time);
     sdcard_log(LOG_INFO, m, ROTULO_LOCAL);
 }
-
-#pragma region Bios
-
-// extern hx711_t sensors[NUM_WEIGHT_SENSORS];
-
-void init_hardware()
-{
-    esp_log_at_terminal(ROTULO_LOCAL, "Inicializando Cartao SD.");
-
-    initialize_sdcard();
-
-    sdcard_log(LOG_INFO, "Cartao SD inicializado. Inicializando sensores HX711.", ROTULO_LOCAL);
-    ESP_ERROR_CHECK(initialize_weight_sensors());
-
-    sdcard_log(LOG_INFO, "Sensores inicializados.", ROTULO_LOCAL);
-}
-
-static esp_err_t initialize_sdcard()
-{
-    uint8_t retry_count = 0;
-    const uint8_t max_retries = 3;
-    esp_err_t ret = ESP_FAIL;
-    do
-    {
-        esp_log_at_terminal(ROTULO_LOCAL, "Loop While");
-        ret = sdcard_init();
-        if (ret == ESP_OK)
-        {
-            ret = sdcard_log(LOG_INFO, "Testando Logs no Cartao SD ", ROTULO_LOCAL);
-            if (ret == ESP_OK)
-                break;
-
-            esp_log_at_terminal(ROTULO_LOCAL, "Problema ao escrever Logs!!");
-            vTaskDelay(pdMS_TO_TICKS(1000));
-            retry_count++;
-            continue;
-        }
-
-        esp_log_at_terminal(ROTULO_LOCAL, "Falha ao iniciar Cartao SD");
-        retry_count++;
-        vTaskDelay(pdMS_TO_TICKS(1000));
-    } while (retry_count < max_retries);
-
-    return ret;
-}
-
-static esp_err_t initialize_weight_sensors()
-{
-    int dout[4] = {SCALE1_DOUT, SCALE2_DOUT, SCALE3_DOUT, SCALE4_DOUT};
-    int sck[4] = {SCALE1_SCK, SCALE2_SCK, SCALE3_SCK, SCALE4_SCK};
-    // uint32_t calib_factor[4] = {86UL, 123UL, 74UL, 116UL}; // estimados manualmente
-    uint32_t calib_factor[4] = {315UL, 315UL, 240UL, 315UL}; // estimados manualmente
-    for (int i = 0; i < NUM_WEIGHT_SENSORS; i++)
-    {
-        sensors[i].id = i;
-        sensors[i].calib_factor = calib_factor[i];
-        if (hx711_init(&sensors[i], dout[i], sck[i], HX711_CHANNEL_A_128) != ESP_OK)
-        {
-            char msg[80];
-            snprintf(msg, 80, "Falha ao inicializar sensor 1, portas: %d [OUT] e %d [CLK].", &sensors[i]->dout_pin, &sensors[i]->sck_pin);
-            sdcard_log(LOG_ERROR, msg, ROTULO_LOCAL);
-            return ESP_FAIL;
-        }
-        return ESP_OK;
-    }
-    vTaskDelay(pdMS_TO_TICKS(2000)); // Aguarda dois segundos para estabilização térmica
-    return ESP_OK;
-}
-
-#pragma endregion
