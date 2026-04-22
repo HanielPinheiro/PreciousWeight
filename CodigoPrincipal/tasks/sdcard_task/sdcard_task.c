@@ -3,8 +3,8 @@
 static const char *ROTULO_LOCAL = "SDCARD_TASK";
 static uint8_t sd_failure_counter = 0;
 static TaskHandle_t sd_task_handler = NULL;
-
 QueueHandle_t sdcard_log_queue = NULL;
+
 static void sdcard_writer_task(void *pv_params)
 {
     log_entry_t entry;

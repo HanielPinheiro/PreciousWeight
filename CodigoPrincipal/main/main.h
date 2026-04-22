@@ -72,9 +72,7 @@ typedef enum
 
 #define LED_GPIO GPIO_NUM_2
 
-// extern QueueHandle_t sensor_queues[NUM_WEIGHT_SENSORS];
-// extern TaskHandle_t sensor_tasks[NUM_WEIGHT_SENSORS];
-// extern TaskHandle_t display_task_handle;
+extern int32_t weight;
 extern hx711_t sensors[NUM_WEIGHT_SENSORS];
 
 #endif // SETUP_H

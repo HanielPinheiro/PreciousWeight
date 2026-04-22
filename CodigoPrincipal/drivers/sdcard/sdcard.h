@@ -2,7 +2,7 @@
 #ifndef SDCARD_H
 #define SDCARD_H
 
-#include "../../config/include/setup.h"
+#include "../../main/main.h"
 
 #define MORE_LOGS false
 #define MAX_LOG_LENGTH 160

@@ -1,8 +1,7 @@
 #include "mqtt_task.h"
 
-TaskHandle_t mqtt_manager_task_handle = NULL;
-SemaphoreHandle_t mqtt_restart_sem = NULL;
-
+static TaskHandle_t mqtt_manager_task_handle = NULL;
+static SemaphoreHandle_t mqtt_restart_sem = NULL;
 static char *ROTULO_LOCAL = "MQTT_TASK";
 
 void mqtt_manager_task(void *pvParameters)
@@ -17,7 +16,7 @@ void mqtt_manager_task(void *pvParameters)
             {
                 ESP_LOGI(ROTULO_LOCAL, "Stopping MQTT client");
                 esp_mqtt_client_stop(client);
-                vTaskDelay(pdMS_TO_TICKS(500));                
+                vTaskDelay(pdMS_TO_TICKS(500));
 
                 ESP_LOGI(ROTULO_LOCAL, "Destroying MQTT client");
                 esp_mqtt_client_destroy(client);

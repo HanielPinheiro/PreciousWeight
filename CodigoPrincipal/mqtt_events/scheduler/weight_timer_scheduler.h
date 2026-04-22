@@ -2,7 +2,7 @@
 #ifndef WEIGHT_SCHEDULER_H
 #define WEIGHT_SCHEDULER_H
 
-#include "../../config/include/setup.h"
+#include "../../main/main.h"
 
 void init_weight_sensors_timer();
 void stop_schedule_timer();

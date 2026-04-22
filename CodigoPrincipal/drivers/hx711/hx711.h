@@ -27,7 +27,7 @@
 #define AVERAGE_NUMBER 20
 #define TARE_NUMBER 200
 
-#include "../../config/include/setup.h"
+#include "../../main/main.h"
 
 typedef enum
 {
@@ -47,7 +47,6 @@ typedef struct
 
 esp_err_t initialize_weight_sensors(void);
 void hx711_tare(hx711_t *sensor);
-int32_t hx711_read_average(hx711_t *sensor, uint8_t samples);
 int32_t measure_weight(void);
 
 #endif // HX711_H

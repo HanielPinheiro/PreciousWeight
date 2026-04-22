@@ -4,14 +4,10 @@
  * https://www.youtube.com/watch?v=JzQTPnCspNM -> Outro exemplo de semaforo
  */
 
-#include "../config/include/setup.h"
+#include "main.h"
 
 char *ROTULO_LOCAL = "MAIN";
-
-// QueueHandle_t sensor_queues[NUM_WEIGHT_SENSORS] = {0};
-// TaskHandle_t sensor_tasks[NUM_WEIGHT_SENSORS] = {0};
-// TaskHandle_t display_task_handle = {0};
-
+int32_t weight;
 hx711_t sensors[NUM_WEIGHT_SENSORS] = {
     {.id = 0, .dout_pin = SCALE1_DOUT, .sck_pin = SCALE1_SCK, .offset = DEFAULT_OFFSET, .calib_factor = SCALE1_FACTOR},
     {.id = 1, .dout_pin = SCALE2_DOUT, .sck_pin = SCALE1_SCK, .offset = DEFAULT_OFFSET, .calib_factor = SCALE2_FACTOR},
@@ -65,7 +61,7 @@ void app_main()
     sdcard_log(LOG_INFO, "Sensores inicializados. Iniciando Tasks de SD Card e Sensores,", ROTULO_LOCAL);
 
     ESP_ERROR_CHECK(init_sdcard_task());
-    ESP_ERROR_CHECK(init_sensors_task());      
+    ESP_ERROR_CHECK(init_sensors_task());
 
     init_weight_sensors_timer();
     update_current_time();

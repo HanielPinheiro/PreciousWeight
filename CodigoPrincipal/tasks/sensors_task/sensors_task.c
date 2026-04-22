@@ -4,8 +4,6 @@ static const char *ROTULO_LOCAL = "SENSOR_TASK";
 static SemaphoreHandle_t barrier_semaphore = {0};
 static QueueHandle_t sensor_data_queue = {0};
 static TaskHandle_t reader_tasks[NUM_WEIGHT_SENSORS] = {0};
-static sensor_data_t sensor_readings[NUM_WEIGHT_SENSORS] = {0};
-static int readings_count = 0;
 
 static void sensor_coordinator_task(void *pv_params)
 {
@@ -25,17 +23,11 @@ static void sensor_reader_task(void *pv_params)
     hx711_t sensor = sensors[sensor_id];
 
     while (1)
-    {
-        // Aguarda sinal para iniciar leitura sincronizada
+    {        
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-        // a => avaliar a responsabilidade, isso deveria estar aqui ou em hx711.c?
-        sensor_data_t data = {.sensor_id = sensor_id, .raw_value = hx711_read_average(&sensor, WEIGHT_NUMBER_TO_AVERAGE)};
-        int32_t diff = data.raw_value - sensor.offset;
-        data.units = diff < 0 ? diff * -1 : diff;
-        data.weight = data.units / sensor.calib_factor;
-
+      
         // Armazena leitura e verifica se todas completaram
-        sensor_readings[sensor_id] = data;
+        sensor_readings[sensor_id] = ;
         if (xSemaphoreTake(barrier_semaphore, portMAX_DELAY))
         {
             readings_count++;
@@ -52,47 +44,24 @@ static void sensor_reader_task(void *pv_params)
 
 static void sensor_data_process_queue(void *pv_params)
 {
-    sensor_data_t sensor_data[NUM_WEIGHT_SENSORS] = {0};
-
     while (1)
     {
         if (xQueueReceive(sensor_data_queue, &sensor_data, portMAX_DELAY))
         { // recebeu sinal da leitura, processa
-            ESP_LOGW(ROTULO_LOCAL, "Sensor[%d]:Raw{%ld}|Diff{%ld};Sensor[%d]:Raw{%ld}|Diff{%ld};Sensor[%d]:Raw{%ld}|Diff{%ld};Sensor[%d]:Raw{%ld}|Diff{%ld}",
-                     sensor_data[0].sensor_id, sensor_data[0].raw_value, sensor_data[0].units,
-                     sensor_data[1].sensor_id, sensor_data[1].raw_value, sensor_data[1].units,
-                     sensor_data[2].sensor_id, sensor_data[2].raw_value, sensor_data[2].units,
-                     sensor_data[3].sensor_id, sensor_data[3].raw_value, sensor_data[3].units);
-
-            // Aqui você pode adicionar o processamento conjunto dos dados
-            ESP_LOGE(ROTULO_LOCAL, "Sensor[%d]:Weight{%ld};Sensor[%d]:Weight{%ld};Sensor[%d]:Weight{%ld};Sensor[%d]:Weight{%ld}",
-                     sensor_data[0].sensor_id, sensor_data[0].weight,
-                     sensor_data[1].sensor_id, sensor_data[1].weight,
-                     sensor_data[2].sensor_id, sensor_data[2].weight,
-                     sensor_data[3].sensor_id, sensor_data[3].weight);
-
-            int32_t final_weight = 0UL;
-            for (int i = 0; i < NUM_WEIGHT_SENSORS; i++)
-            {
-                if (i == 2)
-                    continue;
-                final_weight += sensor_data[i].weight;
-            }
-            final_weight /= (NUM_WEIGHT_SENSORS - 1);
-            ESP_LOGI(ROTULO_LOCAL, "Peso{%ld}", final_weight);
+            int32_t weight = measure_weight();
         }
     }
 }
 
-esp_err_t init_sensors_task()
-{
-    asd for (int i = 0; i < NUM_WEIGHT_SENSORS; i++)
-    {
-        ESP_LOGI(ROTULO_LOCAL, "Tare - Sensor[%d]", i);
-        hx711_tare(&sensors[i], WEIGHT_NUMBER_TO_TARE);
-    }
+/**
+ * Além da leitura do peso é necessário monitorar os sensores
+ * por isso existe uma estrutura de task e filas para ler sensores
+ * Dessa forma a leitura é feita em thread especifica
+ */
 
-    // Cria recursos de sincronização
+esp_err_t init_sensors_task()
+{       
+    //Semaforo para evitar acesso concorrente
     barrier_semaphore = xSemaphoreCreateCounting(1, 1);
     sensor_data_queue = xQueueCreate(10, sizeof(sensor_data_t) * NUM_WEIGHT_SENSORS);
 

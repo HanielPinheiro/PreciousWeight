@@ -6,6 +6,40 @@ static QueueHandle_t weight_measure = NULL;
 static bool control = false;
 static char log_msg[150] = {0};
 
+#pragma region Static
+
+static void execute_scheduled_task()
+{
+    weight_t w = measure_weight();
+    xQueueSend(weight_measure, &w, 0);
+}
+
+static void scheduled_weight_measurement(TimerHandle_t xTimer)
+{
+    // This runs when the timer expires
+    execute_scheduled_task();
+
+    // Schedule the next event
+    if (number_of_weight_times > 0)
+        schedule_next_measure();
+}
+
+static void task_worker(void *pvParams)
+{
+    while (1)
+    {
+        weight_t w = {0};
+        if (xQueueReceive(weight_measure, &w, portMAX_DELAY))
+        {
+            snprintf(log_msg, sizeof(log_msg), "Raw{%ld}_Calibrated{%.2f}", w.raw_value, w.value);
+            sdcard_log(LOG_INFO, log_msg, ROTULO_LOCAL);
+            mqtt_publish(MQTT_TOPIC_PUB_SENSOR, log_msg, 2);
+        }
+    }
+}
+
+#pragma endregion
+
 void schedule_next_measure()
 {
     if (!scale_has_baby() || number_of_weight_times <= 0)
@@ -60,36 +94,6 @@ void schedule_next_measure()
         xTimerStart(schedule_weight_measure_timer, portMAX_DELAY);
     else
         ESP_LOGE(ROTULO_LOCAL, "Failed to schedule timer!");
-}
-
-static void execute_scheduled_task()
-{
-    weight_t w = measure_weight();
-    xQueueSend(weight_measure, &w, 0);
-}
-
-static void scheduled_weight_measurement(TimerHandle_t xTimer)
-{
-    // This runs when the timer expires
-    execute_scheduled_task();
-
-    // Schedule the next event
-    if (number_of_weight_times > 0)
-        schedule_next_measure();
-}
-
-static void task_worker(void *pvParams)
-{
-    while (1)
-    {
-        weight_t w = {0};
-        if (xQueueReceive(weight_measure, &w, portMAX_DELAY))
-        {
-            snprintf(log_msg, sizeof(log_msg), "Raw{%ld}_Calibrated{%.2f}", w.raw_value, w.value);
-            sdcard_log(LOG_INFO, log_msg, ROTULO_LOCAL);
-            mqtt_publish(MQTT_TOPIC_PUB_SENSOR, log_msg, 2);
-        }
-    }
 }
 
 void stop_schedule_timer()

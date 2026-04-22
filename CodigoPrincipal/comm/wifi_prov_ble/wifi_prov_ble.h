@@ -1,7 +1,7 @@
 #pragma once
 #ifndef WIFI_H
 #define WIFI_H
-#include "../../config/include/setup.h"
+#include "../../main/main.h"
 #define SIZE_TIME 50
 extern char current_time[SIZE_TIME];
 

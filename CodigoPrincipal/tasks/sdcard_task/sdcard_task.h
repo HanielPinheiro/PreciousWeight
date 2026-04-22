@@ -2,7 +2,7 @@
 #ifndef SDCARD_TASK_H
 #define SDCARD_TASK_H
 
-#include "../../config/include/setup.h"
+#include "../../main/main.h"
 
 extern QueueHandle_t sdcard_log_queue;
 esp_err_t init_sdcard_task();

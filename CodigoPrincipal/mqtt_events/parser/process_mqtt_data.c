@@ -201,7 +201,7 @@ static esp_err_t calibrate_routine(const char *data)
 
             for (int i = 0; i < NUM_WEIGHT_SENSORS; i++)
             {
-                sensors[i].calib_factor = hx711_read_average(&sensors[i], WEIGHT_NUMBER_TO_AVERAGE);
+                sensors[i].calib_factor = hx711_read_average(&sensors[i], AVERAGE_NUMBER);
                 snprintf(m, 100, "Novo valor bruto de referencia - Sensor[%d]:%ld", i, sensors[i].calib_factor);
                 sdcard_log(LOG_INFO, m, ROTULO_LOCAL);
             }
@@ -238,7 +238,6 @@ static esp_err_t calibrate_routine(const char *data)
 
 static esp_err_t wifi_routine()
 {
-    // 1. Stop MQTT client first (if you have access to it)
     sdcard_log(LOG_WARN, "Desligando MQTT", ROTULO_LOCAL);
     esp_mqtt_client_handle_t client = mqtt_get_client_handle();
     if (client)
