@@ -2,10 +2,45 @@
 
 static const char *ROTULO_LOCAL = "SENSOR_TASK";
 
+// Objetivo deste módulo:
+// - Manter uma leitura periódica dos HX711 (um "frame" com todas as leituras)
+// - Detectar falhas comuns:
+//      1) Sensor parou de ler (timeout em ms + streak de inválidos)
+//      2) Glitch de leitura (salto brusco confirmado + retorno ao normal)
+//
+// Arquitetura:
+// - 1 task de polling (prioridade alta): lê sensores e faz detecção de falhas
+// - 1 task de processamento (prioridade média): agrega leituras e atualiza "weight"
+// - 1 fila (tamanho 1) com overwrite: sempre mantém o frame mais recente (evita backlog)
+//
+// Obs.: O driver do HX711 já usa região crítica durante o shift do clock, então paralelizar
+// leitura em múltiplas tasks tende a aumentar overhead sem ganho real.
+
+// Periodicidade de leitura dos HX711 (ms).
 #define SENSOR_POLL_PERIOD_MS 1000
+
+// Detecção de "parou de ler":
+// - streak: conta quantas leituras inválidas seguidas ocorreram
+// - timeout: protege contra situações em que a task atrasa (N ciclos não é absoluto)
 #define SENSOR_INVALID_STREAK_LIMIT 3
-#define SENSOR_JUMP_THRESHOLD_GRAMS 500
-#define SENSOR_JUMP_STREAK_LIMIT 2
+#define SENSOR_STUCK_TIMEOUT_MS 3500
+
+// Detecção de "salto brusco":
+// Em balança de bebê, 500g geralmente é alto demais para flag de glitch.
+// Aqui usamos threshold dinâmico baseado no ruído (EWMA), com limites mínimo e máximo.
+#define SENSOR_JUMP_THRESHOLD_MIN_GRAMS 80
+#define SENSOR_JUMP_THRESHOLD_MAX_GRAMS 800
+#define SENSOR_JUMP_NOISE_EWMA_ALPHA 0.15f
+#define SENSOR_JUMP_NOISE_MULTIPLIER 6.0f
+#define SENSOR_JUMP_BASE_MARGIN_GRAMS 20
+
+// Para confirmar glitch:
+// - precisa ocorrer em 2 leituras consecutivas (candidate -> confirmed)
+// - e depois haver retorno ao "baseline" (padrão spike)
+#define SENSOR_RETURN_BAND_GRAMS 30
+#define SENSOR_SPIKE_MAX_DURATION_MS 2000
+
+// Rate-limit de logs por sensor (evita flood no SD e no console).
 #define SENSOR_FAULT_LOG_INTERVAL_MS 5000
 
 enum
@@ -31,15 +66,42 @@ static int32_t i32_abs(int32_t value)
     return (value < 0) ? -value : value;
 }
 
+static int32_t i32_clamp(int32_t value, int32_t min_value, int32_t max_value)
+{
+    if (value < min_value)
+        return min_value;
+    if (value > max_value)
+        return max_value;
+    return value;
+}
+
 static void sensors_poll_task(void *pv_params)
 {
     (void)pv_params;
 
     TickType_t last_wake_ticks = xTaskGetTickCount();
-    int32_t last_value[NUM_WEIGHT_SENSORS] = {0};
-    bool has_last[NUM_WEIGHT_SENSORS] = {0};
+
+    // Estado por sensor (não usar variáveis locais por task "reader", pois aqui é polling único).
+    int32_t stable_value[NUM_WEIGHT_SENSORS] = {0};
+    bool has_stable[NUM_WEIGHT_SENSORS] = {0};
+
+    // Último instante em que recebemos leitura válida (ms).
+    uint32_t last_valid_ms[NUM_WEIGHT_SENSORS] = {0};
+
+    // Streak de leituras inválidas (para detectar falhas rápidas).
     uint8_t invalid_streak[NUM_WEIGHT_SENSORS] = {0};
-    uint8_t jump_streak[NUM_WEIGHT_SENSORS] = {0};
+
+    // Estimativa de ruído (EWMA do delta absoluto) usada para threshold dinâmico.
+    float noise_ewma_abs_delta[NUM_WEIGHT_SENSORS] = {0};
+
+    // Máquina de estado para detectar glitches tipo "spike":
+    // 0 = normal
+    // 1 = candidate (1ª leitura acima do threshold)
+    // 2 = confirmed (2ª leitura consecutiva acima do threshold) aguardando retorno
+    uint8_t spike_state[NUM_WEIGHT_SENSORS] = {0};
+    uint32_t spike_start_ms[NUM_WEIGHT_SENSORS] = {0};
+
+    // Rate-limit de logs por sensor.
     uint32_t last_fault_log_ms[NUM_WEIGHT_SENSORS] = {0};
 
     while (1)
@@ -54,45 +116,133 @@ static void sensors_poll_task(void *pv_params)
 
             uint8_t fault = SENSOR_FAULT_NONE;
             bool valid = (w.raw_value != HX711_INVALID_READING);
+            bool jump_glitch_confirmed = false;
 
             if (!valid)
             {
                 invalid_streak[i]++;
-                jump_streak[i] = 0;
+                // Se a leitura ficou inválida, aborta detecção de spike (senão o estado pode ficar preso).
+                spike_state[i] = 0;
                 fault |= SENSOR_FAULT_INVALID;
             }
             else
             {
                 invalid_streak[i] = 0;
+                last_valid_ms[i] = frame.timestamp_ms;
 
-                if (has_last[i] && (i32_abs(w.value - last_value[i]) > SENSOR_JUMP_THRESHOLD_GRAMS))
+                if (!has_stable[i])
                 {
-                    jump_streak[i]++;
-                    fault |= SENSOR_FAULT_JUMP;
+                    // Primeira leitura válida vira baseline inicial do sensor.
+                    stable_value[i] = w.value;
+                    has_stable[i] = true;
+                    noise_ewma_abs_delta[i] = 0;
+                    spike_state[i] = 0;
                 }
                 else
                 {
-                    jump_streak[i] = 0;
-                }
+                    // Threshold dinâmico baseado no ruído estimado.
+                    // - quanto mais ruído, maior o threshold
+                    // - nunca abaixo de MIN e nunca acima de MAX
+                    int32_t dynamic_threshold = (int32_t)(noise_ewma_abs_delta[i] * SENSOR_JUMP_NOISE_MULTIPLIER) + SENSOR_JUMP_BASE_MARGIN_GRAMS;
+                    dynamic_threshold = i32_clamp(dynamic_threshold, SENSOR_JUMP_THRESHOLD_MIN_GRAMS, SENSOR_JUMP_THRESHOLD_MAX_GRAMS);
 
-                last_value[i] = w.value;
-                has_last[i] = true;
+                    int32_t delta_from_baseline = i32_abs(w.value - stable_value[i]);
+
+                    // Atualiza estimativa de ruído somente quando estamos em modo "normal" e perto do baseline.
+                    // Isso evita que spikes contaminem o EWMA.
+                    if (spike_state[i] == 0 && delta_from_baseline <= dynamic_threshold)
+                    {
+                        noise_ewma_abs_delta[i] = (SENSOR_JUMP_NOISE_EWMA_ALPHA * (float)delta_from_baseline) +
+                                                  ((1.0f - SENSOR_JUMP_NOISE_EWMA_ALPHA) * noise_ewma_abs_delta[i]);
+                    }
+
+                    // Detecção do padrão spike:
+                    // - candidate: 1 leitura acima do threshold
+                    // - confirmed: 2 leituras consecutivas acima do threshold
+                    // - glitch confirmado: após confirmed, há retorno ao baseline
+                    if (spike_state[i] == 0)
+                    {
+                        if (delta_from_baseline > dynamic_threshold)
+                        {
+                            spike_state[i] = 1;
+                            spike_start_ms[i] = frame.timestamp_ms;
+                            fault |= SENSOR_FAULT_JUMP;
+                        }
+                        else
+                        {
+                            stable_value[i] = w.value;
+                        }
+                    }
+                    else if (spike_state[i] == 1)
+                    {
+                        if (delta_from_baseline > dynamic_threshold)
+                        {
+                            spike_state[i] = 2;
+                            fault |= SENSOR_FAULT_JUMP;
+                        }
+                        else
+                        {
+                            // Não confirmou (voltou ao normal no 2º sample): considera ruído normal.
+                            spike_state[i] = 0;
+                            stable_value[i] = w.value;
+                        }
+                    }
+                    else
+                    {
+                        // spike_state == 2: aguardando retorno ao baseline para confirmar glitch.
+                        fault |= SENSOR_FAULT_JUMP;
+
+                        if (delta_from_baseline <= SENSOR_RETURN_BAND_GRAMS)
+                        {
+                            // Glitch confirmado: salto brusco + retorno.
+                            // Não muda o baseline de forma abrupta, apenas aceita o valor retornado.
+                            jump_glitch_confirmed = true;
+                            spike_state[i] = 0;
+                            stable_value[i] = w.value;
+                        }
+                        else if ((frame.timestamp_ms - spike_start_ms[i]) >= SENSOR_SPIKE_MAX_DURATION_MS)
+                        {
+                            // Se o "salto" persistiu tempo demais, é provavelmente um evento real
+                            // (ex.: alguém colocou peso na balança). Aceitamos como novo baseline.
+                            spike_state[i] = 0;
+                            stable_value[i] = w.value;
+                        }
+                    }
+                }
+            }
+
+            // Timeout em ms: se faz muito tempo desde a última leitura válida, marca como inválido.
+            // Isso é complementar ao streak (que depende do ciclo).
+            if (has_stable[i] && (last_valid_ms[i] != 0))
+            {
+                uint32_t since_valid_ms = frame.timestamp_ms - last_valid_ms[i];
+                if (since_valid_ms >= SENSOR_STUCK_TIMEOUT_MS)
+                    fault |= SENSOR_FAULT_INVALID;
             }
 
             frame.fault[i] = fault;
 
-            bool fault_persistent = (invalid_streak[i] >= SENSOR_INVALID_STREAK_LIMIT) || (jump_streak[i] >= SENSOR_JUMP_STREAK_LIMIT);
-            if (fault_persistent && ((frame.timestamp_ms - last_fault_log_ms[i]) >= SENSOR_FAULT_LOG_INTERVAL_MS))
+            // Log com rate-limit:
+            // - INVALID: dispara quando streak >= limite ou timeout estourou
+            // - JUMP: dispara apenas quando o spike foi confirmado e retornou ao normal (glitch)
+            bool invalid_persistent = (invalid_streak[i] >= SENSOR_INVALID_STREAK_LIMIT) ||
+                                      (has_stable[i] && last_valid_ms[i] != 0 && ((frame.timestamp_ms - last_valid_ms[i]) >= SENSOR_STUCK_TIMEOUT_MS));
+
+            if ((invalid_persistent || jump_glitch_confirmed) &&
+                ((frame.timestamp_ms - last_fault_log_ms[i]) >= SENSOR_FAULT_LOG_INTERVAL_MS))
             {
                 char msg[120];
-                if (invalid_streak[i] >= SENSOR_INVALID_STREAK_LIMIT)
+                if (invalid_persistent)
                 {
-                    snprintf(msg, sizeof(msg), "Falha HX711: sensor %d sem leitura valida (%u ciclos).", i, (unsigned)invalid_streak[i]);
+                    uint32_t since_valid_ms = (last_valid_ms[i] == 0) ? 0 : (frame.timestamp_ms - last_valid_ms[i]);
+                    snprintf(msg, sizeof(msg),
+                             "Falha HX711: sensor %d sem leitura valida (streak=%u, since_valid=%ums).",
+                             i, (unsigned)invalid_streak[i], (unsigned)since_valid_ms);
                     sdcard_log(LOG_ERROR, msg, ROTULO_LOCAL);
                 }
-                else
+                else if (jump_glitch_confirmed)
                 {
-                    snprintf(msg, sizeof(msg), "Falha HX711: sensor %d salto brusco (%u ciclos).", i, (unsigned)jump_streak[i]);
+                    snprintf(msg, sizeof(msg), "Falha HX711: sensor %d glitch (salto brusco + retorno).", i);
                     sdcard_log(LOG_WARN, msg, ROTULO_LOCAL);
                 }
                 last_fault_log_ms[i] = frame.timestamp_ms;
@@ -121,8 +271,6 @@ static void sensors_process_task(void *pv_params)
 
         for (int i = 0; i < NUM_WEIGHT_SENSORS; i++)
         {
-            if (i == 2)
-                continue;
             if (frame.reading[i].raw_value == HX711_INVALID_READING)
                 continue;
 
