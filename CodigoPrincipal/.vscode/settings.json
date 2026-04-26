@@ -6,7 +6,6 @@
     "gpio.h": "c",
     "hx711.h": "c",
     "stdio.h": "c",
-    "buzzer.h": "c",
     "freertos.h": "c",
     "netfwd": "c",
     "sdspi_host.h": "c",
@@ -84,7 +83,8 @@
     "utility": "c",
     "compare": "c",
     "text_encoding": "c",
-    "thread": "c"
+    "thread": "c",
+    "portmacro.h": "c"
   },
   "idf.flashType": "UART",
   "idf.portWin": "COM4",
@@ -105,5 +105,6 @@
   "esp-idf.enableLinting": true,
   "esp-idf.enableAdvancedHighlighting": true,
   "C_Cpp.errorSquiggles": "Enabled",
-  "C_Cpp.intelliSenseEngine": "Default"
+  "C_Cpp.intelliSenseEngine": "Default",
+  "idf.currentSetup": "c:\\Users\\Biruleibe\\EspressifVsCode\\v5.4.2\\esp-idf"
 }

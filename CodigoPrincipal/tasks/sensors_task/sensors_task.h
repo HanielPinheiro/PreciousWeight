@@ -1,0 +1,17 @@
+#pragma once
+#ifndef SENSORS_TASK_H
+#define SENSORS_TASK_H
+
+typedef struct
+{
+    int32_t raw_value;
+    int32_t units;
+    int32_t weight;
+    uint8_t sensor_id;
+} sensor_data_t;
+
+esp_err_t init_sensors_task(void);
+void set_global_weight(int64_t new_value);
+int64_t get_global_weight(void);
+
+#endif // SENSORS_TASK_H

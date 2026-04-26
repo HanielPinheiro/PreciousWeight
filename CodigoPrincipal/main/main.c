@@ -4,51 +4,68 @@
  * https://www.youtube.com/watch?v=JzQTPnCspNM -> Outro exemplo de semaforo
  */
 
-#include "bios.h"
-#include "weight_timer_scheduler.h"
-#include "sdcard_task.h"
-#include "wifi_prov_ble.h"
-#include "mqtt_task.h"
-#include "process_mqtt_data.h"
-#include "sensors_task.h"
+#include "../config/config.h"
 
-QueueHandle_t sensor_queues[NUM_WEIGHT_SENSORS] = {0};
-TaskHandle_t sensor_tasks[NUM_WEIGHT_SENSORS] = {0};
-TaskHandle_t display_task_handle = {0};
+char *ROTULO_LOCAL = "MAIN";
+
+hx711_t sensors[NUM_WEIGHT_SENSORS] = {
+    {.id = 0, .dout_pin = SCALE1_DOUT, .sck_pin = SCALE1_SCK, .offset = DEFAULT_OFFSET, .calib_factor_in_1e9 = SCALE1_FACTOR},
+    {.id = 1, .dout_pin = SCALE2_DOUT, .sck_pin = SCALE2_SCK, .offset = DEFAULT_OFFSET, .calib_factor_in_1e9 = SCALE2_FACTOR},
+    {.id = 2, .dout_pin = SCALE3_DOUT, .sck_pin = SCALE3_SCK, .offset = DEFAULT_OFFSET, .calib_factor_in_1e9 = SCALE3_FACTOR},
+    {.id = 3, .dout_pin = SCALE4_DOUT, .sck_pin = SCALE4_SCK, .offset = DEFAULT_OFFSET, .calib_factor_in_1e9 = SCALE4_FACTOR}};
+
+static char *get_reset_reason_string(esp_reset_reason_t reason)
+{
+    switch (reason)
+    {
+    case ESP_RST_POWERON:
+        return "Razao do último reset: Power-On Reset";
+    case ESP_RST_SW:
+        return "Razao do último reset: Software Reset (esp_restart)";
+    case ESP_RST_PANIC:
+        return "Razao do último reset: Panic/Crash Reset";
+    case ESP_RST_INT_WDT:
+        return "Razao do último reset: Interrupt Watchdog Reset";
+    case ESP_RST_TASK_WDT:
+        return "Razao do ultimo reset: Task Watchdog Reset";
+    case ESP_RST_WDT:
+        return "Razao do ultimo reset: Other Watchdog Reset";
+    case ESP_RST_DEEPSLEEP:
+        return "Razao do ultimo reset: Deep Sleep Wakeup";
+    case ESP_RST_BROWNOUT:
+        return "Razao do ultimo reset: Brownout Reset";
+    case ESP_RST_SDIO:
+        return "Razao do ultimo reset: SDIO Reset";
+    default:
+        return "Razao do ultimo reset: Unknown Reset Reason";
+    }
+}
 
 void app_main()
 {
-    char *ROTULO_LOCAL = "MAIN";
-    init_hardware();
+    esp_log_at_terminal(ROTULO_LOCAL, "Inicializando Cartao SD.");
+
+    ESP_ERROR_CHECK(initialize_sdcard());
+
+    sdcard_log(LOG_INFO, "Cartao SD inicializado.", ROTULO_LOCAL);
     sdcard_log(LOG_WARN, get_reset_reason_string(esp_reset_reason()), ROTULO_LOCAL);
-    sdcard_log(LOG_INFO, "Rotina da BIOS executada com sucesso.", ROTULO_LOCAL);
 
-    init_wifi();
-    sdcard_log(LOG_INFO, "Wi-Fi inicializado com sucesso. Inicializando MQTT.", ROTULO_LOCAL);
+    // init_wifi();
+    // sdcard_log(LOG_INFO, "Wi-Fi inicializado com sucesso. Inicializando MQTT.", ROTULO_LOCAL);
 
-    if (init_mqtt_task() != ESP_OK)
-    {
-        sdcard_log(LOG_ERROR, "Falha ao inicializar init_mqtt_task", ROTULO_LOCAL);
-        return;
-    }
-    sdcard_log(LOG_INFO, "Task MQTT Manager com Callback inicializada com sucesso. Iniciando Taks", ROTULO_LOCAL);
+    // ESP_ERROR_CHECK(init_mqtt_task());
+    // sdcard_log(LOG_INFO, "Task MQTT inicializada com sucesso. Iniciando leitores HX711,", ROTULO_LOCAL);
 
-    if (init_sdcard_task() != ESP_OK)
-    {
-        sdcard_log(LOG_ERROR, "Falha ao inicializar init_sdcard_task", ROTULO_LOCAL);
-        return;
-    }
+    ESP_ERROR_CHECK(hx711_initialize_sensors());
+    sdcard_log(LOG_INFO, "Sensores inicializados. Iniciando Tasks de SD Card e Sensores,", ROTULO_LOCAL);
 
-    if (init_sensors_task() != ESP_OK)
-    {
-        sdcard_log(LOG_ERROR, "Falha ao inicializar init_sensors_task", ROTULO_LOCAL);
-        return;
-    }
+    ESP_ERROR_CHECK(init_sdcard_task());
+    ESP_ERROR_CHECK(init_sensors_task());
 
     init_weight_sensors_timer();
+    update_current_time();
 
     char m[90] = {0};
-    update_current_time();
     snprintf(m, 90, "Sistema inicializado com sucesso em %s \r\n", current_time);
     sdcard_log(LOG_INFO, m, ROTULO_LOCAL);
 }
