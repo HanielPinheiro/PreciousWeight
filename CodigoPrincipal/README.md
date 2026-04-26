@@ -145,3 +145,75 @@ Mecanismos de recall/update seguro
 [BOOT] → [INITIALIZING] → [PROVISIONING?] → [CONNECTING] → [OPERATIONAL]
 ↓ ↓ ↓ ↓
 [ERROR] ←──────[RECOVERY] ←──────[DISCONNECTED] ←──[ERROR]
+
+---
+
+# Wi-Fi / BLE provisioning / MQTT (como está hoje)
+
+## Objetivo do comportamento
+
+Imagine o cenário:
+- Eu só me comunico com o ESP32 via Wi-Fi usando MQTT.
+- Se o ESP32 não se conectar no AP, ele deve permitir comunicação via BLE e aguardar parear para eu informar novo Wi-Fi.
+
+## Onde está implementado
+
+- Wi-Fi + BLE provisioning: `comm/wifi_prov_ble/wifi_prov_ble.c`
+- Parser de comandos MQTT: `mqtt_events/parser/process_mqtt_data.c`
+- MQTT client: `comm/mqtt_config/mqtt3.c`
+- Boot: `main/main.c`
+
+## Fluxo atual do firmware (boot)
+
+O boot chama `init_wifi()` e esse fluxo decide entre:
+- Já provisionado: tenta conectar em STA usando credenciais salvas
+- Não provisionado: inicia provisioning via BLE
+
+O “provisionado ou não” é definido por `wifi_prov_mgr_is_provisioned()`. Na prática, isso depende das credenciais armazenadas em flash (NVS) pelo Wi-Fi do ESP-IDF.
+
+## Problema atual (AP não existe mais)
+
+Quando o dispositivo já está provisionado e o AP some:
+- O firmware tenta reconectar indefinidamente em `WIFI_EVENT_STA_DISCONNECTED` chamando `esp_wifi_connect()`.
+- O boot em `start_wifi_sta()` fica esperando para sempre até obter IP (`IP_EVENT_STA_GOT_IP`) porque a espera é `portMAX_DELAY`.
+
+Resultado: se não conecta ao AP, não há um caminho automático para entrar em BLE provisioning. O dispositivo fica preso tentando conectar.
+
+## Reset de Wi-Fi que existe hoje
+
+Existe `reset_wifi()` em `wifi_prov_ble.c`, mas o gatilho atual é via MQTT:
+- Comando: prefixo `"[WIF]"` (ver `process_mqtt_data.h/.c`)
+- Ao receber via MQTT, o handler para MQTT e chama `reset_wifi()`
+
+Limitação importante:
+- Se o Wi-Fi não conecta, você não consegue mandar o MQTT. Então, na prática, esse reset não resolve o caso de “campo” quando o AP some.
+
+Observação importante:
+- O `reset_wifi()` atual apaga o NVS inteiro (`nvs_flash_erase()`), então ele também apaga outros dados do projeto que estejam no NVS (ex.: timestamp em `storage`).
+
+## Sobre MQTT neste repositório
+
+No `main.c`, a inicialização da task MQTT está comentada. Se a build final depende do MQTT para operação, garanta que essa parte esteja habilitada na versão que você grava no dispositivo.
+
+---
+
+# Sugestão simples (ESP-IDF v5.4.2 + ESP32 DevKit v1 / NodeMCU)
+
+## Meta
+
+Sem “grandes obras” e sem quebrar a integração MQTT:
+- Quando não conseguir obter IP em um tempo razoável, entrar em modo de reprovisionamento BLE
+- Evitar apagar o NVS inteiro para não causar efeitos colaterais
+
+## Estratégia mais simples e robusta
+
+1) No boot, esperar por IP com timeout (ex.: 30s).
+2) Se estourar o timeout, limpar apenas credenciais de Wi-Fi (sem apagar todo NVS) e reiniciar.
+3) No próximo boot, como não terá credenciais, `init_wifi()` cairá no caminho “não provisionado” e iniciará BLE provisioning.
+
+Isso é simples, previsível e reduz retrabalho nos softwares que falam com MQTT, porque o protocolo MQTT/tópicos não mudam.
+
+## Também cobre o caso “Wi-Fi caiu depois de já estar funcionando”
+
+Além do boot, dá para aplicar a mesma ideia quando houver muitas desconexões seguidas:
+- Após X segundos sem IP (ou N desconexões), limpar credenciais e reiniciar para reprovisionar via BLE.

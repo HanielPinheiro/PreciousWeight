@@ -3,7 +3,8 @@
 #define MQTT3_H
 
 // #define MQTT_ADDRESS "mqtts://192.168.0.15:8883"
-#define MQTT_ADDRESS "mqtt://192.168.116.26:1883"
+// #define MQTT_ADDRESS "mqtt://192.168.116.26:1883"
+#define MQTT_ADDRESS "mqtt://192.168.15.4:5278"
 #define MQTT_RECONNECT_DELAY_MS 5000
 #define MQTT_KEEPALIVE 60
 

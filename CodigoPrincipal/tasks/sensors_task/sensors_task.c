@@ -57,7 +57,7 @@ static void sensor_processor_task(void *pvParams)
             int64_t w = (int64_t)(sum / SCALE_MEASURE_FACTOR);
             if (w >= 3000.0)
                 w = (int64_t)w * 0.99;
-            if (w < 0)
+            if (w <= 50)
                 w = 0;
 
             set_global_weight(w);
@@ -88,7 +88,7 @@ int64_t get_global_weight()
 void set_global_weight(int64_t new_value)
 {
     xSemaphoreTake(global_weight_mutex, portMAX_DELAY);
-    final_weight = new_value <= (int64_t)50 ? (int64_t)0 : new_value;
+    final_weight = new_value;
     xSemaphoreGive(global_weight_mutex);
 }
 

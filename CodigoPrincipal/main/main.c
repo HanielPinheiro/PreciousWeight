@@ -50,11 +50,11 @@ void app_main()
     sdcard_log(LOG_INFO, "Cartao SD inicializado.", ROTULO_LOCAL);
     sdcard_log(LOG_WARN, get_reset_reason_string(esp_reset_reason()), ROTULO_LOCAL);
 
-    // init_wifi();
-    // sdcard_log(LOG_INFO, "Wi-Fi inicializado com sucesso. Inicializando MQTT.", ROTULO_LOCAL);
+    init_wifi();
+    sdcard_log(LOG_INFO, "Wi-Fi inicializado com sucesso. Inicializando MQTT.", ROTULO_LOCAL);
 
-    // ESP_ERROR_CHECK(init_mqtt_task());
-    // sdcard_log(LOG_INFO, "Task MQTT inicializada com sucesso. Iniciando leitores HX711,", ROTULO_LOCAL);
+    ESP_ERROR_CHECK(init_mqtt_task());
+    sdcard_log(LOG_INFO, "Task MQTT inicializada com sucesso. Iniciando leitores HX711,", ROTULO_LOCAL);
 
     ESP_ERROR_CHECK(hx711_initialize_sensors());
     sdcard_log(LOG_INFO, "Sensores inicializados. Iniciando Tasks de SD Card e Sensores,", ROTULO_LOCAL);

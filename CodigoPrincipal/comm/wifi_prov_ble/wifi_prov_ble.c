@@ -260,11 +260,6 @@ static esp_err_t custom_prov_data_handler(uint32_t session_id, const uint8_t *in
 
     return ESP_OK;
 }
-static void erase_nvs()
-{
-    ESP_ERROR_CHECK(nvs_flash_erase()); /* NVS partition was truncated and needs to be erased */
-    ESP_ERROR_CHECK(nvs_flash_init());  /* Retry nvs_flash_init */
-}
 
 static void wifi_init_all()
 {
@@ -273,7 +268,10 @@ static void wifi_init_all()
     /* Initialize NVS partition */
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND)
-        erase_nvs();
+    {
+        ESP_ERROR_CHECK(nvs_flash_erase()); /* NVS partition was truncated and needs to be erased */
+        ESP_ERROR_CHECK(nvs_flash_init());  /* Retry nvs_flash_init */
+    }
 
     ESP_ERROR_CHECK(esp_netif_init());                /* Initialize TCP/IP */
     ESP_ERROR_CHECK(esp_event_loop_create_default()); /* Initialize the event loop */
@@ -299,24 +297,29 @@ static void start_wifi_sta() // Conectar usando dados salvos(modo STA)
     ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL));
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     ESP_ERROR_CHECK(esp_wifi_start());
-    xEventGroupWaitBits(wifi_event_group, BIT0, true, true, portMAX_DELAY);
+    EventBits_t bits = xEventGroupWaitBits(wifi_event_group, BIT0, pdTRUE, pdTRUE, pdMS_TO_TICKS(10000));
+    if ((bits & BIT0) == 0)
+    {
+        ESP_LOGW(ROTULO_LOCAL, "Timeout sem obter IP. Entrando em reprovisionamento via BLE...");
+        reset_wifi();
+    }
 }
 
 void reset_wifi()
 {
     ESP_LOGI(ROTULO_LOCAL, "Performing full WiFi reset...");
 
-    // 2. After stop mqtt client Deinit provisioning manager
+    // After stop mqtt client Deinit provisioning manager
     wifi_prov_mgr_deinit();
 
-    // 3. Stop WiFi
+    // Stop WiFi
     ESP_ERROR_CHECK(esp_wifi_stop());
+    // reset wifi
+    ESP_ERROR_CHECK(esp_wifi_restore());
+    // turn off wifi tasks
     ESP_ERROR_CHECK(esp_wifi_deinit());
 
-    // 4. Erase NVS (this is what your reset_wifi does)
-    erase_nvs();
-
-    // 5. Restart the ESP32
+    // Restart the ESP32
     ESP_LOGI(ROTULO_LOCAL, "Wi-Fi reseted. Restarting ESP32...");
     vTaskDelay(pdMS_TO_TICKS(1000));
     esp_restart();
