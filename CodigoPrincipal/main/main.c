@@ -7,7 +7,7 @@
 #include "../config/config.h"
 
 char *ROTULO_LOCAL = "MAIN";
-int64_t global_weight;
+
 hx711_t sensors[NUM_WEIGHT_SENSORS] = {
     {.id = 0, .dout_pin = SCALE1_DOUT, .sck_pin = SCALE1_SCK, .offset = DEFAULT_OFFSET, .calib_factor_in_1e9 = SCALE1_FACTOR},
     {.id = 1, .dout_pin = SCALE2_DOUT, .sck_pin = SCALE2_SCK, .offset = DEFAULT_OFFSET, .calib_factor_in_1e9 = SCALE2_FACTOR},

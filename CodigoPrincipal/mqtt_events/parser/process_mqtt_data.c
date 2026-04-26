@@ -100,8 +100,9 @@ static esp_err_t weight_times_routine(const char *data)
 
 static esp_err_t measure_routine()
 {
+    int64_t global_weight = get_global_weight();
     char m[50];
-    snprintf(m, 50, "%s;Peso{%ld}", RECEIVED_MEASURE, global_weight);
+    snprintf(m, 50, "%s;Peso{%lld}", RECEIVED_MEASURE, global_weight);
     sdcard_log(LOG_INFO, m, ROTULO_LOCAL);
     while (true)
     {

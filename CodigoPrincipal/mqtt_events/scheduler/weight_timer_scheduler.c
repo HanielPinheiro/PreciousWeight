@@ -11,7 +11,8 @@ static char log_msg[150] = {0};
 static void scheduled_weight_measurement(TimerHandle_t xTimer)
 {
     // This runs when the timer expires
-    xQueueSend(weight_measure, &global_weight, 0);
+    int64_t w = get_global_weight();
+    xQueueSend(weight_measure, &w, 0);
 
     // Schedule the next event
     if (number_of_weight_times > 0)

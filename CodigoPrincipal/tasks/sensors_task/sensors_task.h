@@ -10,6 +10,8 @@ typedef struct
     uint8_t sensor_id;
 } sensor_data_t;
 
-esp_err_t init_sensors_task();
+esp_err_t init_sensors_task(void);
+void set_global_weight(int64_t new_value);
+int64_t get_global_weight(void);
 
 #endif // SENSORS_TASK_H

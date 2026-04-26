@@ -36,16 +36,21 @@
 
 typedef struct
 {
-    uint8_t id;
+    int8_t id;
     gpio_num_t dout_pin;
     gpio_num_t sck_pin;
     int32_t offset;
     int64_t calib_factor_in_1e9;
 } hx711_t;
 
+int32_t hx711_get_offset(int8_t sensor_id);
+void hx711_set_offset(int8_t sensor_id, int32_t new_offset);
+int64_t hx711_get_calib_factor(int8_t sensor_id);
+void hx711_set_calib_factor(int8_t sensor_id, int64_t new_factor);
+
+esp_err_t hx711_tare_safe(int8_t id);
+
 esp_err_t hx711_initialize_sensors(void);
-void hx711_tare(hx711_t *sensor);
-int32_t hx711_read_sensor_weight(hx711_t *sensor);
-int64_t measure_scale_weight(void);
+int64_t hx711_read_sensor_weight(int8_t id);
 
 #endif // HX711_H

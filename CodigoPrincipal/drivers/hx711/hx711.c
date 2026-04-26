@@ -2,8 +2,17 @@
 
 static const char *ROTULO_LOCAL = "HX711 DRIVER";
 static portMUX_TYPE s_hx711_mux = portMUX_INITIALIZER_UNLOCKED;
+static SemaphoreHandle_t s_mutex = NULL;
 
 #pragma region static / private
+
+static esp_err_t hx711_init_mutexes(void)
+{
+    s_mutex = xSemaphoreCreateMutex();
+    if (s_mutex == NULL)
+        return ESP_ERR_NO_MEM;
+    return ESP_OK;
+}
 
 static esp_err_t hx711_setup(gpio_num_t dout_pin, gpio_num_t sck_pin)
 {
@@ -96,69 +105,145 @@ static int32_t hx711_read_average(gpio_num_t dout_pin, gpio_num_t sck_pin, uint8
                 break;
         }
     }
+
     return (count == samples) ? (int32_t)(sum / samples) : HX711_INVALID_READING;
 }
+
+static esp_err_t hx711_tare(int8_t id, gpio_num_t dout_pin, gpio_num_t sck_pin)
+{
+    int8_t try = 0;
+    int32_t new_offset = HX711_INVALID_READING;
+    while (new_offset == HX711_INVALID_READING && try < 3)
+    {
+        new_offset = hx711_read_average(dout_pin, sck_pin, TARE_NUMBER);
+        try++;
+    }
+
+    if (new_offset == HX711_INVALID_READING)
+    {
+        ESP_LOGW(ROTULO_LOCAL, "FALHA NA TARA, USANDO OFFSET 0");
+        return ESP_ERR_INVALID_STATE;
+    }
+
+    hx711_set_offset(id, new_offset);
+    ESP_LOGI(ROTULO_LOCAL, "TARA DA BALANÇA:SAMPLES{%d};OFFSET{%ld}", TARE_NUMBER, new_offset);
+    return ESP_OK;
+}
+
 #pragma endregion
 
 #pragma region public
 
+int32_t hx711_get_offset(int8_t id)
+{
+    int32_t off;
+    xSemaphoreTake(s_mutex, portMAX_DELAY);
+    off = sensors[id].offset;
+    xSemaphoreGive(s_mutex);
+    return off;
+}
+
+void hx711_set_offset(int8_t id, int32_t new_offset)
+{
+    xSemaphoreTake(s_mutex, portMAX_DELAY);
+    sensors[id].offset = new_offset;
+    xSemaphoreGive(s_mutex);
+}
+
+int64_t hx711_get_calib_factor(int8_t id)
+{
+    int64_t cal;
+    xSemaphoreTake(s_mutex, portMAX_DELAY);
+    cal = sensors[id].calib_factor_in_1e9;
+    xSemaphoreGive(s_mutex);
+    return cal;
+}
+
+void hx711_set_calib_factor(int8_t id, int64_t new_factor)
+{
+    xSemaphoreTake(s_mutex, portMAX_DELAY);
+    sensors[id].calib_factor_in_1e9 = new_factor;
+    xSemaphoreGive(s_mutex);
+}
+
+esp_err_t hx711_tare_safe(int8_t id)
+{
+    gpio_num_t dout_pin;
+    gpio_num_t sck_pin;
+
+    xSemaphoreTake(s_mutex, portMAX_DELAY);
+    dout_pin = sensors[id].dout_pin;
+    sck_pin = sensors[id].sck_pin;
+    xSemaphoreGive(s_mutex);
+
+    int32_t sensor_data = hx711_read_average(dout_pin, sck_pin, 2);
+    if (sensor_data == HX711_INVALID_READING)
+        return ESP_ERR_INVALID_STATE;
+
+    hx711_set_offset(id, sensor_data);
+    return ESP_OK;
+}
+
 esp_err_t hx711_initialize_sensors()
 {
+    hx711_init_mutexes();
+
+    gpio_num_t dout_pin;
+    gpio_num_t sck_pin;
+    char msg[80] = {0};
     for (int i = 0; i < NUM_WEIGHT_SENSORS; i++)
     {
-        if (!&sensors[i])
-            return ESP_ERR_INVALID_ARG;
+        xSemaphoreTake(s_mutex, portMAX_DELAY);
+        dout_pin = sensors[i].dout_pin;
+        sck_pin = sensors[i].sck_pin;
+        xSemaphoreGive(s_mutex);
 
-        char msg[80];
-        if (hx711_setup(sensors[i].dout_pin, sensors[i].sck_pin) != ESP_OK)
+        if (hx711_setup(dout_pin, sck_pin) != ESP_OK)
         {
-            snprintf(msg, sizeof(msg), "Falha ao inicializar sensor %d, portas: %d [DOUT] e %d [SCK].", i, (int)sensors[i].dout_pin, (int)sensors[i].sck_pin);
+            snprintf(msg, sizeof(msg), "FALHA AO INICIALIZAR SENSOR %d, PORTAS: %d [DOUT] e %d [SCK].", i, (int8_t)dout_pin, (int8_t)sck_pin);
             sdcard_log(LOG_ERROR, msg, ROTULO_LOCAL);
             return ESP_FAIL;
         }
-        snprintf(msg, sizeof(msg), "Sensor %d inicializado, portas: %d [DOUT] e %d [SCK].", i, (int)sensors[i].dout_pin, (int)sensors[i].sck_pin);
+        snprintf(msg, sizeof(msg), "SENSOR %d INICIALIZADO: %d [DOUT], %d [SCK]. INICIANDO TARA.", i, (int8_t)dout_pin, (int8_t)sck_pin);
         sdcard_log(LOG_INFO, msg, ROTULO_LOCAL);
 
-        hx711_tare(&sensors[i]);
-        snprintf(msg, sizeof(msg), "Sensor %d TARA REALIZADA", i);
+        esp_err_t r = hx711_tare(i, dout_pin, sck_pin);
+        if (r != ESP_OK)
+            return r;
+
+        snprintf(msg, sizeof(msg), "SENSOR %d TARA REALIZADA", i);
         sdcard_log(LOG_INFO, msg, ROTULO_LOCAL);
     }
     // Aguarda dois segundos para estabilização térmica dos sensores
     vTaskDelay(pdMS_TO_TICKS(2000));
     return ESP_OK;
 }
-void hx711_tare(hx711_t *sensor)
+
+int64_t hx711_read_sensor_weight(int8_t id)
 {
-    int8_t try = 0;
-    int32_t value = HX711_INVALID_READING;
-    while (value == HX711_INVALID_READING && try < 3)
-    {
-        value = hx711_read_average(sensor, TARE_NUMBER);
-        try++;
-    }
+    gpio_num_t dout_pin;
+    gpio_num_t sck_pin;
+    int32_t offset_local;
+    int64_t calib_local;
+    xSemaphoreTake(s_mutex, portMAX_DELAY);
+    dout_pin = sensors[id].dout_pin;
+    sck_pin = sensors[id].sck_pin;
+    offset_local = sensors[id].offset;
+    calib_local = sensors[id].calib_factor_in_1e9;
+    xSemaphoreGive(s_mutex);
 
-    if (value == HX711_INVALID_READING)
-    {
-        value = 0; // se a leitura for ruim, usa zero de offset
-        ESP_LOGW(ROTULO_LOCAL, "Falha na tara, usando offset 0");
-    }
-
-    sensor->offset = value;
-    ESP_LOGI(ROTULO_LOCAL, "Tara da Balança:Samples=%d, Offset=%ld", TARE_NUMBER, sensor->offset);
-}
-
-int32_t hx711_read_sensor_weight(int8_t id)
-{
-    hx711_t *sensor = hx711_get_sensor(id);
-    int32_t raw = hx711_read_average(sensor->dout_pin, sensor->sck_pin, AVERAGE_NUMBER);
+    int32_t raw = hx711_read_average(dout_pin, sck_pin, AVERAGE_NUMBER);
     if (raw == HX711_INVALID_READING)
-        return HX711_INVALID_READING;
-    int32_t diff = raw - sensor->offset;
+    {
+        ESP_LOGW(ROTULO_LOCAL, "Sensor %d: leitura inválida", id);
+        return (int64_t)HX711_INVALID_READING;
+    }
 
-    if (MODO_DEBUG)
-        ESP_LOGI(ROTULO_LOCAL, "Sensor[%d]:Raw{%ld}|Offset{%ld}|Diff{%ld}", id, raw, sensor->offset, diff);
+    int32_t diff = raw - offset_local;
 
-    return diff;
+    // ESP_LOGI(ROTULO_LOCAL, "Sensor[%d]:Raw{%ld}|Offset{%ld}|Diff{%ld}", id, raw, offset_local, diff);
+
+    return (int64_t)(diff * calib_local);
 }
 
 #pragma endregion
