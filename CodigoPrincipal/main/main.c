@@ -7,12 +7,12 @@
 #include "../config/config.h"
 
 char *ROTULO_LOCAL = "MAIN";
-int32_t weight;
+int64_t global_weight;
 hx711_t sensors[NUM_WEIGHT_SENSORS] = {
-    {.id = 0, .dout_pin = SCALE1_DOUT, .sck_pin = SCALE1_SCK, .offset = DEFAULT_OFFSET, .calib_factor = SCALE1_FACTOR},
-    {.id = 1, .dout_pin = SCALE2_DOUT, .sck_pin = SCALE2_SCK, .offset = DEFAULT_OFFSET, .calib_factor = SCALE2_FACTOR},
-    {.id = 2, .dout_pin = SCALE3_DOUT, .sck_pin = SCALE3_SCK, .offset = DEFAULT_OFFSET, .calib_factor = SCALE3_FACTOR},
-    {.id = 3, .dout_pin = SCALE4_DOUT, .sck_pin = SCALE4_SCK, .offset = DEFAULT_OFFSET, .calib_factor = SCALE4_FACTOR}};
+    {.id = 0, .dout_pin = SCALE1_DOUT, .sck_pin = SCALE1_SCK, .offset = DEFAULT_OFFSET, .calib_factor_in_1e9 = SCALE1_FACTOR},
+    {.id = 1, .dout_pin = SCALE2_DOUT, .sck_pin = SCALE2_SCK, .offset = DEFAULT_OFFSET, .calib_factor_in_1e9 = SCALE2_FACTOR},
+    {.id = 2, .dout_pin = SCALE3_DOUT, .sck_pin = SCALE3_SCK, .offset = DEFAULT_OFFSET, .calib_factor_in_1e9 = SCALE3_FACTOR},
+    {.id = 3, .dout_pin = SCALE4_DOUT, .sck_pin = SCALE4_SCK, .offset = DEFAULT_OFFSET, .calib_factor_in_1e9 = SCALE4_FACTOR}};
 
 static char *get_reset_reason_string(esp_reset_reason_t reason)
 {
@@ -48,7 +48,6 @@ void app_main()
     ESP_ERROR_CHECK(initialize_sdcard());
 
     sdcard_log(LOG_INFO, "Cartao SD inicializado.", ROTULO_LOCAL);
-
     sdcard_log(LOG_WARN, get_reset_reason_string(esp_reset_reason()), ROTULO_LOCAL);
 
     // init_wifi();
@@ -57,7 +56,7 @@ void app_main()
     // ESP_ERROR_CHECK(init_mqtt_task());
     // sdcard_log(LOG_INFO, "Task MQTT inicializada com sucesso. Iniciando leitores HX711,", ROTULO_LOCAL);
 
-    ESP_ERROR_CHECK(initialize_hx711_sensors());
+    ESP_ERROR_CHECK(hx711_initialize_sensors());
     sdcard_log(LOG_INFO, "Sensores inicializados. Iniciando Tasks de SD Card e Sensores,", ROTULO_LOCAL);
 
     ESP_ERROR_CHECK(init_sdcard_task());

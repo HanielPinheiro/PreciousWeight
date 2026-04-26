@@ -73,7 +73,7 @@ typedef enum
 
 #define LED_GPIO GPIO_NUM_2
 
-extern int32_t weight;
+extern int64_t global_weight;
 extern hx711_t sensors[NUM_WEIGHT_SENSORS];
 
 /*Esse arquivo é necessário pra evitar referencia circular nas dependencias*/

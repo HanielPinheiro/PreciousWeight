@@ -8,16 +8,10 @@ static char log_msg[150] = {0};
 
 #pragma region Static
 
-static void execute_scheduled_task()
-{
-    weight_t w = measure_scale_weight();
-    xQueueSend(weight_measure, &w, 0);
-}
-
 static void scheduled_weight_measurement(TimerHandle_t xTimer)
 {
     // This runs when the timer expires
-    execute_scheduled_task();
+    xQueueSend(weight_measure, &global_weight, 0);
 
     // Schedule the next event
     if (number_of_weight_times > 0)
@@ -28,10 +22,10 @@ static void task_worker(void *pvParams)
 {
     while (1)
     {
-        weight_t w = {0};
+        int64_t w = {0};
         if (xQueueReceive(weight_measure, &w, portMAX_DELAY))
         {
-            snprintf(log_msg, sizeof(log_msg), "Raw{%ld}_Calibrated{%ld}", w.raw_value, w.value);
+            snprintf(log_msg, sizeof(log_msg), "Peso{%lld}", w);
             sdcard_log(LOG_INFO, log_msg, ROTULO_LOCAL);
             mqtt_publish(MQTT_TOPIC_PUB_SENSOR, log_msg, 2);
         }
@@ -111,7 +105,7 @@ void init_weight_sensors_timer()
         (void *)0,                   // Timer ID
         scheduled_weight_measurement // Callback
     );
-    weight_measure = xQueueCreate(MAX_WEIGHT_TIMES, sizeof(weight_t));
+    weight_measure = xQueueCreate(MAX_WEIGHT_TIMES, sizeof(int64_t));
     xTaskCreate(task_worker, "WeightMeasure", 4096, NULL, 2, NULL);
 
     if (scale_has_baby() && number_of_weight_times > 0)

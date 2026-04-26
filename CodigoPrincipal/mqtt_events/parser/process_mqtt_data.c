@@ -100,9 +100,8 @@ static esp_err_t weight_times_routine(const char *data)
 
 static esp_err_t measure_routine()
 {
-    weight_t weight = measure_scale_weight();
     char m[50];
-    snprintf(m, 50, "%s;Raw{%ld};Grams{%ld}", RECEIVED_MEASURE, weight.raw_value, weight.value);
+    snprintf(m, 50, "%s;Peso{%ld}", RECEIVED_MEASURE, global_weight);
     sdcard_log(LOG_INFO, m, ROTULO_LOCAL);
     while (true)
     {
@@ -115,86 +114,7 @@ static esp_err_t measure_routine()
 
 static esp_err_t calibrate_routine(const char *data)
 {
-    /*
-     Rotina fabricante:
-     colocar peso conhecido, calibrar salvar scale 'de fábrica' no authdb e aqui no codigo no array em bios.c
-
-     Rotina do cliente (hospital):
-     Se no futuro leitura da balança for ruim:
-     - Realizar tara.
-     */
-    if (calibration_steps == 0)
-    {
-        for (int i = 0; i < NUM_WEIGHT_SENSORS; i++)
-            hx711_tare(&sensors[i]);
-        while (true)
-        {
-            if (mqtt_publish(MQTT_TOPIC_PUB_WEIGHT, RECEIVED_CALIBRATE, 2))
-            {
-                sdcard_log(LOG_INFO, "Tara concluida pra todos os sensores", ROTULO_LOCAL);
-                break;
-            }
-            vTaskDelay(pdMS_TO_TICKS(300));
-        }
-        calibration_steps++;
-    }
-
-    /**
-     - Colocar peso bebe na balança e digitar peso dele com 2 casas decimais.
-     - Substituir scale dos sensores
-     - Realizar nova leitura de peso e pedir confirmação
-     */
-    if (calibration_steps == 1)
-    {
-        int size = strlen(data);
-        if (size > 2 && size <= 8)
-        {
-
-            char *endptr;
-            float known_weight_grams = strtof(data, &endptr);
-
-            if (endptr == data || *endptr != '\0' || known_weight_grams <= 0) // Validate the conversion
-                return ESP_ERR_INVALID_ARG;
-
-            char m[100];
-            snprintf(m, 100, "Novo peso de referencia: {%.2f}", known_weight_grams);
-            // scale_in_grams = known_weight_grams;
-            sdcard_log(LOG_INFO, m, ROTULO_LOCAL);
-
-            for (int i = 0; i < NUM_WEIGHT_SENSORS; i++)
-            {
-                // sensors[i].calib_factor = hx711_read_average(&sensors[i], AVERAGE_NUMBER);
-                snprintf(m, 100, "Novo valor bruto de referencia - Sensor[%d]:%ld", i, (int32_t)sensors[i].calib_factor);
-                sdcard_log(LOG_INFO, m, ROTULO_LOCAL);
-            }
-
-            while (true)
-            {
-                if (mqtt_publish(MQTT_TOPIC_PUB_WEIGHT, RECEIVED_CALIBRATE, 2))
-                    break;
-                vTaskDelay(pdMS_TO_TICKS(300));
-            }
-            measure_routine();
-            calibration_steps++;
-        }
-    }
-
-    /*
-        - Se confirmar (calibration_steps > 1), ja atualizei o db, se não, recomeça
-         No AuthDb colocar campo de data  do ajuste do scale,
-        estará em branco quando for ajuste 'de fabrica',
-        se não estiver em branco, indica que houve 'ajuste' do peso naquela data e os valores de 'scale_in_grams' não são os de fábrica.
-*/
-    if (calibration_steps > 1)
-    {
-        calibration_steps = 0;
-    }
-
-    /*Criar telas no app,
-      Endpoint na api
-      Comandos no mqtt
-    Fluxo no Código esp32
-    */
+    // To do => precisa apenas trocar os fatores, vai receber do mqtt e aplicar nos sensores. Talvez precisa usar NVS.
     return ESP_OK;
 }
 
