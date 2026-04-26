@@ -7,15 +7,10 @@ static SemaphoreHandle_t s_data_mutex[NUM_WEIGHT_SENSORS];
 static SemaphoreHandle_t global_weight_mutex;
 static int64_t final_weight;
 
-// Parâmetros de cada tarefa leitora
-#define SENSOR_READ_DELAY_MS 100 // atraso entre ciclos de leitura (ajustável)
+#pragma region tasks functions
 
-#pragma region static
-/**
- * Leitura individual de cada sensor
- */
 static void sensor_reader_task(void *arg)
-{
+{ // Leitura individual de cada sensor
     int id = (int)arg;
     TickType_t last_wake = xTaskGetTickCount();
     configASSERT(s_data_mutex[id] != NULL); // ao inves de checar se o mutex esta disponivel no loop, checa fora dele
@@ -30,13 +25,13 @@ static void sensor_reader_task(void *arg)
             xSemaphoreGive(s_data_mutex[id]);
         }
 
-        vTaskDelayUntil(&last_wake, pdMS_TO_TICKS(SENSOR_READ_DELAY_MS)); // Aguarda o próximo ciclo (evita polling excessivo)
+        vTaskDelayUntil(&last_wake, pdMS_TO_TICKS(100)); // Aguarda o próximo ciclo (evita polling excessivo)
     }
 }
 
-// Tarefa de processamento: calcula o peso global a partir dos valores mais recentes
 static void sensor_processor_task(void *pvParams)
 {
+    // Tarefa de processamento: calcula o peso global a partir dos valores mais recentes
     TickType_t last_wake = xTaskGetTickCount();
     while (1)
     {
@@ -79,49 +74,6 @@ static void sensor_processor_task(void *pvParams)
     }
 }
 
-static int64_t last = 0;
-static uint8_t down3 = 0;
-static uint8_t cooldown = 0;
-static int8_t inited = 0;
-
-static int8_t check_if_tare_is_needed(int64_t w, int64_t step, uint8_t cooldown_reads)
-{
-    if (inited == 0)
-    {
-        last = w;
-        inited = 1;
-        return 0;
-    }
-
-    if (cooldown)
-    {
-        cooldown--;
-        last = w;
-        return 0;
-    }
-
-    int64_t d = w - last;
-
-    if (d <= -step)
-    {
-        down3++;
-        if (down3 >= 3)
-        {
-            down3 = 0;
-            cooldown = cooldown_reads;
-            last = w;
-            return 1;
-        }
-    }
-    else
-    {
-        down3 = 0;
-    }
-
-    last = w;
-    return 0;
-}
-
 #pragma endregion
 
 int64_t get_global_weight()
@@ -136,14 +88,8 @@ int64_t get_global_weight()
 void set_global_weight(int64_t new_value)
 {
     xSemaphoreTake(global_weight_mutex, portMAX_DELAY);
-    final_weight = new_value;
+    final_weight = new_value <= (int64_t)50 ? (int64_t)0 : new_value;
     xSemaphoreGive(global_weight_mutex);
-    if (check_if_tare_is_needed(new_value, 15, 8))
-    {
-        ESP_LOGW(ROTULO_LOCAL, "Realizando tara (re-tara)");
-        for (int8_t i = 0; i < NUM_WEIGHT_SENSORS; i++)
-            hx711_tare_safe(i);
-    }
 }
 
 esp_err_t init_sensors_task(void)
@@ -173,7 +119,6 @@ esp_err_t init_sensors_task(void)
         }
     }
 
-    // Cria a tarefa de processamento (prioridade média)
     if (xTaskCreate(sensor_processor_task, "sensor_proc", 4096, NULL, TASK_PRIORITY_MEDIUM, NULL) != pdPASS)
     {
         ESP_LOGE(ROTULO_LOCAL, "Falha ao criar tarefa de processamento");
