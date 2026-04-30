@@ -24,8 +24,8 @@ const lbl_logs = "Registers";
 const lbl_connect_scale_to_network = "Connect Scale to WiFi";
 
 const address_localhost = "http://localhost:8080";
-const address_api = "http://100.96.1.34:8080"; //No android, localhost é 10.0.2.2, e não "localhost" ou "127.0.0.1"
-//const address_api = "http://10.208.28.26:8080"; //No android, localhost é 10.0.2.2, e não "localhost" ou "127.0.0.1"
+const address_api = "http://100.96.1.34:8080"; //OpenVPN
+//const address_api = "http://10.0.2.2:8080"; //No android, localhost é 10.0.2.2, e não "localhost" ou "127.0.0.1"
 
 const api_pattern_code = "{code}";
 const api_pattern_hash = "{hash}";

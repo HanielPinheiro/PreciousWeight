@@ -157,7 +157,36 @@ class ElementsOfViews {
   }
 
   static Widget InputWithController(BuildContext context, TextEditingController _controller, String labelText, String hintText, Icon _icon, [bool isPassword = false, bool isReadOnly = false]) {
-    return TextField(controller: _controller, style: TextStyle(color: Theme.of(context).colorScheme.primary), decoration: MyDecorations().GetInputDecoration(context, labelText, hintText, _icon), readOnly: isReadOnly, obscureText: isPassword);
+    if (!isPassword) {
+      return TextField(
+        controller: _controller,
+        style: TextStyle(color: Theme.of(context).colorScheme.primary),
+        decoration: MyDecorations().GetInputDecoration(context, labelText, hintText, _icon),
+        readOnly: isReadOnly,
+        obscureText: false,
+      );
+    }
+
+    var obscureText = true;
+    return StatefulBuilder(
+      builder: (context, setState) {
+        final colorScheme = Theme.of(context).colorScheme;
+        return TextField(
+          controller: _controller,
+          style: TextStyle(color: colorScheme.primary),
+          decoration: MyDecorations()
+              .GetInputDecoration(context, labelText, hintText, _icon)
+              .copyWith(
+                suffixIcon: IconButton(
+                  icon: Icon(obscureText ? Icons.visibility : Icons.visibility_off, color: colorScheme.primary),
+                  onPressed: () => setState(() => obscureText = !obscureText),
+                ),
+              ),
+          readOnly: isReadOnly,
+          obscureText: obscureText,
+        );
+      },
+    );
   }
 
   static Future<void> ShowTimeManager(BuildContext context, ValueChanged<String> onSave, {required String initialTimes}) async {
