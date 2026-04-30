@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'dart:convert';
 
 
 import '../../repository/design/button_styles.dart';
@@ -81,6 +82,61 @@ class _ScaleDetailsState extends State<ScaleDetails> {
     await _loadData();
   }
 
+  String _formatWeightResponse(String rawResponse) {
+    final trimmed = rawResponse.trim();
+    final asNumber = num.tryParse(trimmed);
+    if (asNumber != null) return "Peso: $asNumber g";
+
+    try {
+      final decoded = jsonDecode(trimmed);
+      if (decoded is Map) {
+        final candidates = [
+          decoded['weight'],
+          decoded['peso'],
+          decoded['value'],
+          decoded['grams'],
+          decoded['g'],
+        ];
+        for (final v in candidates) {
+          if (v == null) continue;
+          if (v is num) return "Peso: $v g";
+          if (v is String) {
+            final n = num.tryParse(v.trim());
+            if (n != null) return "Peso: $n g";
+          }
+        }
+      }
+    } catch (_) {}
+
+    return "Resposta do servidor:\n$trimmed";
+  }
+
+  Future<void> _requestWeightNow() async {
+    if (!_scaleActive) return;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const AlertDialog(
+        title: Text("Lendo peso..."),
+        content: SizedBox(
+          height: 72,
+          child: Center(child: CircularProgressIndicator()),
+        ),
+      ),
+    );
+
+    try {
+      final raw = await context.read<ScalesProvider>().requestWeightNow(context, _currentScale!.id);
+      if (!mounted) return;
+      Navigator.of(context, rootNavigator: true).pop();
+      await ElementsOfViews.showSimpleDialog(context, "Peso", _formatWeightResponse(raw));
+    } catch (_) {
+      if (!mounted) return;
+      Navigator.of(context, rootNavigator: true).pop();
+    }
+  }
+
   Widget _showFlex1() {
     return Row(mainAxisSize: MainAxisSize.max, crossAxisAlignment: CrossAxisAlignment.center, mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
       ElementsOfViews.SimpleButton(context, _scaleActive ? "Inativar Balança" : "Ativar Balança", () async {
@@ -142,6 +198,9 @@ class _ScaleDetailsState extends State<ScaleDetails> {
       crossAxisAlignment: CrossAxisAlignment.center,
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
+        ElementsOfViews.SimpleButton(context, "Medir Peso Agora", () async {
+          await _requestWeightNow();
+        }, false, !_scaleActive),
         ElementsOfViews.CardToText(context, "Código Hash: \n${_currentScale!.hash}"),
         ElementsOfViews.CardToText(context, "Estado da balança: ${ScaleModel.ScaleOperation(_currentScale!.status)}"),
       ],

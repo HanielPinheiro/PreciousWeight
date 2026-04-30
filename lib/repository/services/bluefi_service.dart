@@ -229,27 +229,52 @@ class _BluefiService extends State<BluefiService> {
   }
 
   Widget _showConnData() {
+    final theme = Theme.of(context);
     return Container(
       padding: EdgeInsets.all(10),
-      color: Theme.of(context).colorScheme.surface,
-      child: Column(mainAxisSize: MainAxisSize.max, mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-        Expanded(child: Text(lbl_wifi_data_br, style: displaySmall.copyWith(color: Theme.of(context).colorScheme.primary))),
-        Expanded(child: ElementsOfViews.InputWithController(context, _wifiLogin, lbl_wifi_login_br, lbl_wifi_login_lbl_br, Icon(Icons.person, color: Theme.of(context).colorScheme.primary))),
-        Expanded(child: ElementsOfViews.InputWithController(context, _wifiPassword, lbl_wifi_pass_br, lbl_login_senha_lbl_br, Icon(Icons.password, color: Theme.of(context).colorScheme.primary), true)),
-        Expanded(child: ElevatedButton.icon(icon: Icon(Icons.login, color: Theme.of(context).colorScheme.primary), label: Text(lbl_wifi_btn_connect_br, style: TextStyle(color: Theme.of(context).colorScheme.primary)), onPressed: () async => await _connectAction(), style: ElevatedButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.primary, backgroundColor: Theme.of(context).colorScheme.onSecondary, elevation: 4.0)))
-      ]),
+      color: theme.colorScheme.surface,
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(lbl_wifi_data_br, style: displaySmall.copyWith(color: theme.colorScheme.primary)),
+            SizedBox(height: 12),
+            ElementsOfViews.InputWithController(context, _wifiLogin, lbl_wifi_login_br, lbl_wifi_login_lbl_br, Icon(Icons.person, color: theme.colorScheme.primary)),
+            SizedBox(height: 12),
+            ElementsOfViews.InputWithController(context, _wifiPassword, lbl_wifi_pass_br, lbl_login_senha_lbl_br, Icon(Icons.password, color: theme.colorScheme.primary), true),
+            SizedBox(height: 16),
+            SizedBox(
+              height: 48,
+              child: ElevatedButton.icon(
+                icon: Icon(Icons.login, color: theme.colorScheme.primary),
+                label: Text(lbl_wifi_btn_connect_br, style: TextStyle(color: theme.colorScheme.primary)),
+                onPressed: () async => await _connectAction(),
+                style: ElevatedButton.styleFrom(foregroundColor: theme.colorScheme.primary, backgroundColor: theme.colorScheme.onSecondary, elevation: 4.0),
+              ),
+            )
+          ],
+        ),
+      ),
     );
   }
 
   _btnActivateBluetooth() {
+    final theme = Theme.of(context);
     return Container(
       padding: EdgeInsets.all(10),
-      color: Theme.of(context).colorScheme.surface,
-      child: Column(mainAxisSize: MainAxisSize.max, mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-        Expanded(child: SizedBox(height: 100)),
-        Expanded(flex: 1, child: ElevatedButton.icon(icon: Icon(size: 25, Icons.bluetooth, color: Theme.of(context).colorScheme.primary), label: Text(lbl_wifi_btn_ble_permission_br, style: headlineSmall.copyWith(color: Theme.of(context).colorScheme.primary)), onPressed: () async => _requestPermissions(), style: ElevatedButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.primary, backgroundColor: Theme.of(context).colorScheme.onSecondary, elevation: 4.0))),
-        Expanded(child: SizedBox(height: 100))
-      ]),
+      color: theme.colorScheme.surface,
+      child: Center(
+        child: SizedBox(
+          height: 48,
+          child: ElevatedButton.icon(
+            icon: Icon(size: 25, Icons.bluetooth, color: theme.colorScheme.primary),
+            label: Text(lbl_wifi_btn_ble_permission_br, style: headlineSmall.copyWith(color: theme.colorScheme.primary)),
+            onPressed: () async => _requestPermissions(),
+            style: ElevatedButton.styleFrom(foregroundColor: theme.colorScheme.primary, backgroundColor: theme.colorScheme.onSecondary, elevation: 4.0),
+          ),
+        ),
+      ),
     );
   }
 
@@ -275,7 +300,7 @@ class _BluefiService extends State<BluefiService> {
             mainAxisSize: MainAxisSize.max,
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [Expanded(flex: 2, child: _bleOn ? _showConnData() : _btnActivateBluetooth()), Expanded(flex: 2, child: _messageArea())],
+            children: [Expanded(flex: 3, child: _bleOn ? _showConnData() : _btnActivateBluetooth()), Expanded(flex: 1, child: _messageArea())],
           ),
         ),
       ),

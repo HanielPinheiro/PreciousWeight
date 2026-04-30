@@ -205,4 +205,19 @@ class ScalesProvider with ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<String> requestWeightNow(BuildContext context, int scale_id) async {
+    try {
+      return await SafeApi.call<String>(
+        context: context,
+        apiCall: () async {
+          return await _scaleApi.requestWeightNow(scale_id.toString());
+        },
+      );
+    } catch (e) {
+      throw e;
+    } finally {
+      notifyListeners();
+    }
+  }
 }
