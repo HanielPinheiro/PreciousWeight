@@ -82,36 +82,7 @@ class _ScaleDetailsState extends State<ScaleDetails> {
     await _loadData();
   }
 
-  String _formatWeightResponse(String rawResponse) {
-    final trimmed = rawResponse.trim();
-    final asNumber = num.tryParse(trimmed);
-    if (asNumber != null) return "Peso: $asNumber g";
-
-    try {
-      final decoded = jsonDecode(trimmed);
-      if (decoded is Map) {
-        final candidates = [
-          decoded['weight'],
-          decoded['peso'],
-          decoded['value'],
-          decoded['grams'],
-          decoded['g'],
-        ];
-        for (final v in candidates) {
-          if (v == null) continue;
-          if (v is num) return "Peso: $v g";
-          if (v is String) {
-            final n = num.tryParse(v.trim());
-            if (n != null) return "Peso: $n g";
-          }
-        }
-      }
-    } catch (_) {}
-
-    return "Resposta do servidor:\n$trimmed";
-  }
-
-  Future<void> _requestWeightNow() async {
+  Future<void> _measureWeightNow() async {
     if (!_scaleActive) return;
 
     showDialog(
@@ -127,10 +98,10 @@ class _ScaleDetailsState extends State<ScaleDetails> {
     );
 
     try {
-      final raw = await context.read<ScalesProvider>().requestWeightNow(context, _currentScale!.id);
+      final raw = await context.read<ScalesProvider>().getWeightNow(context, _currentScale!.id);
       if (!mounted) return;
       Navigator.of(context, rootNavigator: true).pop();
-      await ElementsOfViews.showSimpleDialog(context, "Peso", _formatWeightResponse(raw));
+      await ElementsOfViews.showSimpleDialog(context, "Peso", raw);
     } catch (_) {
       if (!mounted) return;
       Navigator.of(context, rootNavigator: true).pop();
@@ -199,7 +170,7 @@ class _ScaleDetailsState extends State<ScaleDetails> {
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
         ElementsOfViews.SimpleButton(context, "Medir Peso Agora", () async {
-          await _requestWeightNow();
+          await _measureWeightNow();
         }, false, !_scaleActive),
         ElementsOfViews.CardToText(context, "Código Hash: \n${_currentScale!.hash}"),
         ElementsOfViews.CardToText(context, "Estado da balança: ${ScaleModel.ScaleOperation(_currentScale!.status)}"),
@@ -230,136 +201,3 @@ class _ScaleDetailsState extends State<ScaleDetails> {
     );
   }
 }
-
-// class _ScaleDetailsState extends State<ScaleDetails> {
-//   bool _isLoading = true;
-//   bool _scaleActive = false;
-//   bool _hasBaby = false;
-//
-//   @override
-//   void initState() {
-//     super.initState();
-//     WidgetsBinding.instance.addPostFrameCallback((_) async {
-//       await _loadData();
-//     });
-//   }
-//
-//   Future<void> _loadData() async {
-//     if (_isLoading) {
-//       final _provider = await context.read<ScalesProvider>();
-//       try {
-//         final sc = await _provider.getScaleById(widget.id);
-//         BabyModel? bb;
-//         if (sc != null && sc.babyId != null) bb = await context.read<BabyProvider>().getBabyById(sc.babyId!);
-//
-//         if (mounted) {
-//           setState(() {
-//             if (bb != null) sc!.assignedBaby = bb;
-//             _isLoading = false;
-//             _scaleActive = sc!.status == 1;
-//             _hasBaby = sc.babyId != null;
-//           });
-//         }
-//       } catch (e) {
-//         if (mounted)
-//           setState(() {
-//             _isLoading = false;
-//           });
-//         print('Error loading scale data: $e');
-//       }
-//     }
-//   }
-//
-//   _wrapText(BuildContext context, String text) {
-//     return Expanded(child: FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.center, child: Text(text, style: TextStyle(fontSize: 18, color: Theme.of(context).colorScheme.primary), overflow: TextOverflow.ellipsis)));
-//   }
-//
-//   Future<Widget> _showFlex1() async {
-//     final _currentScale =  await ErrorHandler.SafeApiCall(context: context,apiCall: () async {await context.read<ScalesProvider>().getScaleById(widget.id);});
-//
-//
-//     return Row(mainAxisSize: MainAxisSize.max, crossAxisAlignment: CrossAxisAlignment.center, mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-//       ElementsOfViews.SimpleButton(context, _scaleActive ? "Inativar Balança" : "Ativar Balança", () async {
-//         await ErrorHandler.SafeApiCall(
-//             context: context,
-//             apiCall: () async {
-//               await context.read<ScalesProvider>().enableOrDisableScale(_currentScale!);
-//             },
-//             onSuccess: () async {
-//               final new_data = await context.read<ScalesProvider>().getScaleById(widget.id);
-//               setState(() {
-//                 _scaleActive = new_data!.status == 1;
-//                 _hasBaby = new_data.babyId != null;
-//               });
-//             });
-//       }),
-//       ElementsOfViews.SimpleButton(context, "${_hasBaby ? "Trocar Bebê de Balança" : "Associar Bebê à Balança"}", () {
-//         Navigator.push(context, MaterialPageRoute(builder: (context) => ScaleBabies(scale: _currentScale)));
-//       }),
-//     ]);
-//   }
-//
-//   Future<Widget> _showFlex2() async {
-//     final _currentScale = await context.read<ScalesProvider>().getScaleById(widget.id);
-//
-//     return Padding(
-//         padding: const EdgeInsets.symmetric(horizontal: 25),
-//         child: InkWell(
-//             // Clickable behavior
-//             borderRadius: BorderRadius.circular(15),
-//             child: Container(
-//               padding: EdgeInsets.all(9),
-//               decoration: MyDecorations().GetBoxDecoration(context),
-//               child: Row(children: [
-//                 Container(child: _currentScale!.assignedBaby!.qrCodeImage!, constraints: BoxConstraints(maxWidth: 120)),
-//                 SizedBox(width: 10),
-//                 Expanded(
-//                     child: Column(mainAxisAlignment: MainAxisAlignment.spaceEvenly, crossAxisAlignment: CrossAxisAlignment.center, children: [
-//                   Text("Nome", style: displaySmall.copyWith(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold)),
-//                   _wrapText(context, _currentScale.assignedBaby!.name!),
-//                   Text("Nome da mãe", style: displaySmall.copyWith(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold)),
-//                   _wrapText(context, _currentScale.assignedBaby!.motherName!),
-//                   Text("Data de Nascimento", style: displaySmall.copyWith(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold)),
-//                   _wrapText(context, dateFormatter_objToDb.format(_currentScale.assignedBaby!.birthDate!)),
-//                 ])),
-//               ]),
-//             )));
-//   }
-//
-//   Future<Widget> _showFlex3() async {
-//     final _currentScale = await context.read<ScalesProvider>().getScaleById(widget.id);
-//     return Column(mainAxisSize: MainAxisSize.max, crossAxisAlignment: CrossAxisAlignment.center, mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-//       ElementsOfViews.CardToText(context, "Código ID: ${_currentScale!.id}"),
-//       ElementsOfViews.CardToText(context, "MAC Address: ${_currentScale.hash}"),
-//       ElementsOfViews.CardToText(context, "Estado da balança: ${ScaleModel.ScaleOperation(_currentScale.status)}" /*, bgColor: scale.status == 1 ? green : red*/),
-//     ]);
-//   }
-//
-//   Future<List<Widget>> _renderData() async {
-//     return [
-//       Column(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-//         Expanded(flex: 1, child: await _showFlex1()),
-//         _hasBaby ? Expanded(flex: 2, child: await _showFlex2()) : Expanded(flex: 1, child: ElementsOfViews.CardToText(context, "Nenhum bebê associado")),
-//         Expanded(flex: 4, child: await _showFlex3()),
-//       ])
-//     ];
-//   }
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return FutureBuilder<List<Widget>>(
-//       future: _renderData(),
-//       builder: (context, snapshot) {
-//         if (snapshot.connectionState == ConnectionState.waiting) {
-//           return const Center(child: CircularProgressIndicator());
-//         } else if (snapshot.hasError) {
-//           return AlertDialog(content: Text('Error: ${snapshot.error}'));
-//         } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-//           return AlertDialog(content: Text('No scales found'));
-//         } else {
-//           return SafeArea(child: Scaffold(appBar: ElementsOfViews.SimpleAppBar(context, 'Dados da Balança'), body: snapshot.data![0]));
-//         }
-//       },
-//     );
-//   }
-// }

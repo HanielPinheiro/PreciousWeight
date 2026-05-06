@@ -206,7 +206,7 @@ class ScalesProvider with ChangeNotifier {
     }
   }
 
-  Future<String> requestWeightNow(BuildContext context, int scale_id) async {
+  Future<String> getWeightNow(BuildContext context, int scale_id) async {
     try {
       return await SafeApi.call<String>(
         context: context,

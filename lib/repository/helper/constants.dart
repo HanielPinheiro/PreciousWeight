@@ -51,6 +51,7 @@ const api_scale_enable = "/scales/enable/{code}";
 const api_scale_disable = "/scales/disable/{code}";
 const api_scale_setBaby = "/scales/baby/set";
 const api_scale_unsetBaby = "/scales/baby/unset";
+const api_scale_measure_now = "/scales/measure_now/{code}";
 const api_scaleData_get = "/scale_data/search/{hash}";
 const api_scaleData_getQr = "/scale_data/qr/{hash}";
 
