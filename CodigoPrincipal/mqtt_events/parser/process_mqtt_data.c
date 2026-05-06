@@ -7,7 +7,6 @@ char baby_id[12] = {0};
 SemaphoreHandle_t has_baby_mutex = NULL;
 weight_time_t weight_times[MAX_WEIGHT_TIMES];
 uint8_t number_of_weight_times = 0;
-int calibration_steps = 0;
 
 #pragma region Static
 
@@ -191,6 +190,7 @@ void process_mqtt_data(const char *mqtt_data)
     if (has_baby_mutex == NULL)
         has_baby_mutex = xSemaphoreCreateMutex();
 
+    // O array handlers ja gerencia a funcao de callback quando um determinado comando for recebido
     int handlers_size = sizeof(handlers) / sizeof(handlers[0]);
     for (int i = 0; i < handlers_size; i++)
     {
@@ -198,17 +198,6 @@ void process_mqtt_data(const char *mqtt_data)
         size_t len = strlen(h->prefix);
         if (strncmp(mqtt_data, h->prefix, len) == 0)
         {
-            if (calibration_steps > 0 && !strcmp(h->prefix, RECEIVED_CALIBRATE))
-            {
-                calibration_steps = 0;
-            }
-
-            // if (!scale_has_baby() && strcmp(h->prefix, RECEIVED_BABY))
-            // {
-            //     mqtt_publish(MQTT_TOPIC_PUB_WEIGHT, "ERROR_BABY_NOT_INFORMED", 1);
-            //     return;
-            // }
-
             if (number_of_weight_times >= MAX_WEIGHT_TIMES && strcmp(h->prefix, RECEIVED_TIMES))
             {
                 mqtt_publish(MQTT_TOPIC_PUB_WEIGHT, "ERROR_MAX_WEIGHT_TIMES_ACHIEVED", 1);

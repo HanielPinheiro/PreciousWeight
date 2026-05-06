@@ -1,11 +1,11 @@
 #include "WiFi.h"
 #include "PubSubClient.h"
 
-const char* ssid = "DR_LORDES_2.5";
-const char* password = "maya1609@@@";
-const char* mqtt_server = "192.168.0.10";
+const char* ssid = "haniel_mqtt";
+const char* password = "mqtt1234";
+const char* mqtt_server = "100.96.1.34";
 const int port = 5278;
-char* globalTopic = "test";
+char* globalTopic = "status";
 long lastMsg;
 
 WiFiClient espClient;
