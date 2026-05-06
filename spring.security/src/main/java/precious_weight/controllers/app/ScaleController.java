@@ -112,7 +112,18 @@ public class ScaleController {
             Map<String, String> error = Map.of("error", ex.getMessage());
             return ResponseEntity.badRequest().body(error);
         }
-    }    
+    }  
+
+     @PreAuthorize("isAuthenticated()")
+    @PostMapping(ScaleController_MeasureNow)
+    public ResponseEntity<?> measureWeightRightNow(@PathVariable Integer scaleId) {
+        try {
+            return ResponseEntity.ok(weightService.MeasureWeightRightNowViaMqtt(scaleId));
+        } catch (Exception ex) {
+            Map<String, String> error = Map.of("error", ex.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        }
+    }  
 }
 
 

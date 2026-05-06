@@ -20,9 +20,6 @@ public class WeightService {
     @Autowired
     private ScaleService scaleService;
 
- @Autowired
-    private MqttPublisherService mqttPublisherService;
-
     public List<WeightModel> listAll() {
         return iWeight.findAll();
     }
@@ -59,13 +56,6 @@ public class WeightService {
         save(w);
     }
 
-    public WeightModel MeasureWeightRightNowViaMqtt(Integer id){
-        var mac = scaleService.GetMacFromScaleId(id);
-        //Envio [MEA]
-        mqttPublisherService.sendCriticalCommand(mac, MQTT_COMMAND_MEASURE);
-
-        //aqui deveria aguardar alguns instantes ate mqtt enviar peso de volta, rotina do subscriber rodar e saveWeightFromScale adicionar weight no db
-        //então deveria pegar lista de pesos (getScaleWeights) e retornar o ultimo
-    }
+    
     
 }

@@ -159,6 +159,15 @@ public class ScaleService {
         mqttPublisherService.sendCriticalCommand(mac, MQTT_COMMAND_RUN);
     }
 
+    public WeightModel MeasureWeightRightNowViaMqtt(Integer id){
+        var mac = GetMacFromScaleId(id);
+        //Envio [MEA]
+        mqttPublisherService.sendCriticalCommand(mac, MQTT_COMMAND_MEASURE);
+
+        //aqui deveria aguardar alguns instantes ate mqtt enviar peso de volta, rotina do subscriber rodar e saveWeightFromScale adicionar weight no db
+        //então deveria pegar lista de pesos (getScaleWeights) e retornar o ultimo
+    }
+
     public void SendNewWeightTimesToScale(Integer babyId, String babyWeightTime) throws Exception {
         String hash = iBaby.getReferenceById(babyId).getAssignedScale().getScaleHash();
         String mac = GetMacFromScaleByHash(hash);

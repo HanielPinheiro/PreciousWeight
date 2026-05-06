@@ -63,15 +63,5 @@ public class WeightController {
             return ResponseEntity.badRequest().body(error);
         }
     }
-
-    @PreAuthorize("isAuthenticated()")
-    @PostMapping(WeightController_MeasureNow)
-    public ResponseEntity<?> measureWeightRightNow(@PathVariable Integer id) {
-        try {
-            return ResponseEntity.ok(weightService.MeasureWeightRightNowViaMqtt(id));
-        } catch (Exception ex) {
-            Map<String, String> error = Map.of("error", ex.getMessage());
-            return ResponseEntity.badRequest().body(error);
-        }
-    }
+   
 }

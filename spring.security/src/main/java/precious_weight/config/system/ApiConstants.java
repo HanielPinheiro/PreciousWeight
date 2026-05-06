@@ -18,11 +18,11 @@ public class ApiConstants {
     public static final String ScaleController_SetBaby = "/baby/set";
     public static final String ScaleController_UnsetBaby = "/baby/unset";
     public static final String ScaleController_SearchByHash = "/hash/{hashId}";
+    public static final String ScaleController_MeasureNow = "/measure_now/{scaleId}";
 
     public static final String WeightController = "/weight";
     public static final String WeightController_Babies = "/babies/{babyId}";
     public static final String WeightController_Scales = "/scales/{scaleId}";
-    public static final String WeightController_MeasureNow = "/measure_now/{id}";
 
     public static final String AuditController = "/audit";
     public static final String AuditController_Weights = "/weights/{babyId}";
