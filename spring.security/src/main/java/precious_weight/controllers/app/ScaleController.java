@@ -112,7 +112,7 @@ public class ScaleController {
             Map<String, String> error = Map.of("error", ex.getMessage());
             return ResponseEntity.badRequest().body(error);
         }
-    }
+    }    
 }
 
 

@@ -87,6 +87,12 @@ public class ScaleService {
         return scaleDataService.GetScaleMacFromScaleHashId(scaleHash);
     }
 
+    public String GetMacFromScaleId(Integer scaleId) throws Exception {
+        ScaleModel scale = GetScaleFromId(scaleId);
+        if (scale == null) throw new Exception("Scale not found");
+        return GetMacFromScaleByHash(scale.getScaleHash());
+    }
+
     public ScaleModel SetOrUnsetBabyToScale(ScaleRequest scaleRequest, boolean set) throws Exception {
         Integer scaleId = scaleRequest.getScaleId();
         Integer babyId = scaleRequest.getBabyId();

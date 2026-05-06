@@ -22,6 +22,7 @@ public class ApiConstants {
     public static final String WeightController = "/weight";
     public static final String WeightController_Babies = "/babies/{babyId}";
     public static final String WeightController_Scales = "/scales/{scaleId}";
+    public static final String WeightController_MeasureNow = "/measure_now/{id}";
 
     public static final String AuditController = "/audit";
     public static final String AuditController_Weights = "/weights/{babyId}";
