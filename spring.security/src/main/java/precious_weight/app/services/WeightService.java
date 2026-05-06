@@ -20,6 +20,10 @@ public class WeightService {
     @Autowired
     private ScaleService scaleService;
 
+    private int _globalFlagWeightNow = 0;
+    public int GetFlagWeightNow(){ return _globalFlagWeightNow; }
+    public void SetFlagWeightNow(Integer v){ _globalFlagWeightNow = v; }    
+
     public List<WeightModel> listAll() {
         return iWeight.findAll();
     }
@@ -54,6 +58,7 @@ public class WeightService {
         w.setWeightValue(Double.parseDouble(weight));
 
         save(w);
+        SetFlagWeightNow(1);
     }
 
     

@@ -118,8 +118,8 @@ public class ScaleController {
     @PostMapping(ScaleController_MeasureNow)
     public ResponseEntity<?> measureWeightRightNow(@PathVariable Integer scaleId) {
         try {
-            return ResponseEntity.ok(weightService.MeasureWeightRightNowViaMqtt(scaleId));
-        } catch (Exception ex) {
+            return ResponseEntity.ok(scaleService.MeasureWeightRightNowViaMqtt(scaleId));
+       } catch (Exception ex) {
             Map<String, String> error = Map.of("error", ex.getMessage());
             return ResponseEntity.badRequest().body(error);
         }
