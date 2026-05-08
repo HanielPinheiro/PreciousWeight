@@ -9,7 +9,7 @@ import org.eclipse.paho.client.mqttv3.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import precious_weight.app.services.WeightService;
+import precious_weight.app.services.ScaleService;
 
 import static precious_weight.config.system.MqttConstants.MQTT_TOPIC_SUB_SCALE;
 import static precious_weight.config.system.MqttConstants.MQTT_TOPIC_SUB_WEIGHT;
@@ -22,7 +22,7 @@ public class MqttSubscriberService {
     private IMqttAsyncClient mqttClient;
 
     @Autowired
-    private WeightService weightService;
+    private ScaleService scaleService;
 
     @PostConstruct
     public void startMonitoring() throws MqttException {
@@ -40,7 +40,7 @@ public class MqttSubscriberService {
             String payload = new String(message.getPayload());
             try{
                 logger.info("Receive new weight in topic : {} | Weight: {}", messageTopic, payload);
-                weightService.saveWeightFromScale(messageTopic.replace("weight/", ""), payload);
+                scaleService.SaveWeightFromScale(messageTopic.replace("weight/", ""), payload);
                 log(messageTopic, payload);
                 logger.info("Weight saved in topic: {}", messageTopic);
             }

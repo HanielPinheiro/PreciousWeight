@@ -2,15 +2,13 @@ package precious_weight.controllers.app;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import precious_weight.app.models.request.WeightRequest;
-import precious_weight.app.services.WeightService;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.Map;
 
+import precious_weight.app.interfaces.iWeight;
+import precious_weight.app.models.request.WeightRequest;
 import static precious_weight.config.system.ApiConstants.*;
 
 @RestController
@@ -18,13 +16,13 @@ import static precious_weight.config.system.ApiConstants.*;
 public class WeightController {
 
     @Autowired
-    WeightService weightService;
+    iWeight iWeight;
 
     @PreAuthorize("isAuthenticated()")
     @PostMapping(Controller_List)
     public ResponseEntity<?> listAllWeights() {
         try {
-            return ResponseEntity.ok(weightService.listAll());
+            return ResponseEntity.ok(iWeight.findAll());
         } catch (Exception ex) {
             Map<String, String> error = Map.of("error", ex.getMessage());
             return ResponseEntity.badRequest().body(error);
@@ -35,7 +33,7 @@ public class WeightController {
     @PostMapping(Controller_Save)
     public ResponseEntity<?> saveWeight(@RequestBody WeightRequest request) {
         try {
-            return ResponseEntity.ok(weightService.save(request));
+            return ResponseEntity.ok(iWeight.save(request.ToModel()));
         } catch (Exception ex) {
             Map<String, String> error = Map.of("error", ex.getMessage());
             return ResponseEntity.badRequest().body(error);
@@ -46,7 +44,7 @@ public class WeightController {
     @PostMapping(WeightController_Babies)
     public ResponseEntity<?> getBabyWeights(@PathVariable Integer babyId) {
         try {
-            return ResponseEntity.ok(weightService.getBabyWeights(babyId));
+            return ResponseEntity.ok(iWeight.findByBabyId(babyId));
         } catch (Exception ex) {
             Map<String, String> error = Map.of("error", ex.getMessage());
             return ResponseEntity.badRequest().body(error);
@@ -57,7 +55,7 @@ public class WeightController {
     @PostMapping(WeightController_Scales)
     public ResponseEntity<?> getScaleWeights(@PathVariable Integer scaleId) {
         try {
-            return ResponseEntity.ok(weightService.getScaleWeights(scaleId));
+            return ResponseEntity.ok(iWeight.findByScaleId(scaleId));
         } catch (Exception ex) {
             Map<String, String> error = Map.of("error", ex.getMessage());
             return ResponseEntity.badRequest().body(error);

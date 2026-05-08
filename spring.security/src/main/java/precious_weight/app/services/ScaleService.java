@@ -5,15 +5,16 @@ import org.springframework.stereotype.Service;
 
 import precious_weight.app.interfaces.iBaby;
 import precious_weight.app.interfaces.iScale;
+import precious_weight.app.interfaces.iWeight;
 import precious_weight.app.models.ScaleModel;
 import precious_weight.app.models.BabyModel;
+import precious_weight.app.models.WeightModel;
 import precious_weight.app.models.request.ScaleRequest;
+import precious_weight.app.models.request.WeightRequest;
 import precious_weight.auth.services.MqttPublisherService;
 import precious_weight.auth.services.ScaleDataService;
 
 import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import static precious_weight.config.system.MqttConstants.*;
 
@@ -35,13 +36,18 @@ public class ScaleService {
     private iBaby iBaby;
 
     @Autowired
+    private iWeight iWeight;
+
+    @Autowired
     private MqttPublisherService mqttPublisherService;
 
     @Autowired
     private ScaleDataService scaleDataService;
 
-    @Autowired
-    private WeightService weightService;   
+    private int _globalFlagWeightNow = 0;
+
+    public int GetFlagWeightNow(){ return _globalFlagWeightNow; }
+    public void SetFlagWeightNow(Integer v){ _globalFlagWeightNow = v; }
 
     public List<ScaleModel> GetScales() {
         return iScale.findAll();
@@ -75,16 +81,6 @@ public class ScaleService {
         return GetMacFromScaleByHash(scale.getScaleHash());
     }
 
-    public ScaleModel SetScaleToUser(UUID id) throws Exception {
-        if (scaleDataService.GetScaleFromId(id) == null) throw new Exception("Invalid ID!");
-        if(GetScaleFromHash(id.toString()) != null) throw new Exception("Scale already inserted");
-
-        ScaleModel newScale = new ScaleModel();
-        newScale.setScaleHash(id.toString());
-        newScale.setScaleState(0);
-        return iScale.save(newScale);
-    }
-
     public ScaleModel EnableOrDisable(Integer id, boolean enabled) throws Exception {
         ScaleModel scale = GetScaleFromId(id);
         if (scale == null) throw new Exception("Scale not found");
@@ -94,6 +90,23 @@ public class ScaleService {
         scale.setScaleState(value);
         iScale.save(scale);
         return GetScaleFromId(id);
+    }
+
+    private Boolean BabyHasScale(Integer babyId) {
+        List<ScaleModel> scales = GetScalesWithBaby(); // Get all babies for scales that have babyId assigned
+        if(scales.isEmpty()) return null;
+        ScaleModel find = scales.stream().filter(s -> Objects.equals(s.getAssignedBaby().getBabyId(), babyId)).toList().getFirst();
+        return find != null;
+    }
+
+    public ScaleModel SetScaleToUser(UUID id) throws Exception {
+        if (scaleDataService.GetScaleFromId(id) == null) throw new Exception("Invalid ID!");
+        if(GetScaleFromHash(id.toString()) != null) throw new Exception("Scale already inserted");
+
+        ScaleModel newScale = new ScaleModel();
+        newScale.setScaleHash(id.toString());
+        newScale.setScaleState(0);
+        return iScale.save(newScale);
     }
   
     public ScaleModel SetOrUnsetBabyToScale(ScaleRequest scaleRequest, boolean set) throws Exception {
@@ -130,11 +143,25 @@ public class ScaleService {
         }
     }
 
-    private Boolean BabyHasScale(Integer babyId) {
-        List<ScaleModel> scales = GetScalesWithBaby(); // Get all babies for scales that have babyId assigned
-        if(scales.isEmpty()) return null;
-        ScaleModel find = scales.stream().filter(s -> Objects.equals(s.getAssignedBaby().getBabyId(), babyId)).toList().getFirst();
-        return find != null;
+    public void SaveWeightFromScale(String scaleHash, String weight) throws Exception{
+        var scale = this.GetScaleFromHash(scaleHash);
+        Integer scaleId = scale.getScaleId();
+        Integer babyId  = this.GetBabyIdByScaleId(scaleId);
+
+        var w = new WeightRequest();
+        w.setBabyId(babyId);
+        w.setScaleId(scaleId);
+        w.setWeightValue(Double.parseDouble(weight));
+
+        iWeight.save(w.ToModel());
+        this.SetFlagWeightNow(1);
+    }
+
+    public void SendNewWeightTimesToScale(Integer babyId, String babyWeightTime) throws Exception {
+        String hash = iBaby.getReferenceById(babyId).getAssignedScale().getScaleHash();
+        String mac = GetMacFromScaleByHash(hash);
+        SendClearToScaleViaMqtt(mac);
+        SendBabyDataToScaleViaMqtt(mac,babyId,babyWeightTime);
     }
 
     private void SendClearToScaleViaMqtt(String mac ){
@@ -161,23 +188,16 @@ public class ScaleService {
         mqttPublisherService.sendCriticalCommand(mac, MQTT_COMMAND_RUN);
     }
 
-    public void SendNewWeightTimesToScale(Integer babyId, String babyWeightTime) throws Exception {
-        String hash = iBaby.getReferenceById(babyId).getAssignedScale().getScaleHash();
-        String mac = GetMacFromScaleByHash(hash);
-        SendClearToScaleViaMqtt(mac);
-        SendBabyDataToScaleViaMqtt(mac,babyId,babyWeightTime);
-    }
-
-    public WeightModel MeasureWeightRightNowViaMqtt(Integer id){
+    public WeightModel MeasureWeightRightNowViaMqtt(Integer id) throws Exception{
         var mac = GetMacFromScaleId(id);
         //Envio [MEA]
-        weightService.SetFlagWeightNow(0);
+        this.SetFlagWeightNow(0);
         mqttPublisherService.sendCriticalCommand(mac, MQTT_COMMAND_MEASURE);
 
-        while(weightService.GetFlagWeightNow() == 0){
+        while(this.GetFlagWeightNow() == 0){
             //Do nothing
         };
-        return weightService.getScaleWeights(id).filtered.get(filtered.size() - 1);
+        return iWeight.findByScaleId(id).getLast();
     }
 
  
