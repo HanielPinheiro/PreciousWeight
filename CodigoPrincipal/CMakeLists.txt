@@ -15,6 +15,7 @@ set(EXTRA_COMPONENT_DIRS
     "${CMAKE_CURRENT_SOURCE_DIR}/tasks/mqtt_task"    
     "${CMAKE_CURRENT_SOURCE_DIR}/tasks/sdcard_task"    
     "${CMAKE_CURRENT_SOURCE_DIR}/tasks/sensors_task"    
+    "${CMAKE_CURRENT_SOURCE_DIR}/tasks/led_task"    
 )
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)

@@ -78,6 +78,12 @@ static void sensor_processor_task(void *pvParams)
 
 int64_t get_global_weight()
 {
+    if (global_weight_mutex == NULL)
+    {
+        ESP_LOGE("SENSORS", "Erro: Semáforo não inicializado!");
+        return -1;
+    }
+
     int64_t w;
     xSemaphoreTake(global_weight_mutex, portMAX_DELAY);
     w = final_weight;

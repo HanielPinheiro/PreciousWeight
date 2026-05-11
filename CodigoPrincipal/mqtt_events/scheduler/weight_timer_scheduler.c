@@ -35,12 +35,12 @@ static void task_worker(void *pvParams)
 
 #pragma endregion
 
-void schedule_next_measure()
+esp_err_t schedule_next_measure()
 {
     if (!scale_has_baby() || number_of_weight_times <= 0)
     {
         ESP_LOGW(ROTULO_LOCAL, "No schedule available - waiting...");
-        return;
+        return ESP_OK; // não é um erro, apenas nao tem bebe ou horario agendado
     }
 
     time_t now = {0};
@@ -86,18 +86,27 @@ void schedule_next_measure()
 
     // Schedule timer
     if (xTimerChangePeriod(schedule_weight_measure_timer, pdMS_TO_TICKS(delay_ms), portMAX_DELAY) == pdPASS)
-        xTimerStart(schedule_weight_measure_timer, portMAX_DELAY);
+    {
+        if (xTimerStart(schedule_weight_measure_timer, portMAX_DELAY) != pdPASS)
+        {
+            return ESP_FAIL;
+        }
+        return ESP_OK;
+    }
     else
-        ESP_LOGE(ROTULO_LOCAL, "Failed to schedule timer!");
+        return ESP_FAIL;
 }
 
-void stop_schedule_timer()
+esp_err_t stop_schedule_timer()
 {
-    xTimerStop(schedule_weight_measure_timer, portMAX_DELAY);
+    if (xTimerStop(schedule_weight_measure_timer, portMAX_DELAY) != pdPASS)
+        return ESP_FAIL;
+
     ESP_LOGI(ROTULO_LOCAL, "weight_sensors_timer stoped");
+    return ESP_OK;
 }
 
-void init_weight_sensors_timer()
+esp_err_t init_weight_sensors_timer()
 {
     schedule_weight_measure_timer = xTimerCreate(
         "SchedulerTimer",            // Name
@@ -107,8 +116,11 @@ void init_weight_sensors_timer()
         scheduled_weight_measurement // Callback
     );
     weight_measure = xQueueCreate(MAX_WEIGHT_TIMES, sizeof(int64_t));
-    xTaskCreate(task_worker, "WeightMeasure", 4096, NULL, 2, NULL);
+    if (xTaskCreate(task_worker, "WeightMeasure", 4096, NULL, 2, NULL) != pdPASS)
+        return ESP_FAIL;
 
     if (scale_has_baby() && number_of_weight_times > 0)
-        schedule_next_measure();
+        return schedule_next_measure();
+
+    return ESP_OK;
 }

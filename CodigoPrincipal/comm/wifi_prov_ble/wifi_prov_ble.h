@@ -5,6 +5,7 @@
 #define SIZE_TIME 50
 extern char current_time[SIZE_TIME];
 
+esp_err_t start_date_time_routine();
 void update_current_time();
 void print_efuse_mac();
 

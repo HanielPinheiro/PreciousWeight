@@ -10,6 +10,9 @@
 #define STORAGE_NAMESPACE "storage"
 #define TIME_PERIOD (86400000000ULL)
 
+static EventGroupHandle_t wifi_event_group;
+static const char *ROTULO_LOCAL = "WIFI";
+
 static void initialize_sntp(void)
 {
     esp_sntp_config_t config = ESP_NETIF_SNTP_DEFAULT_CONFIG_MULTIPLE(2, ESP_SNTP_SERVER_LIST("a.st1.ntp.br", "b.st1.ntp.br"));
@@ -82,17 +85,23 @@ exit:
     return err;
 }
 
-static void start_date_time()
+static esp_err_t start_date_time()
 {
-    ESP_ERROR_CHECK(fetch_and_store_time_in_nvs(NULL)); // always update timestamp in NVS when wifi conn drops and restart
+    // always update timestamp in NVS when wifi conn drops and restart
+    if (fetch_and_store_time_in_nvs(NULL) != ESP_OK)
+        return ESP_FAIL;
 
     const esp_timer_create_args_t nvs_update_timer_args = {
         .callback = (void *)&fetch_and_store_time_in_nvs,
     };
 
     esp_timer_handle_t nvs_update_timer;
-    ESP_ERROR_CHECK(esp_timer_create(&nvs_update_timer_args, &nvs_update_timer));
-    ESP_ERROR_CHECK(esp_timer_start_periodic(nvs_update_timer, TIME_PERIOD));
+    if (esp_timer_create(&nvs_update_timer_args, &nvs_update_timer) != ESP_OK)
+        return ESP_FAIL;
+    if (esp_timer_start_periodic(nvs_update_timer, TIME_PERIOD) != ESP_OK)
+        return ESP_FAIL;
+
+    return ESP_OK;
 }
 
 static void set_timezone_gmt3()
@@ -101,10 +110,17 @@ static void set_timezone_gmt3()
     tzset();
 }
 
-#pragma endregion
+esp_err_t start_date_time_routine()
+{
+    ESP_LOGI(ROTULO_LOCAL, "Getting Date Time from SNTP");
+    vTaskDelay(pdMS_TO_TICKS(5000));
+    if (start_date_time() != ESP_OK)
+        return ESP_FAIL;
+    set_timezone_gmt3();
+    return ESP_OK;
+}
 
-static EventGroupHandle_t wifi_event_group;
-static const char *ROTULO_LOCAL = "WIFI";
+#pragma endregion
 
 /* This step is only useful when scheme is wifi_prov_scheme_ble.
  * This will set a custom 128 bit UUID which will be included in the BLE advertisement and will correspond to the primary GATT service that provides provisioning endpoints as GATT characteristics.
@@ -185,11 +201,6 @@ static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_
             esp_err_t ret = esp_wifi_sta_get_rssi(&rssi_strength);
             if (ret == ESP_OK)
                 ESP_LOGI(ROTULO_LOCAL, "Wi-Fi Strength {%d}", rssi_strength);
-
-            ESP_LOGI(ROTULO_LOCAL, "Getting Date Time from SNTP");
-            vTaskDelay(pdMS_TO_TICKS(5000));
-            start_date_time();
-            set_timezone_gmt3();
             break;
 
         case WIFI_EVENT_STA_DISCONNECTED:
@@ -297,7 +308,7 @@ static void start_wifi_sta() // Conectar usando dados salvos(modo STA)
     ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL));
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     ESP_ERROR_CHECK(esp_wifi_start());
-    EventBits_t bits = xEventGroupWaitBits(wifi_event_group, BIT0, pdTRUE, pdTRUE, pdMS_TO_TICKS(10000));
+    EventBits_t bits = xEventGroupWaitBits(wifi_event_group, BIT0, pdTRUE, pdTRUE, pdMS_TO_TICKS(50000));
     if ((bits & BIT0) == 0)
     {
         ESP_LOGW(ROTULO_LOCAL, "Timeout sem obter IP. Entrando em reprovisionamento via BLE...");

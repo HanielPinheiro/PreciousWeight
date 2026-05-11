@@ -53,6 +53,7 @@
 #include "weight_timer_scheduler.h"
 
 // --- Suas Tasks ---
+#include "led_task.h"
 #include "mqtt_task.h"
 #include "sdcard_task.h"
 #include "sensors_task.h"
