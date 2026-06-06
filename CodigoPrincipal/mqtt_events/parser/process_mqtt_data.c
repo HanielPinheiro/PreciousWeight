@@ -48,6 +48,13 @@ static esp_err_t run_routine()
 
     while (1)
     {
+        if (sdcard_log_queue == NULL)
+        {
+            ESP_LOGW(ROTULO_LOCAL, "Queue ainda não criada, aguardando...");
+            vTaskDelay(pdMS_TO_TICKS(500));
+            continue;
+        }
+
         if (xQueueSend(sdcard_log_queue, &entry, pdMS_TO_TICKS(100)) == pdTRUE)
             break;
 
