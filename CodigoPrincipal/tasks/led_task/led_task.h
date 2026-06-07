@@ -24,7 +24,23 @@ typedef enum
     BLINK_LED_EVENTS_ERROR,
 } led_pattern_t;
 
-esp_err_t led_indicator_start(void);
-esp_err_t led_indicator_set_pattern(led_pattern_t pattern);
+// Pattern definitions (timings in milliseconds)
+typedef struct
+{
+    const int16_t on_time_ms;
+    const int16_t off_time_ms;
+    const int16_t repeat_count; // 0 = infinite
+} led_time_pattern;
+
+// Dictionary that relates the led_pattern enum with the time pattern on and off
+typedef struct
+{
+    led_pattern_t pattern;
+    const led_time_pattern *steps;
+    int8_t num_steps;
+} pattern_step;
+
+esp_err_t initialize_led_task(void);
+esp_err_t set_pattern_to_led_task(led_pattern_t pattern);
 
 #endif // LED_TASK_H
