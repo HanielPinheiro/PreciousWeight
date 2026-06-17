@@ -28,7 +28,7 @@ static void task_worker(void *pvParams)
 
         snprintf(log_msg, sizeof(log_msg), "%s{%lld}", RECEIVED_MEASURE, w);
         sdcard_log(LOG_INFO, log_msg, ROTULO_LOCAL);
-        mqtt_publish(MQTT_TOPIC_PUB_WEIGHT, log_msg, 2);
+        mqtt_publish(MQTT_TOPIC_WEIGHTS, log_msg, 2);
 
         if (scale_has_baby() && number_of_weight_times > 0)
         {

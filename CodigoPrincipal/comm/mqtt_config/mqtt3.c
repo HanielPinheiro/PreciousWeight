@@ -3,16 +3,6 @@
 
 /*
    Necessita  Conectar na internet corretamente (etapa feita pelo wifi_prov_ble)
-   Gerar client.key e client.csr com openssl, usando ca.crt gerado por mim:
-   Generate your own CA:
-       openssl genrsa -out ca.key 4096
-       openssl req -x509 -new -nodes -key ca.key -sha256 -days 3650 -out ca.crt
-   Generate Client Certificate (signed by your CA)
-       openssl genrsa -out client.key 2048
-       openssl req -new -key client.key -out client.csr
-       openssl x509 -req -in client.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out client.crt -days 365
-   senha do certificado Pr3c10usw3e1ght!@
-
    Ajustar o caminho ate os certificados no cmakelists
 */
 // EXPLICACAO
@@ -53,7 +43,7 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
         connected = true;
 
         // AQUI SE INSCREVE NO CANAL DO MQTT PRA OUVIR EVENTOS!!!
-        esp_mqtt_client_subscribe(client, MQTT_TOPIC_SUBSCRIBE, 1);
+        esp_mqtt_client_subscribe(client, MQTT_TOPIC_SCALES, 1);
         break;
 
     case MQTT_EVENT_DISCONNECTED:
@@ -81,28 +71,28 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
 
 void mqtt_app_start(void)
 {
-    // const esp_mqtt_client_config_t mqtt_cfg = {
-    //     .broker = {
-    //         .address.uri = MQTT_ADDRESS,
-    //         .verification = {
-    //             .certificate = (const char *)ca_cert_pem_start,
-    //             .skip_cert_common_name_check = true}},
-    //     .credentials = {.authentication = {
-    //                         .certificate = (const char *)client_cert_pem_start,
-    //                         .key = (const char *)client_key_pem_start,
-    //                     },
-    //                     .client_id = WIFI_DEVICE_NAME},
-    //     .session = {.keepalive = MQTT_KEEPALIVE, .disable_clean_session = true, .last_will = {.topic = MQTT_TOPIC_CONN_DISCONN, .msg = "DISCONNECTED", .qos = 1, .retain = true}},
-    //     .network = {.reconnect_timeout_ms = 10000, .disable_auto_reconnect = false}};
-
     const esp_mqtt_client_config_t mqtt_cfg = {
         .broker = {
             .address.uri = MQTT_ADDRESS,
-            // NÃO colocar .verification
-        },
-        // NÃO colocar .credentials
-        .session = {.keepalive = MQTT_KEEPALIVE, .disable_clean_session = true, .last_will = {.topic = MQTT_TOPIC_CONN_DISCONN, .msg = "DISCONNECTED", .qos = 1, .retain = true}},
+            .verification = {
+                .certificate = (const char *)ca_cert_pem_start,
+                .skip_cert_common_name_check = true}},
+        .credentials = {.authentication = {
+                            .certificate = (const char *)client_cert_pem_start,
+                            .key = (const char *)client_key_pem_start,
+                        },
+                        .client_id = WIFI_DEVICE_NAME},
+        .session = {.keepalive = MQTT_KEEPALIVE, .disable_clean_session = true, .last_will = {.topic = MQTT_TOPIC_CONN_STATUS, .msg = "DISCONNECTED", .qos = 1, .retain = true}},
         .network = {.reconnect_timeout_ms = 10000, .disable_auto_reconnect = false}};
+
+    // const esp_mqtt_client_config_t mqtt_cfg = {
+    //     .broker = {
+    //         .address.uri = MQTT_ADDRESS,
+    //         // NÃO colocar .verification
+    //     },
+    //     // NÃO colocar .credentials
+    //     .session = {.keepalive = MQTT_KEEPALIVE, .disable_clean_session = true, .last_will = {.topic = MQTT_TOPIC_CONN_STATUS, .msg = "DISCONNECTED", .qos = 1, .retain = true}},
+    //     .network = {.reconnect_timeout_ms = 10000, .disable_auto_reconnect = false}};
 
     client = esp_mqtt_client_init(&mqtt_cfg);
     esp_mqtt_client_register_event(client, ESP_EVENT_ANY_ID, mqtt_event_handler, NULL);

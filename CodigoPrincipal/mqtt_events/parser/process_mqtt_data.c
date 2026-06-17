@@ -112,7 +112,7 @@ static esp_err_t measure_routine()
     sdcard_log(LOG_INFO, m, ROTULO_LOCAL);
     while (true)
     {
-        if (mqtt_publish(MQTT_TOPIC_PUB_WEIGHT, m, 1))
+        if (mqtt_publish(MQTT_TOPIC_WEIGHTS, m, 1))
             break;
         vTaskDelay(pdMS_TO_TICKS(300));
     }
@@ -207,7 +207,7 @@ void process_mqtt_data(const char *mqtt_data)
         {
             if (number_of_weight_times >= MAX_WEIGHT_TIMES && strcmp(h->prefix, RECEIVED_TIMES))
             {
-                mqtt_publish(MQTT_TOPIC_PUB_WEIGHT, "ERROR_MAX_WEIGHT_TIMES_ACHIEVED", 1);
+                mqtt_publish(MQTT_TOPIC_WEIGHTS, "ERROR_MAX_WEIGHT_TIMES_ACHIEVED", 1);
                 return;
             }
 
@@ -217,7 +217,7 @@ void process_mqtt_data(const char *mqtt_data)
             esp_err_t result = h->handler(data);
             if (result == ESP_OK)
             {
-                mqtt_publish(MQTT_TOPIC_PUB_WEIGHT, SUCCESS_MSG, 1);
+                mqtt_publish(MQTT_TOPIC_WEIGHTS, SUCCESS_MSG, 1);
                 ESP_LOGI(ROTULO_LOCAL, "%s", h->log_success);
                 // if (strstr(h->log_success, "%s"))
                 //     ESP_LOGI(ROTULO_LOCAL, "%s - %s", h->log_success, baby_id);
@@ -227,7 +227,7 @@ void process_mqtt_data(const char *mqtt_data)
             else
             {
                 sdcard_log(LOG_ERROR, h->log_error, ROTULO_LOCAL);
-                mqtt_publish(MQTT_TOPIC_PUB_WEIGHT, ERROR_MSG, 1);
+                mqtt_publish(MQTT_TOPIC_WEIGHTS, ERROR_MSG, 1);
             }
             return;
         }

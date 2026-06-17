@@ -36,7 +36,7 @@ void mqtt_connection_status_callback(esp_mqtt_event_id_t connected)
     {
     case MQTT_EVENT_CONNECTED:
         ESP_LOGI(ROTULO_LOCAL, "MQTT - Connected to MQTT broker");
-        mqtt_publish(MQTT_TOPIC_CONN_DISCONN, "CONNECTED", 1);
+        mqtt_publish(MQTT_TOPIC_CONN_STATUS, "CONNECTED", 1);
         break;
 
     case MQTT_EVENT_DISCONNECTED:
@@ -58,7 +58,7 @@ void mqtt_connection_status_callback(esp_mqtt_event_id_t connected)
          *  LOGO, balança publica em 3 canais, status, sensors, weights, e recebe dados em 1
          * A balança só recebe os dados dela -> /scales/MAC_ADDRESS_ESP32 (SERVICE NAME)
          */
-        if (strncmp(event->topic, MQTT_TOPIC_SUBSCRIBE, event->topic_len) == 0)
+        if (strncmp(event->topic, MQTT_TOPIC_SCALES, event->topic_len) == 0)
         {
             // Cria uma cópia null-terminated segura dos dados
             char msg_copy[event->data_len + 1]; // +1 para o null terminator
