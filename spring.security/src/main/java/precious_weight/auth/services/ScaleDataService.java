@@ -5,6 +5,7 @@ import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import precious_weight.app.models.ScaleModel;
 import precious_weight.auth.interfaces.iScaleData;
 import precious_weight.auth.models.ScaleDataModel;
 import precious_weight.auth.models.request.ScaleDataRequest;

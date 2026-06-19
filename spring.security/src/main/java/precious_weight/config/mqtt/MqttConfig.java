@@ -12,12 +12,18 @@ import static precious_weight.config.system.MqttConstants.*;
 @Configuration
 public class MqttConfig {
     private static final Logger logger = LoggerFactory.getLogger(MqttConfig.class);
-    @Value("${mqtt.broker.url}") // e.g., "tcp://mosquitto:1883"
-    private String brokerUrl;
+    @Value("${mqtt.broker.url}")
+    private String BrokerUrl;
+
+    @Value("${mqtt.broker.username}")
+    private String Username;
+
+    @Value("${mqtt.broker.password}")
+    private String Password;
 
     @Bean
     public IMqttAsyncClient mqttAsyncClient() throws MqttException {
-        IMqttAsyncClient client = new MqttAsyncClient(brokerUrl, MQTT_API_SERVICE_NAME);
+        IMqttAsyncClient client = new MqttAsyncClient(BrokerUrl, MQTT_API_SERVICE_NAME);
         client.setCallback(new MqttCallbackExtended() {
             @Override
             public void connectionLost(Throwable throwable) {
@@ -54,11 +60,13 @@ public class MqttConfig {
         });
 
         MqttConnectOptions options = new MqttConnectOptions();
+        options.setUserName(Username);
+        options.setPassword(Password.toCharArray());
         options.setCleanSession(false); // Persistent session (QoS 2)
         options.setAutomaticReconnect(true);
         options.setConnectionTimeout(10);
-
         client.connect(options).waitForCompletion();
+
         MqttMessage onlineMessage = new MqttMessage("ONLINE".getBytes());
         onlineMessage.setQos(2);
         onlineMessage.setRetained(true);

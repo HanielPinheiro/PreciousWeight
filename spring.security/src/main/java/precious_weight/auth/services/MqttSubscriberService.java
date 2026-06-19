@@ -40,7 +40,7 @@ public class MqttSubscriberService {
             String payload = new String(message.getPayload());
             try{
                 logger.info("Receive new weight in topic : {} | Weight: {}", messageTopic, payload);
-                scaleService.SaveWeightFromScale(messageTopic.replace("weight/", ""), payload);
+                scaleService.SaveWeightFromScale(messageTopic.replace("/weights/", ""), payload);
                 log(messageTopic, payload);
                 logger.info("Weight saved in topic: {}", messageTopic);
             }

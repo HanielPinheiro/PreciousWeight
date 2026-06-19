@@ -14,12 +14,17 @@ import precious_weight.app.models.request.WeightRequest;
 import precious_weight.auth.services.MqttPublisherService;
 import precious_weight.auth.services.ScaleDataService;
 
+import java.io.Console;
+import java.time.Duration;
 import java.util.*;
 
 import static precious_weight.config.system.MqttConstants.*;
 
 @Service
 public class ScaleService {
+    private boolean trying = false;
+    private long startTime = System.nanoTime();
+
     public enum ScaleStates {
         nonOperant(0), operant(1);
         public final int value;
@@ -143,15 +148,26 @@ public class ScaleService {
         }
     }
 
-    public void SaveWeightFromScale(String scaleHash, String weight) throws Exception{
-        var scale = this.GetScaleFromHash(scaleHash);
-        Integer scaleId = scale.getScaleId();
-        Integer babyId  = this.GetBabyIdByScaleId(scaleId);
+    public void SaveWeightFromScale(String scaleMac, String weight) throws Exception{
+        var authScale = scaleDataService.GetScaleFromMac(scaleMac);
+        if (authScale == null) throw new Exception(String.format("Can't find scale by mac %s", scaleMac));
+
+        //Lado do cliente (id numerico, sem hash / mac
+        var commercialScale = GetScaleFromHash(authScale.getScaleId().toString());
+        Integer scaleId = commercialScale.getScaleId();
+        Integer babyId = -1;
+        try {
+             babyId = this.GetBabyIdByScaleId(scaleId);
+        }
+        catch(Exception e){
+            //do nothing
+        }
 
         var w = new WeightRequest();
         w.setBabyId(babyId);
         w.setScaleId(scaleId);
-        w.setWeightValue(Double.parseDouble(weight));
+        var extractWeight = weight.split("\\{")[1].replace("}","");
+        w.setWeightValue(Double.parseDouble(extractWeight));
 
         iWeight.save(w.ToModel());
         this.SetFlagWeightNow(1);
@@ -194,10 +210,18 @@ public class ScaleService {
         this.SetFlagWeightNow(0);
         mqttPublisherService.sendCriticalCommand(mac, MQTT_COMMAND_MEASURE);
 
+        System.out.println("Waiting Esp32 Answer ");
+        startTime = System.nanoTime();
         while(this.GetFlagWeightNow() == 0){
-            //Do nothing
+            long durationInSeconds = (System.nanoTime() - startTime) / 1_000_000_000;
+            if (durationInSeconds < 5) System.out.print(".");
+            else throw new Exception(String.format("Can't receive an answer of scale %d", id));
+            Thread.sleep(Duration.ofMillis(200));
         };
-        return iWeight.findByScaleId(id).getLast();
+
+        var lastWeight =iWeight.findByScaleId(id).getLast();
+        System.out.printf("Last weight received from esp32 %.2f %n", lastWeight.getWeightValue());
+        return lastWeight;
     }
 
  

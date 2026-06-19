@@ -1,2658 +1,2846 @@
 {
-	"info": {
-		"_postman_id": "5a85383e-2832-4c4f-a189-46d75028ad90",
-		"name": "PreciousWeight",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "27144858",
-		"_collection_link": "https://my-team-5898.postman.co/workspace/Team-Workspace~1ae73fb0-52ae-468a-810a-c7cc44091695/collection/27144858-5a85383e-2832-4c4f-a189-46d75028ad90?action=share&source=collection_link&creator=27144858"
-	},
-	"item": [
-		{
-			"name": "Audit",
-			"item": [
-				{
-					"name": "Babies",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Response time is less than 500ms\", function () {\r",
-									"  pm.expect(pm.response.responseTime).to.be.below(500);\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"Content-Type header is application/json\", function () {\r",
-									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"Response has the required fields - accessToken and expiresIn\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData).to.be.an('object');\r",
-									"    pm.expect(responseData.accessToken).to.exist;\r",
-									"    pm.expect(responseData.expiresIn).to.exist;\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"AccessToken is a non-empty string\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData.accessToken).to.be.a('string').and.to.have.lengthOf.at.least(1, \"AccessToken should be a non-empty string\");\r",
-									"});\r",
-									"\r",
-									"pm.test(\"ExpiresIn is a non-negative integer\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData.expiresIn).to.be.a('number').and.to.be.at.least(0, \"ExpiresIn should be a non-negative integer\");\r",
-									"});"
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						},
-						{
-							"listen": "prerequest",
-							"script": {
-								"exec": [
-									""
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						}
-					],
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{token}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{base_url}}/audit/babies/1",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"audit",
-								"babies",
-								"1"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Scales",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Response time is less than 500ms\", function () {\r",
-									"  pm.expect(pm.response.responseTime).to.be.below(500);\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"Content-Type header is application/json\", function () {\r",
-									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"Response has the required fields - accessToken and expiresIn\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData).to.be.an('object');\r",
-									"    pm.expect(responseData.accessToken).to.exist;\r",
-									"    pm.expect(responseData.expiresIn).to.exist;\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"AccessToken is a non-empty string\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData.accessToken).to.be.a('string').and.to.have.lengthOf.at.least(1, \"AccessToken should be a non-empty string\");\r",
-									"});\r",
-									"\r",
-									"pm.test(\"ExpiresIn is a non-negative integer\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData.expiresIn).to.be.a('number').and.to.be.at.least(0, \"ExpiresIn should be a non-negative integer\");\r",
-									"});"
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						},
-						{
-							"listen": "prerequest",
-							"script": {
-								"exec": [
-									""
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						}
-					],
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{token}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{base_url}}/audit/scales/1",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"audit",
-								"scales",
-								"1"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Weights",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Response time is less than 500ms\", function () {\r",
-									"  pm.expect(pm.response.responseTime).to.be.below(500);\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"Content-Type header is application/json\", function () {\r",
-									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"Response has the required fields - accessToken and expiresIn\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData).to.be.an('object');\r",
-									"    pm.expect(responseData.accessToken).to.exist;\r",
-									"    pm.expect(responseData.expiresIn).to.exist;\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"AccessToken is a non-empty string\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData.accessToken).to.be.a('string').and.to.have.lengthOf.at.least(1, \"AccessToken should be a non-empty string\");\r",
-									"});\r",
-									"\r",
-									"pm.test(\"ExpiresIn is a non-negative integer\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData.expiresIn).to.be.a('number').and.to.be.at.least(0, \"ExpiresIn should be a non-negative integer\");\r",
-									"});"
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						},
-						{
-							"listen": "prerequest",
-							"script": {
-								"exec": [
-									""
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						}
-					],
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{token}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{base_url}}/audit/weights/1",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"audit",
-								"weights",
-								"1"
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "Auth",
-			"item": [
-				{
-					"name": "Login",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"\r",
-									"  pm.test(\"Response status code is 200\", function () {\r",
-									"    pm.response.to.have.status(200);\r",
-									"    pm.collectionVariables.set(\"token\", pm.response.json().accessToken);\r",
-									"  });\r",
-									"\r",
-									"\r",
-									"pm.test(\"Response time is less than 500ms\", function () {\r",
-									"  pm.expect(pm.response.responseTime).to.be.below(500);\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"Content-Type header is application/json\", function () {\r",
-									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"Response has the required fields - accessToken and expiresIn\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData).to.be.an('object');\r",
-									"    pm.expect(responseData.accessToken).to.exist;\r",
-									"    pm.expect(responseData.expiresIn).to.exist;\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"AccessToken is a non-empty string\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData.accessToken).to.be.a('string').and.to.have.lengthOf.at.least(1, \"AccessToken should be a non-empty string\");\r",
-									"});\r",
-									"\r",
-									"pm.test(\"ExpiresIn is a non-negative integer\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData.expiresIn).to.be.a('number').and.to.be.at.least(0, \"ExpiresIn should be a non-negative integer\");\r",
-									"});"
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						},
-						{
-							"listen": "prerequest",
-							"script": {
-								"exec": [
-									""
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						}
-					],
-					"request": {
-						"auth": {
-							"type": "noauth"
-						},
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\r\n    \"email\":\"admin@precious_weight.com\",\r\n    \"password\": \"M1U1tr4H4rdPa550w0rd!\"\r\n}\r\n// {\r\n//     \"email\":\"asdasd@asd\",\r\n//     \"password\": \"Abacaxi1234!\"\r\n// }\r\n// {\r\n//     \"email\":\"\",\r\n//     \"password\": \"\"\r\n// }",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{base_url}}/login",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"login"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Reset Password",
-					"request": {
-						"auth": {
-							"type": "noauth"
-						},
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\r\n    \"email\":\"asdasd@asd\",\r\n    \"password\": \"Abacaxi1234!\"\r\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{base_url}}/reset_password",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"reset_password"
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "Baby",
-			"item": [
-				{
-					"name": "List Babies",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Response time is less than 500ms\", function () {\r",
-									"  pm.expect(pm.response.responseTime).to.be.below(500);\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"Content-Type header is application/json\", function () {\r",
-									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"Response has the required fields - accessToken and expiresIn\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData).to.be.an('object');\r",
-									"    pm.expect(responseData.accessToken).to.exist;\r",
-									"    pm.expect(responseData.expiresIn).to.exist;\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"AccessToken is a non-empty string\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData.accessToken).to.be.a('string').and.to.have.lengthOf.at.least(1, \"AccessToken should be a non-empty string\");\r",
-									"});\r",
-									"\r",
-									"pm.test(\"ExpiresIn is a non-negative integer\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData.expiresIn).to.be.a('number').and.to.be.at.least(0, \"ExpiresIn should be a non-negative integer\");\r",
-									"});"
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						},
-						{
-							"listen": "prerequest",
-							"script": {
-								"exec": [
-									""
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						}
-					],
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{token}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{base_url}}/babies/list",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"babies",
-								"list"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Search Baby by Id",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Response time is less than 500ms\", function () {\r",
-									"  pm.expect(pm.response.responseTime).to.be.below(500);\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"Content-Type header is application/json\", function () {\r",
-									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"Response has the required fields - accessToken and expiresIn\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData).to.be.an('object');\r",
-									"    pm.expect(responseData.accessToken).to.exist;\r",
-									"    pm.expect(responseData.expiresIn).to.exist;\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"AccessToken is a non-empty string\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData.accessToken).to.be.a('string').and.to.have.lengthOf.at.least(1, \"AccessToken should be a non-empty string\");\r",
-									"});\r",
-									"\r",
-									"pm.test(\"ExpiresIn is a non-negative integer\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData.expiresIn).to.be.a('number').and.to.be.at.least(0, \"ExpiresIn should be a non-negative integer\");\r",
-									"});"
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						},
-						{
-							"listen": "prerequest",
-							"script": {
-								"exec": [
-									""
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						}
-					],
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{token}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{base_url}}/babies/search/2",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"babies",
-								"search",
-								"2"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Insert Baby",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Response time is less than 500ms\", function () {\r",
-									"  pm.expect(pm.response.responseTime).to.be.below(500);\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"Content-Type header is application/json\", function () {\r",
-									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"Response has the required fields - accessToken and expiresIn\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData).to.be.an('object');\r",
-									"    pm.expect(responseData.accessToken).to.exist;\r",
-									"    pm.expect(responseData.expiresIn).to.exist;\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"AccessToken is a non-empty string\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData.accessToken).to.be.a('string').and.to.have.lengthOf.at.least(1, \"AccessToken should be a non-empty string\");\r",
-									"});\r",
-									"\r",
-									"pm.test(\"ExpiresIn is a non-negative integer\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData.expiresIn).to.be.a('number').and.to.be.at.least(0, \"ExpiresIn should be a non-negative integer\");\r",
-									"});"
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						},
-						{
-							"listen": "prerequest",
-							"script": {
-								"exec": [
-									""
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						}
-					],
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{token}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "// {\r\n//     \"babyHospitalId\": \"4588662\",\r\n//     \"babyName\": \"Otaviano Pereira\",\r\n//     \"babyMotherName\": \"Marcela Campos\",\r\n//     \"babyBirthDate\": \"2025-02-25\",\r\n//     \"babyState\": 1,\r\n//     \"babyImageText\": \"ABCDE#$%\" // simulando dado da pulseira com qr code - li qr code e achei dado\r\n// }\r\n{\r\n    \"babyHospitalId\": \"85456727\",\r\n    \"babyName\": \"Mariana da Silva\",\r\n    \"babyMotherName\": \"Priscilla Campos\",\r\n    \"babyBirthDate\": \"2025-04-12\",\r\n    \"babyWeightTime\":\"12:40$20:40\",\r\n    \"babyState\": 1\r\n    // bebê não tem pulseira com qr code capaz de ser traduzido, precisa salvar imagem\r\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{base_url}}/babies/save",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"babies",
-								"save"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Get Qr Code Image",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Response time is less than 500ms\", function () {\r",
-									"  pm.expect(pm.response.responseTime).to.be.below(500);\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"Content-Type header is application/json\", function () {\r",
-									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"Response has the required fields - accessToken and expiresIn\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData).to.be.an('object');\r",
-									"    pm.expect(responseData.accessToken).to.exist;\r",
-									"    pm.expect(responseData.expiresIn).to.exist;\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"AccessToken is a non-empty string\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData.accessToken).to.be.a('string').and.to.have.lengthOf.at.least(1, \"AccessToken should be a non-empty string\");\r",
-									"});\r",
-									"\r",
-									"pm.test(\"ExpiresIn is a non-negative integer\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData.expiresIn).to.be.a('number').and.to.be.at.least(0, \"ExpiresIn should be a non-negative integer\");\r",
-									"});"
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						},
-						{
-							"listen": "prerequest",
-							"script": {
-								"exec": [
-									""
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						}
-					],
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{token}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{base_url}}/babies/qr/8",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"babies",
-								"qr",
-								"8"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Update QR Code",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Response time is less than 500ms\", function () {\r",
-									"  pm.expect(pm.response.responseTime).to.be.below(500);\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"Content-Type header is application/json\", function () {\r",
-									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"Response has the required fields - accessToken and expiresIn\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData).to.be.an('object');\r",
-									"    pm.expect(responseData.accessToken).to.exist;\r",
-									"    pm.expect(responseData.expiresIn).to.exist;\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"AccessToken is a non-empty string\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData.accessToken).to.be.a('string').and.to.have.lengthOf.at.least(1, \"AccessToken should be a non-empty string\");\r",
-									"});\r",
-									"\r",
-									"pm.test(\"ExpiresIn is a non-negative integer\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData.expiresIn).to.be.a('number').and.to.be.at.least(0, \"ExpiresIn should be a non-negative integer\");\r",
-									"});"
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						},
-						{
-							"listen": "prerequest",
-							"script": {
-								"exec": [
-									""
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						}
-					],
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{token}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "formdata",
-							"formdata": [
-								{
-									"key": "file",
-									"type": "file",
-									"src": []
-								}
-							]
-						},
-						"url": {
-							"raw": "{{base_url}}/babies/image/2",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"babies",
-								"image",
-								"2"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Enable Baby",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Response time is less than 500ms\", function () {\r",
-									"  pm.expect(pm.response.responseTime).to.be.below(500);\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"Content-Type header is application/json\", function () {\r",
-									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"Response has the required fields - accessToken and expiresIn\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData).to.be.an('object');\r",
-									"    pm.expect(responseData.accessToken).to.exist;\r",
-									"    pm.expect(responseData.expiresIn).to.exist;\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"AccessToken is a non-empty string\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData.accessToken).to.be.a('string').and.to.have.lengthOf.at.least(1, \"AccessToken should be a non-empty string\");\r",
-									"});\r",
-									"\r",
-									"pm.test(\"ExpiresIn is a non-negative integer\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData.expiresIn).to.be.a('number').and.to.be.at.least(0, \"ExpiresIn should be a non-negative integer\");\r",
-									"});"
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						},
-						{
-							"listen": "prerequest",
-							"script": {
-								"exec": [
-									""
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						}
-					],
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{token}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{base_url}}/babies/enable/1",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"babies",
-								"enable",
-								"1"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Disable Baby",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Response time is less than 500ms\", function () {\r",
-									"  pm.expect(pm.response.responseTime).to.be.below(500);\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"Content-Type header is application/json\", function () {\r",
-									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"Response has the required fields - accessToken and expiresIn\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData).to.be.an('object');\r",
-									"    pm.expect(responseData.accessToken).to.exist;\r",
-									"    pm.expect(responseData.expiresIn).to.exist;\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"AccessToken is a non-empty string\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData.accessToken).to.be.a('string').and.to.have.lengthOf.at.least(1, \"AccessToken should be a non-empty string\");\r",
-									"});\r",
-									"\r",
-									"pm.test(\"ExpiresIn is a non-negative integer\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData.expiresIn).to.be.a('number').and.to.be.at.least(0, \"ExpiresIn should be a non-negative integer\");\r",
-									"});"
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						},
-						{
-							"listen": "prerequest",
-							"script": {
-								"exec": [
-									""
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						}
-					],
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{token}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{base_url}}/babies/disable/1",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"babies",
-								"disable",
-								"1"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Update Baby Data",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Response time is less than 500ms\", function () {\r",
-									"  pm.expect(pm.response.responseTime).to.be.below(500);\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"Content-Type header is application/json\", function () {\r",
-									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"Response has the required fields - accessToken and expiresIn\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData).to.be.an('object');\r",
-									"    pm.expect(responseData.accessToken).to.exist;\r",
-									"    pm.expect(responseData.expiresIn).to.exist;\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"AccessToken is a non-empty string\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData.accessToken).to.be.a('string').and.to.have.lengthOf.at.least(1, \"AccessToken should be a non-empty string\");\r",
-									"});\r",
-									"\r",
-									"pm.test(\"ExpiresIn is a non-negative integer\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData.expiresIn).to.be.a('number').and.to.be.at.least(0, \"ExpiresIn should be a non-negative integer\");\r",
-									"});"
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						},
-						{
-							"listen": "prerequest",
-							"script": {
-								"exec": [
-									""
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						}
-					],
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{token}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{    //id 1\r\n    \"babyWeightTime\":\"03:36$03:37\"\r\n}\r\n\r\n// { //id 2\r\n//     \"babyHospitalId\": \"85456727\",\r\n//     \"babyName\": \"Mariana da Silva\",\r\n//     \"babyMotherName\": \"Priscilla Campos\",\r\n//     \"babyBirthDate\": \"2025-04-12\",\r\n//     \"babyWeightTime\":\"12:40$20:40\",\r\n//     \"babyState\": 1\r\n//     // bebê não tem pulseira com qr code capaz de ser traduzido, precisa salvar imagem\r\n// }",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{base_url}}/babies/update/2",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"babies",
-								"update",
-								"2"
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "Scales",
-			"item": [
-				{
-					"name": "List Scales",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Response time is less than 500ms\", function () {\r",
-									"  pm.expect(pm.response.responseTime).to.be.below(500);\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"Content-Type header is application/json\", function () {\r",
-									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"Response has the required fields - accessToken and expiresIn\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData).to.be.an('object');\r",
-									"    pm.expect(responseData.accessToken).to.exist;\r",
-									"    pm.expect(responseData.expiresIn).to.exist;\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"AccessToken is a non-empty string\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData.accessToken).to.be.a('string').and.to.have.lengthOf.at.least(1, \"AccessToken should be a non-empty string\");\r",
-									"});\r",
-									"\r",
-									"pm.test(\"ExpiresIn is a non-negative integer\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData.expiresIn).to.be.a('number').and.to.be.at.least(0, \"ExpiresIn should be a non-negative integer\");\r",
-									"});"
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						},
-						{
-							"listen": "prerequest",
-							"script": {
-								"exec": [
-									""
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						}
-					],
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{token}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{base_url}}/scales/list",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"scales",
-								"list"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Search Scale by Id",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Response time is less than 500ms\", function () {\r",
-									"  pm.expect(pm.response.responseTime).to.be.below(500);\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"Content-Type header is application/json\", function () {\r",
-									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"Response has the required fields - accessToken and expiresIn\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData).to.be.an('object');\r",
-									"    pm.expect(responseData.accessToken).to.exist;\r",
-									"    pm.expect(responseData.expiresIn).to.exist;\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"AccessToken is a non-empty string\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData.accessToken).to.be.a('string').and.to.have.lengthOf.at.least(1, \"AccessToken should be a non-empty string\");\r",
-									"});\r",
-									"\r",
-									"pm.test(\"ExpiresIn is a non-negative integer\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData.expiresIn).to.be.a('number').and.to.be.at.least(0, \"ExpiresIn should be a non-negative integer\");\r",
-									"});"
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						},
-						{
-							"listen": "prerequest",
-							"script": {
-								"exec": [
-									""
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						}
-					],
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{token}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{base_url}}/scales/search/1",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"scales",
-								"search",
-								"1"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Set Scale to User",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Response time is less than 500ms\", function () {\r",
-									"  pm.expect(pm.response.responseTime).to.be.below(500);\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"Content-Type header is application/json\", function () {\r",
-									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"Response has the required fields - accessToken and expiresIn\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData).to.be.an('object');\r",
-									"    pm.expect(responseData.accessToken).to.exist;\r",
-									"    pm.expect(responseData.expiresIn).to.exist;\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"AccessToken is a non-empty string\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData.accessToken).to.be.a('string').and.to.have.lengthOf.at.least(1, \"AccessToken should be a non-empty string\");\r",
-									"});\r",
-									"\r",
-									"pm.test(\"ExpiresIn is a non-negative integer\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData.expiresIn).to.be.a('number').and.to.be.at.least(0, \"ExpiresIn should be a non-negative integer\");\r",
-									"});"
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						},
-						{
-							"listen": "prerequest",
-							"script": {
-								"exec": [
-									""
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						}
-					],
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{token}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{base_url}}/scales/set/c40155eb-b7e5-4bc9-8746-a986eb03bcee",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"scales",
-								"set",
-								"c40155eb-b7e5-4bc9-8746-a986eb03bcee"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Enable Scale",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Response time is less than 500ms\", function () {\r",
-									"  pm.expect(pm.response.responseTime).to.be.below(500);\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"Content-Type header is application/json\", function () {\r",
-									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"Response has the required fields - accessToken and expiresIn\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData).to.be.an('object');\r",
-									"    pm.expect(responseData.accessToken).to.exist;\r",
-									"    pm.expect(responseData.expiresIn).to.exist;\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"AccessToken is a non-empty string\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData.accessToken).to.be.a('string').and.to.have.lengthOf.at.least(1, \"AccessToken should be a non-empty string\");\r",
-									"});\r",
-									"\r",
-									"pm.test(\"ExpiresIn is a non-negative integer\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData.expiresIn).to.be.a('number').and.to.be.at.least(0, \"ExpiresIn should be a non-negative integer\");\r",
-									"});"
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						},
-						{
-							"listen": "prerequest",
-							"script": {
-								"exec": [
-									""
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						}
-					],
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{token}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{base_url}}/scales/enable/1",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"scales",
-								"enable",
-								"1"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Disable Scale",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Response time is less than 500ms\", function () {\r",
-									"  pm.expect(pm.response.responseTime).to.be.below(500);\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"Content-Type header is application/json\", function () {\r",
-									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"Response has the required fields - accessToken and expiresIn\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData).to.be.an('object');\r",
-									"    pm.expect(responseData.accessToken).to.exist;\r",
-									"    pm.expect(responseData.expiresIn).to.exist;\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"AccessToken is a non-empty string\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData.accessToken).to.be.a('string').and.to.have.lengthOf.at.least(1, \"AccessToken should be a non-empty string\");\r",
-									"});\r",
-									"\r",
-									"pm.test(\"ExpiresIn is a non-negative integer\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData.expiresIn).to.be.a('number').and.to.be.at.least(0, \"ExpiresIn should be a non-negative integer\");\r",
-									"});"
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						},
-						{
-							"listen": "prerequest",
-							"script": {
-								"exec": [
-									""
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						}
-					],
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{token}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{base_url}}/scales/disable/2",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"scales",
-								"disable",
-								"2"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Set Baby to Scale",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Response time is less than 500ms\", function () {\r",
-									"  pm.expect(pm.response.responseTime).to.be.below(500);\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"Content-Type header is application/json\", function () {\r",
-									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"Response has the required fields - accessToken and expiresIn\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData).to.be.an('object');\r",
-									"    pm.expect(responseData.accessToken).to.exist;\r",
-									"    pm.expect(responseData.expiresIn).to.exist;\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"AccessToken is a non-empty string\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData.accessToken).to.be.a('string').and.to.have.lengthOf.at.least(1, \"AccessToken should be a non-empty string\");\r",
-									"});\r",
-									"\r",
-									"pm.test(\"ExpiresIn is a non-negative integer\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData.expiresIn).to.be.a('number').and.to.be.at.least(0, \"ExpiresIn should be a non-negative integer\");\r",
-									"});"
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						},
-						{
-							"listen": "prerequest",
-							"script": {
-								"exec": [
-									""
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						}
-					],
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{token}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\r\n    \"scaleId\":1,\r\n    \"babyId\":2\r\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{base_url}}/scales/baby/set",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"scales",
-								"baby",
-								"set"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Unset Baby to Scale",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Response time is less than 500ms\", function () {\r",
-									"  pm.expect(pm.response.responseTime).to.be.below(500);\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"Content-Type header is application/json\", function () {\r",
-									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"Response has the required fields - accessToken and expiresIn\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData).to.be.an('object');\r",
-									"    pm.expect(responseData.accessToken).to.exist;\r",
-									"    pm.expect(responseData.expiresIn).to.exist;\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"AccessToken is a non-empty string\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData.accessToken).to.be.a('string').and.to.have.lengthOf.at.least(1, \"AccessToken should be a non-empty string\");\r",
-									"});\r",
-									"\r",
-									"pm.test(\"ExpiresIn is a non-negative integer\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData.expiresIn).to.be.a('number').and.to.be.at.least(0, \"ExpiresIn should be a non-negative integer\");\r",
-									"});"
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						},
-						{
-							"listen": "prerequest",
-							"script": {
-								"exec": [
-									""
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						}
-					],
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{token}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{    \r\n    \"scaleId\":1\r\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{base_url}}/scales/baby/unset",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"scales",
-								"baby",
-								"unset"
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "Users",
-			"item": [
-				{
-					"name": "List Users",
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{token}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{base_url}}/users/list",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"users",
-								"list"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Create User",
-					"request": {
-						"auth": {
-							"type": "noauth"
-						},
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\r\n        \"email\":\"biruleibes@asd\",\r\n    \"password\": \"Abacaxi1234!\",\r\n    \"organization\": \"Hospital Geral\"\r\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{base_url}}/users/new",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"users",
-								"new"
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "Weight",
-			"item": [
-				{
-					"name": "List Weights",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Response time is less than 500ms\", function () {\r",
-									"  pm.expect(pm.response.responseTime).to.be.below(500);\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"Content-Type header is application/json\", function () {\r",
-									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"Response has the required fields - accessToken and expiresIn\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData).to.be.an('object');\r",
-									"    pm.expect(responseData.accessToken).to.exist;\r",
-									"    pm.expect(responseData.expiresIn).to.exist;\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"AccessToken is a non-empty string\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData.accessToken).to.be.a('string').and.to.have.lengthOf.at.least(1, \"AccessToken should be a non-empty string\");\r",
-									"});\r",
-									"\r",
-									"pm.test(\"ExpiresIn is a non-negative integer\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData.expiresIn).to.be.a('number').and.to.be.at.least(0, \"ExpiresIn should be a non-negative integer\");\r",
-									"});"
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						},
-						{
-							"listen": "prerequest",
-							"script": {
-								"exec": [
-									""
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						}
-					],
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{token}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{base_url}}/weight/list",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"weight",
-								"list"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Insert Weight",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Response time is less than 500ms\", function () {\r",
-									"  pm.expect(pm.response.responseTime).to.be.below(500);\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"Content-Type header is application/json\", function () {\r",
-									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"Response has the required fields - accessToken and expiresIn\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData).to.be.an('object');\r",
-									"    pm.expect(responseData.accessToken).to.exist;\r",
-									"    pm.expect(responseData.expiresIn).to.exist;\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"AccessToken is a non-empty string\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData.accessToken).to.be.a('string').and.to.have.lengthOf.at.least(1, \"AccessToken should be a non-empty string\");\r",
-									"});\r",
-									"\r",
-									"pm.test(\"ExpiresIn is a non-negative integer\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData.expiresIn).to.be.a('number').and.to.be.at.least(0, \"ExpiresIn should be a non-negative integer\");\r",
-									"});"
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						},
-						{
-							"listen": "prerequest",
-							"script": {
-								"exec": [
-									""
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						}
-					],
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{token}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\r\n    \"babyId\": 2,\r\n    \"scaleId\": 1,\r\n    \"weightValue\": 1295\r\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{base_url}}/weight/save",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"weight",
-								"save"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Get Baby Weights",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Response time is less than 500ms\", function () {\r",
-									"  pm.expect(pm.response.responseTime).to.be.below(500);\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"Content-Type header is application/json\", function () {\r",
-									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"Response has the required fields - accessToken and expiresIn\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData).to.be.an('object');\r",
-									"    pm.expect(responseData.accessToken).to.exist;\r",
-									"    pm.expect(responseData.expiresIn).to.exist;\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"AccessToken is a non-empty string\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData.accessToken).to.be.a('string').and.to.have.lengthOf.at.least(1, \"AccessToken should be a non-empty string\");\r",
-									"});\r",
-									"\r",
-									"pm.test(\"ExpiresIn is a non-negative integer\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData.expiresIn).to.be.a('number').and.to.be.at.least(0, \"ExpiresIn should be a non-negative integer\");\r",
-									"});"
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						},
-						{
-							"listen": "prerequest",
-							"script": {
-								"exec": [
-									""
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						}
-					],
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{token}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{base_url}}/weight/babies/2",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"weight",
-								"babies",
-								"2"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Get Scale Weights",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Response time is less than 500ms\", function () {\r",
-									"  pm.expect(pm.response.responseTime).to.be.below(500);\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"Content-Type header is application/json\", function () {\r",
-									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"Response has the required fields - accessToken and expiresIn\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData).to.be.an('object');\r",
-									"    pm.expect(responseData.accessToken).to.exist;\r",
-									"    pm.expect(responseData.expiresIn).to.exist;\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"AccessToken is a non-empty string\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData.accessToken).to.be.a('string').and.to.have.lengthOf.at.least(1, \"AccessToken should be a non-empty string\");\r",
-									"});\r",
-									"\r",
-									"pm.test(\"ExpiresIn is a non-negative integer\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData.expiresIn).to.be.a('number').and.to.be.at.least(0, \"ExpiresIn should be a non-negative integer\");\r",
-									"});"
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						},
-						{
-							"listen": "prerequest",
-							"script": {
-								"exec": [
-									""
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						}
-					],
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{token}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{base_url}}/weight/scales/2",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"weight",
-								"scales",
-								"2"
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "ScaleData",
-			"item": [
-				{
-					"name": "List Data from Scales",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Response time is less than 500ms\", function () {\r",
-									"  pm.expect(pm.response.responseTime).to.be.below(500);\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"Content-Type header is application/json\", function () {\r",
-									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"Response has the required fields - accessToken and expiresIn\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData).to.be.an('object');\r",
-									"    pm.expect(responseData.accessToken).to.exist;\r",
-									"    pm.expect(responseData.expiresIn).to.exist;\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"AccessToken is a non-empty string\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData.accessToken).to.be.a('string').and.to.have.lengthOf.at.least(1, \"AccessToken should be a non-empty string\");\r",
-									"});\r",
-									"\r",
-									"pm.test(\"ExpiresIn is a non-negative integer\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData.expiresIn).to.be.a('number').and.to.be.at.least(0, \"ExpiresIn should be a non-negative integer\");\r",
-									"});"
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						},
-						{
-							"listen": "prerequest",
-							"script": {
-								"exec": [
-									""
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						}
-					],
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{token}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{base_url}}/scale_data/list",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"scale_data",
-								"list"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Add New Scale Data",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Response time is less than 500ms\", function () {\r",
-									"  pm.expect(pm.response.responseTime).to.be.below(500);\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"Content-Type header is application/json\", function () {\r",
-									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"Response has the required fields - accessToken and expiresIn\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData).to.be.an('object');\r",
-									"    pm.expect(responseData.accessToken).to.exist;\r",
-									"    pm.expect(responseData.expiresIn).to.exist;\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"AccessToken is a non-empty string\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData.accessToken).to.be.a('string').and.to.have.lengthOf.at.least(1, \"AccessToken should be a non-empty string\");\r",
-									"});\r",
-									"\r",
-									"pm.test(\"ExpiresIn is a non-negative integer\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData.expiresIn).to.be.a('number').and.to.be.at.least(0, \"ExpiresIn should be a non-negative integer\");\r",
-									"});"
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						},
-						{
-							"listen": "prerequest",
-							"script": {
-								"exec": [
-									""
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						}
-					],
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{token}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\r\n    \"mac\": \"D0EF76590B7C\"\r\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{base_url}}/scale_data/new",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"scale_data",
-								"new"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Update Scale Data",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Response time is less than 500ms\", function () {\r",
-									"  pm.expect(pm.response.responseTime).to.be.below(500);\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"Content-Type header is application/json\", function () {\r",
-									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"Response has the required fields - accessToken and expiresIn\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData).to.be.an('object');\r",
-									"    pm.expect(responseData.accessToken).to.exist;\r",
-									"    pm.expect(responseData.expiresIn).to.exist;\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"AccessToken is a non-empty string\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData.accessToken).to.be.a('string').and.to.have.lengthOf.at.least(1, \"AccessToken should be a non-empty string\");\r",
-									"});\r",
-									"\r",
-									"pm.test(\"ExpiresIn is a non-negative integer\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData.expiresIn).to.be.a('number').and.to.be.at.least(0, \"ExpiresIn should be a non-negative integer\");\r",
-									"});"
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						},
-						{
-							"listen": "prerequest",
-							"script": {
-								"exec": [
-									""
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						}
-					],
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{token}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\r\n    \"id\":\"6784f9d2-ab64-4219-bb54-9a0e062d0861\",\r\n    \"mac\": \"D0EF76590B7C\"\r\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{base_url}}/scale_data/update",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"scale_data",
-								"update"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Search Scale Data by Id",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Response time is less than 500ms\", function () {\r",
-									"  pm.expect(pm.response.responseTime).to.be.below(500);\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"Content-Type header is application/json\", function () {\r",
-									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"Response has the required fields - accessToken and expiresIn\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData).to.be.an('object');\r",
-									"    pm.expect(responseData.accessToken).to.exist;\r",
-									"    pm.expect(responseData.expiresIn).to.exist;\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"AccessToken is a non-empty string\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData.accessToken).to.be.a('string').and.to.have.lengthOf.at.least(1, \"AccessToken should be a non-empty string\");\r",
-									"});\r",
-									"\r",
-									"pm.test(\"ExpiresIn is a non-negative integer\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData.expiresIn).to.be.a('number').and.to.be.at.least(0, \"ExpiresIn should be a non-negative integer\");\r",
-									"});"
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						},
-						{
-							"listen": "prerequest",
-							"script": {
-								"exec": [
-									""
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						}
-					],
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{token}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{base_url}}/scale_data/search/c40155eb-b7e5-4bc9-8746-a986eb03bcee",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"scale_data",
-								"search",
-								"c40155eb-b7e5-4bc9-8746-a986eb03bcee"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Get QrCode by Id",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Response time is less than 500ms\", function () {\r",
-									"  pm.expect(pm.response.responseTime).to.be.below(500);\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"Content-Type header is application/json\", function () {\r",
-									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"Response has the required fields - accessToken and expiresIn\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData).to.be.an('object');\r",
-									"    pm.expect(responseData.accessToken).to.exist;\r",
-									"    pm.expect(responseData.expiresIn).to.exist;\r",
-									"});\r",
-									"\r",
-									"\r",
-									"pm.test(\"AccessToken is a non-empty string\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData.accessToken).to.be.a('string').and.to.have.lengthOf.at.least(1, \"AccessToken should be a non-empty string\");\r",
-									"});\r",
-									"\r",
-									"pm.test(\"ExpiresIn is a non-negative integer\", function () {\r",
-									"    const responseData = pm.response.json();\r",
-									"    \r",
-									"    pm.expect(responseData.expiresIn).to.be.a('number').and.to.be.at.least(0, \"ExpiresIn should be a non-negative integer\");\r",
-									"});"
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						},
-						{
-							"listen": "prerequest",
-							"script": {
-								"exec": [
-									""
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						}
-					],
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{token}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{base_url}}/scale_data/qr/c40155eb-b7e5-4bc9-8746-a986eb03bcee",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"scale_data",
-								"qr",
-								"c40155eb-b7e5-4bc9-8746-a986eb03bcee"
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		}
-	],
-	"event": [
-		{
-			"listen": "prerequest",
-			"script": {
-				"type": "text/javascript",
-				"packages": {},
-				"exec": [
-					""
-				]
-			}
-		},
-		{
-			"listen": "test",
-			"script": {
-				"type": "text/javascript",
-				"packages": {},
-				"exec": [
-					""
-				]
-			}
-		}
-	],
-	"variable": [
-		{
-			"key": "base_url",
-			"value": "",
-			"type": "default"
-		},
-		{
-			"key": "token",
-			"value": ""
-		}
-	]
+  "info": {
+    "_postman_id": "5a85383e-2832-4c4f-a189-46d75028ad90",
+    "name": "PreciousWeight",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "27144858",
+    "_collection_link": "https://go.postman.co/collection/27144858-5a85383e-2832-4c4f-a189-46d75028ad90?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Audit",
+      "item": [
+        {
+          "name": "Babies",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Response time is less than 500ms\", function () {\r",
+                  "  pm.expect(pm.response.responseTime).to.be.below(500);\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"Content-Type header is application/json\", function () {\r",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"Response has the required fields - accessToken and expiresIn\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData).to.be.an('object');\r",
+                  "    pm.expect(responseData.accessToken).to.exist;\r",
+                  "    pm.expect(responseData.expiresIn).to.exist;\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"AccessToken is a non-empty string\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData.accessToken).to.be.a('string').and.to.have.lengthOf.at.least(1, \"AccessToken should be a non-empty string\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"ExpiresIn is a non-negative integer\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData.expiresIn).to.be.a('number').and.to.be.at.least(0, \"ExpiresIn should be a non-negative integer\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/audit/babies/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "audit",
+                "babies",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Scales",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Response time is less than 500ms\", function () {\r",
+                  "  pm.expect(pm.response.responseTime).to.be.below(500);\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"Content-Type header is application/json\", function () {\r",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"Response has the required fields - accessToken and expiresIn\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData).to.be.an('object');\r",
+                  "    pm.expect(responseData.accessToken).to.exist;\r",
+                  "    pm.expect(responseData.expiresIn).to.exist;\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"AccessToken is a non-empty string\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData.accessToken).to.be.a('string').and.to.have.lengthOf.at.least(1, \"AccessToken should be a non-empty string\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"ExpiresIn is a non-negative integer\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData.expiresIn).to.be.a('number').and.to.be.at.least(0, \"ExpiresIn should be a non-negative integer\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/audit/scales/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "audit",
+                "scales",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Weights",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Response time is less than 500ms\", function () {\r",
+                  "  pm.expect(pm.response.responseTime).to.be.below(500);\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"Content-Type header is application/json\", function () {\r",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"Response has the required fields - accessToken and expiresIn\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData).to.be.an('object');\r",
+                  "    pm.expect(responseData.accessToken).to.exist;\r",
+                  "    pm.expect(responseData.expiresIn).to.exist;\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"AccessToken is a non-empty string\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData.accessToken).to.be.a('string').and.to.have.lengthOf.at.least(1, \"AccessToken should be a non-empty string\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"ExpiresIn is a non-negative integer\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData.expiresIn).to.be.a('number').and.to.be.at.least(0, \"ExpiresIn should be a non-negative integer\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/audit/weights/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "audit",
+                "weights",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "\r",
+                  "  pm.test(\"Response status code is 200\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "    pm.collectionVariables.set(\"token\", pm.response.json().accessToken);\r",
+                  "  });\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"Response time is less than 500ms\", function () {\r",
+                  "  pm.expect(pm.response.responseTime).to.be.below(500);\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"Content-Type header is application/json\", function () {\r",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"Response has the required fields - accessToken and expiresIn\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData).to.be.an('object');\r",
+                  "    pm.expect(responseData.accessToken).to.exist;\r",
+                  "    pm.expect(responseData.expiresIn).to.exist;\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"AccessToken is a non-empty string\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData.accessToken).to.be.a('string').and.to.have.lengthOf.at.least(1, \"AccessToken should be a non-empty string\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"ExpiresIn is a non-negative integer\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData.expiresIn).to.be.a('number').and.to.be.at.least(0, \"ExpiresIn should be a non-negative integer\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"email\":\"admin@precious_weight.com\",\r\n    \"password\": \"M1U1tr4H4rdPa550w0rd!\"\r\n}\r\n// {\r\n//     \"email\":\"teste_haniel@gmail.com\",\r\n//     \"password\": \"Abacaxi1234!\"\r\n// }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"email\":\"asdasd@asd\",\r\n    \"password\": \"Abacaxi1234!\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/reset_password",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "reset_password"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Baby",
+      "item": [
+        {
+          "name": "List Babies",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Response time is less than 500ms\", function () {\r",
+                  "  pm.expect(pm.response.responseTime).to.be.below(500);\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"Content-Type header is application/json\", function () {\r",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"Response has the required fields - accessToken and expiresIn\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData).to.be.an('object');\r",
+                  "    pm.expect(responseData.accessToken).to.exist;\r",
+                  "    pm.expect(responseData.expiresIn).to.exist;\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"AccessToken is a non-empty string\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData.accessToken).to.be.a('string').and.to.have.lengthOf.at.least(1, \"AccessToken should be a non-empty string\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"ExpiresIn is a non-negative integer\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData.expiresIn).to.be.a('number').and.to.be.at.least(0, \"ExpiresIn should be a non-negative integer\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/babies/list",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "babies",
+                "list"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Search Baby by Id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Response time is less than 500ms\", function () {\r",
+                  "  pm.expect(pm.response.responseTime).to.be.below(500);\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"Content-Type header is application/json\", function () {\r",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"Response has the required fields - accessToken and expiresIn\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData).to.be.an('object');\r",
+                  "    pm.expect(responseData.accessToken).to.exist;\r",
+                  "    pm.expect(responseData.expiresIn).to.exist;\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"AccessToken is a non-empty string\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData.accessToken).to.be.a('string').and.to.have.lengthOf.at.least(1, \"AccessToken should be a non-empty string\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"ExpiresIn is a non-negative integer\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData.expiresIn).to.be.a('number').and.to.be.at.least(0, \"ExpiresIn should be a non-negative integer\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/babies/search/2",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "babies",
+                "search",
+                "2"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Insert Baby",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Response time is less than 500ms\", function () {\r",
+                  "  pm.expect(pm.response.responseTime).to.be.below(500);\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"Content-Type header is application/json\", function () {\r",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"Response has the required fields - accessToken and expiresIn\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData).to.be.an('object');\r",
+                  "    pm.expect(responseData.accessToken).to.exist;\r",
+                  "    pm.expect(responseData.expiresIn).to.exist;\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"AccessToken is a non-empty string\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData.accessToken).to.be.a('string').and.to.have.lengthOf.at.least(1, \"AccessToken should be a non-empty string\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"ExpiresIn is a non-negative integer\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData.expiresIn).to.be.a('number').and.to.be.at.least(0, \"ExpiresIn should be a non-negative integer\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "// {\r\n//     \"babyHospitalId\": \"4588662\",\r\n//     \"babyName\": \"Otaviano Pereira\",\r\n//     \"babyMotherName\": \"Marcela Campos\",\r\n//     \"babyBirthDate\": \"2025-02-25\",\r\n//     \"babyState\": 1,\r\n//     \"babyImageText\": \"ABCDE#$%\" // simulando dado da pulseira com qr code - li qr code e achei dado\r\n// }\r\n{\r\n    \"babyHospitalId\": \"85456727\",\r\n    \"babyName\": \"Mariana da Silva\",\r\n    \"babyMotherName\": \"Priscilla Campos\",\r\n    \"babyBirthDate\": \"2025-04-12\",\r\n    \"babyWeightTime\":\"12:40$20:40\",\r\n    \"babyState\": 1\r\n    // bebê não tem pulseira com qr code capaz de ser traduzido, precisa salvar imagem\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/babies/save",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "babies",
+                "save"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Qr Code Image",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Response time is less than 500ms\", function () {\r",
+                  "  pm.expect(pm.response.responseTime).to.be.below(500);\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"Content-Type header is application/json\", function () {\r",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"Response has the required fields - accessToken and expiresIn\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData).to.be.an('object');\r",
+                  "    pm.expect(responseData.accessToken).to.exist;\r",
+                  "    pm.expect(responseData.expiresIn).to.exist;\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"AccessToken is a non-empty string\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData.accessToken).to.be.a('string').and.to.have.lengthOf.at.least(1, \"AccessToken should be a non-empty string\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"ExpiresIn is a non-negative integer\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData.expiresIn).to.be.a('number').and.to.be.at.least(0, \"ExpiresIn should be a non-negative integer\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/babies/qr/8",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "babies",
+                "qr",
+                "8"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update QR Code",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Response time is less than 500ms\", function () {\r",
+                  "  pm.expect(pm.response.responseTime).to.be.below(500);\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"Content-Type header is application/json\", function () {\r",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"Response has the required fields - accessToken and expiresIn\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData).to.be.an('object');\r",
+                  "    pm.expect(responseData.accessToken).to.exist;\r",
+                  "    pm.expect(responseData.expiresIn).to.exist;\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"AccessToken is a non-empty string\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData.accessToken).to.be.a('string').and.to.have.lengthOf.at.least(1, \"AccessToken should be a non-empty string\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"ExpiresIn is a non-negative integer\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData.expiresIn).to.be.a('number').and.to.be.at.least(0, \"ExpiresIn should be a non-negative integer\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "value": null
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/babies/image/2",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "babies",
+                "image",
+                "2"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Enable Baby",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Response time is less than 500ms\", function () {\r",
+                  "  pm.expect(pm.response.responseTime).to.be.below(500);\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"Content-Type header is application/json\", function () {\r",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"Response has the required fields - accessToken and expiresIn\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData).to.be.an('object');\r",
+                  "    pm.expect(responseData.accessToken).to.exist;\r",
+                  "    pm.expect(responseData.expiresIn).to.exist;\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"AccessToken is a non-empty string\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData.accessToken).to.be.a('string').and.to.have.lengthOf.at.least(1, \"AccessToken should be a non-empty string\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"ExpiresIn is a non-negative integer\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData.expiresIn).to.be.a('number').and.to.be.at.least(0, \"ExpiresIn should be a non-negative integer\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/babies/enable/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "babies",
+                "enable",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Disable Baby",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Response time is less than 500ms\", function () {\r",
+                  "  pm.expect(pm.response.responseTime).to.be.below(500);\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"Content-Type header is application/json\", function () {\r",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"Response has the required fields - accessToken and expiresIn\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData).to.be.an('object');\r",
+                  "    pm.expect(responseData.accessToken).to.exist;\r",
+                  "    pm.expect(responseData.expiresIn).to.exist;\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"AccessToken is a non-empty string\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData.accessToken).to.be.a('string').and.to.have.lengthOf.at.least(1, \"AccessToken should be a non-empty string\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"ExpiresIn is a non-negative integer\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData.expiresIn).to.be.a('number').and.to.be.at.least(0, \"ExpiresIn should be a non-negative integer\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/babies/disable/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "babies",
+                "disable",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Baby Data",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Response time is less than 500ms\", function () {\r",
+                  "  pm.expect(pm.response.responseTime).to.be.below(500);\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"Content-Type header is application/json\", function () {\r",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"Response has the required fields - accessToken and expiresIn\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData).to.be.an('object');\r",
+                  "    pm.expect(responseData.accessToken).to.exist;\r",
+                  "    pm.expect(responseData.expiresIn).to.exist;\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"AccessToken is a non-empty string\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData.accessToken).to.be.a('string').and.to.have.lengthOf.at.least(1, \"AccessToken should be a non-empty string\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"ExpiresIn is a non-negative integer\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData.expiresIn).to.be.a('number').and.to.be.at.least(0, \"ExpiresIn should be a non-negative integer\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "// {    //id 1\r\n//     \"babyWeightTime\":\"03:36$03:37\"\r\n// }\r\n\r\n// { //id 2\r\n//     \"babyHospitalId\": \"85456727\",\r\n//     \"babyName\": \"Mariana da Silva\",\r\n//     \"babyMotherName\": \"Priscilla Campos\",\r\n//     \"babyBirthDate\": \"2025-04-12\",\r\n//     \"babyWeightTime\":\"12:40$20:40\",\r\n//     \"babyState\": 1\r\n//     // bebê não tem pulseira com qr code capaz de ser traduzido, precisa salvar imagem\r\n// }\r\n\r\n{\r\n        \"babyName\": \"Mariana da Silva\",\r\n        \"babyMotherName\": \"Priscilla Campos\",\r\n        \"babyBirthDate\": \"2025-04-12\",\r\n        \"babyState\": 1,\r\n        \"babyWeightTime\": \"01:48$17:32\",\r\n        \"babyHospitalId\": \"85456727\",\r\n        \"babyImageText\": null,\r\n        \"babyImageQr\": true,\r\n        \"scaleId\": 1\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/babies/update/8",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "babies",
+                "update",
+                "8"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Scales",
+      "item": [
+        {
+          "name": "List Scales",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Response time is less than 500ms\", function () {\r",
+                  "  pm.expect(pm.response.responseTime).to.be.below(500);\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"Content-Type header is application/json\", function () {\r",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"Response has the required fields - accessToken and expiresIn\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData).to.be.an('object');\r",
+                  "    pm.expect(responseData.accessToken).to.exist;\r",
+                  "    pm.expect(responseData.expiresIn).to.exist;\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"AccessToken is a non-empty string\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData.accessToken).to.be.a('string').and.to.have.lengthOf.at.least(1, \"AccessToken should be a non-empty string\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"ExpiresIn is a non-negative integer\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData.expiresIn).to.be.a('number').and.to.be.at.least(0, \"ExpiresIn should be a non-negative integer\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/scales/list",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "scales",
+                "list"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Search Scale by Id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Response time is less than 500ms\", function () {\r",
+                  "  pm.expect(pm.response.responseTime).to.be.below(500);\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"Content-Type header is application/json\", function () {\r",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"Response has the required fields - accessToken and expiresIn\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData).to.be.an('object');\r",
+                  "    pm.expect(responseData.accessToken).to.exist;\r",
+                  "    pm.expect(responseData.expiresIn).to.exist;\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"AccessToken is a non-empty string\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData.accessToken).to.be.a('string').and.to.have.lengthOf.at.least(1, \"AccessToken should be a non-empty string\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"ExpiresIn is a non-negative integer\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData.expiresIn).to.be.a('number').and.to.be.at.least(0, \"ExpiresIn should be a non-negative integer\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/scales/search/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "scales",
+                "search",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Search Scale by Hash",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Response time is less than 500ms\", function () {\r",
+                  "  pm.expect(pm.response.responseTime).to.be.below(500);\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"Content-Type header is application/json\", function () {\r",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"Response has the required fields - accessToken and expiresIn\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData).to.be.an('object');\r",
+                  "    pm.expect(responseData.accessToken).to.exist;\r",
+                  "    pm.expect(responseData.expiresIn).to.exist;\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"AccessToken is a non-empty string\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData.accessToken).to.be.a('string').and.to.have.lengthOf.at.least(1, \"AccessToken should be a non-empty string\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"ExpiresIn is a non-negative integer\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData.expiresIn).to.be.a('number').and.to.be.at.least(0, \"ExpiresIn should be a non-negative integer\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/scales/hash/e3706d4a-d871-4a3f-a27c-e8a1fb35a351",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "scales",
+                "hash",
+                "e3706d4a-d871-4a3f-a27c-e8a1fb35a351"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Set Scale to User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Response time is less than 500ms\", function () {\r",
+                  "  pm.expect(pm.response.responseTime).to.be.below(500);\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"Content-Type header is application/json\", function () {\r",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"Response has the required fields - accessToken and expiresIn\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData).to.be.an('object');\r",
+                  "    pm.expect(responseData.accessToken).to.exist;\r",
+                  "    pm.expect(responseData.expiresIn).to.exist;\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"AccessToken is a non-empty string\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData.accessToken).to.be.a('string').and.to.have.lengthOf.at.least(1, \"AccessToken should be a non-empty string\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"ExpiresIn is a non-negative integer\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData.expiresIn).to.be.a('number').and.to.be.at.least(0, \"ExpiresIn should be a non-negative integer\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/scales/set/3b052da1-7680-4424-b8dd-0c6da587dda4",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "scales",
+                "set",
+                "3b052da1-7680-4424-b8dd-0c6da587dda4"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Enable Scale",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Response time is less than 500ms\", function () {\r",
+                  "  pm.expect(pm.response.responseTime).to.be.below(500);\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"Content-Type header is application/json\", function () {\r",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"Response has the required fields - accessToken and expiresIn\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData).to.be.an('object');\r",
+                  "    pm.expect(responseData.accessToken).to.exist;\r",
+                  "    pm.expect(responseData.expiresIn).to.exist;\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"AccessToken is a non-empty string\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData.accessToken).to.be.a('string').and.to.have.lengthOf.at.least(1, \"AccessToken should be a non-empty string\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"ExpiresIn is a non-negative integer\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData.expiresIn).to.be.a('number').and.to.be.at.least(0, \"ExpiresIn should be a non-negative integer\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/scales/enable/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "scales",
+                "enable",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Disable Scale",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Response time is less than 500ms\", function () {\r",
+                  "  pm.expect(pm.response.responseTime).to.be.below(500);\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"Content-Type header is application/json\", function () {\r",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"Response has the required fields - accessToken and expiresIn\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData).to.be.an('object');\r",
+                  "    pm.expect(responseData.accessToken).to.exist;\r",
+                  "    pm.expect(responseData.expiresIn).to.exist;\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"AccessToken is a non-empty string\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData.accessToken).to.be.a('string').and.to.have.lengthOf.at.least(1, \"AccessToken should be a non-empty string\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"ExpiresIn is a non-negative integer\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData.expiresIn).to.be.a('number').and.to.be.at.least(0, \"ExpiresIn should be a non-negative integer\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/scales/disable/2",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "scales",
+                "disable",
+                "2"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Set Baby to Scale",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Response time is less than 500ms\", function () {\r",
+                  "  pm.expect(pm.response.responseTime).to.be.below(500);\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"Content-Type header is application/json\", function () {\r",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"Response has the required fields - accessToken and expiresIn\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData).to.be.an('object');\r",
+                  "    pm.expect(responseData.accessToken).to.exist;\r",
+                  "    pm.expect(responseData.expiresIn).to.exist;\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"AccessToken is a non-empty string\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData.accessToken).to.be.a('string').and.to.have.lengthOf.at.least(1, \"AccessToken should be a non-empty string\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"ExpiresIn is a non-negative integer\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData.expiresIn).to.be.a('number').and.to.be.at.least(0, \"ExpiresIn should be a non-negative integer\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"scaleId\":1,\r\n    \"babyId\":2\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/scales/baby/set",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "scales",
+                "baby",
+                "set"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Unset Baby to Scale",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Response time is less than 500ms\", function () {\r",
+                  "  pm.expect(pm.response.responseTime).to.be.below(500);\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"Content-Type header is application/json\", function () {\r",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"Response has the required fields - accessToken and expiresIn\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData).to.be.an('object');\r",
+                  "    pm.expect(responseData.accessToken).to.exist;\r",
+                  "    pm.expect(responseData.expiresIn).to.exist;\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"AccessToken is a non-empty string\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData.accessToken).to.be.a('string').and.to.have.lengthOf.at.least(1, \"AccessToken should be a non-empty string\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"ExpiresIn is a non-negative integer\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData.expiresIn).to.be.a('number').and.to.be.at.least(0, \"ExpiresIn should be a non-negative integer\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{    \r\n    \"scaleId\":1\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/scales/baby/unset",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "scales",
+                "baby",
+                "unset"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Measure Weight Now",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Response time is less than 500ms\", function () {\r",
+                  "  pm.expect(pm.response.responseTime).to.be.below(500);\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"Content-Type header is application/json\", function () {\r",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"Response has the required fields - accessToken and expiresIn\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData).to.be.an('object');\r",
+                  "    pm.expect(responseData.accessToken).to.exist;\r",
+                  "    pm.expect(responseData.expiresIn).to.exist;\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"AccessToken is a non-empty string\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData.accessToken).to.be.a('string').and.to.have.lengthOf.at.least(1, \"AccessToken should be a non-empty string\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"ExpiresIn is a non-negative integer\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData.expiresIn).to.be.a('number').and.to.be.at.least(0, \"ExpiresIn should be a non-negative integer\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/scales/measure_now/2",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "scales",
+                "measure_now",
+                "2"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "List Users",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/users/list",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "users",
+                "list"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create User",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n        \"email\":\"biruleibes@asd\",\r\n    \"password\": \"Abacaxi1234!\",\r\n    \"organization\": \"Hospital Geral\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/users/new",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "users",
+                "new"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Weight",
+      "item": [
+        {
+          "name": "List Weights",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Response time is less than 500ms\", function () {\r",
+                  "  pm.expect(pm.response.responseTime).to.be.below(500);\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"Content-Type header is application/json\", function () {\r",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"Response has the required fields - accessToken and expiresIn\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData).to.be.an('object');\r",
+                  "    pm.expect(responseData.accessToken).to.exist;\r",
+                  "    pm.expect(responseData.expiresIn).to.exist;\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"AccessToken is a non-empty string\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData.accessToken).to.be.a('string').and.to.have.lengthOf.at.least(1, \"AccessToken should be a non-empty string\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"ExpiresIn is a non-negative integer\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData.expiresIn).to.be.a('number').and.to.be.at.least(0, \"ExpiresIn should be a non-negative integer\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/weight/list",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "weight",
+                "list"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Insert Weight",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Response time is less than 500ms\", function () {\r",
+                  "  pm.expect(pm.response.responseTime).to.be.below(500);\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"Content-Type header is application/json\", function () {\r",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"Response has the required fields - accessToken and expiresIn\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData).to.be.an('object');\r",
+                  "    pm.expect(responseData.accessToken).to.exist;\r",
+                  "    pm.expect(responseData.expiresIn).to.exist;\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"AccessToken is a non-empty string\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData.accessToken).to.be.a('string').and.to.have.lengthOf.at.least(1, \"AccessToken should be a non-empty string\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"ExpiresIn is a non-negative integer\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData.expiresIn).to.be.a('number').and.to.be.at.least(0, \"ExpiresIn should be a non-negative integer\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"babyId\": 2,\r\n    \"scaleId\": 1,\r\n    \"weightValue\": 1295\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/weight/save",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "weight",
+                "save"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Baby Weights",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Response time is less than 500ms\", function () {\r",
+                  "  pm.expect(pm.response.responseTime).to.be.below(500);\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"Content-Type header is application/json\", function () {\r",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"Response has the required fields - accessToken and expiresIn\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData).to.be.an('object');\r",
+                  "    pm.expect(responseData.accessToken).to.exist;\r",
+                  "    pm.expect(responseData.expiresIn).to.exist;\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"AccessToken is a non-empty string\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData.accessToken).to.be.a('string').and.to.have.lengthOf.at.least(1, \"AccessToken should be a non-empty string\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"ExpiresIn is a non-negative integer\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData.expiresIn).to.be.a('number').and.to.be.at.least(0, \"ExpiresIn should be a non-negative integer\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/weight/babies/2",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "weight",
+                "babies",
+                "2"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Scale Weights",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Response time is less than 500ms\", function () {\r",
+                  "  pm.expect(pm.response.responseTime).to.be.below(500);\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"Content-Type header is application/json\", function () {\r",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"Response has the required fields - accessToken and expiresIn\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData).to.be.an('object');\r",
+                  "    pm.expect(responseData.accessToken).to.exist;\r",
+                  "    pm.expect(responseData.expiresIn).to.exist;\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"AccessToken is a non-empty string\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData.accessToken).to.be.a('string').and.to.have.lengthOf.at.least(1, \"AccessToken should be a non-empty string\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"ExpiresIn is a non-negative integer\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData.expiresIn).to.be.a('number').and.to.be.at.least(0, \"ExpiresIn should be a non-negative integer\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/weight/scales/2",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "weight",
+                "scales",
+                "2"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "ScaleData",
+      "item": [
+        {
+          "name": "List Data from Scales",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Response time is less than 500ms\", function () {\r",
+                  "  pm.expect(pm.response.responseTime).to.be.below(500);\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"Content-Type header is application/json\", function () {\r",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"Response has the required fields - accessToken and expiresIn\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData).to.be.an('object');\r",
+                  "    pm.expect(responseData.accessToken).to.exist;\r",
+                  "    pm.expect(responseData.expiresIn).to.exist;\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"AccessToken is a non-empty string\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData.accessToken).to.be.a('string').and.to.have.lengthOf.at.least(1, \"AccessToken should be a non-empty string\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"ExpiresIn is a non-negative integer\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData.expiresIn).to.be.a('number').and.to.be.at.least(0, \"ExpiresIn should be a non-negative integer\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/scale_data/list",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "scale_data",
+                "list"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Add New Scale Data",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Response time is less than 500ms\", function () {\r",
+                  "  pm.expect(pm.response.responseTime).to.be.below(500);\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"Content-Type header is application/json\", function () {\r",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"Response has the required fields - accessToken and expiresIn\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData).to.be.an('object');\r",
+                  "    pm.expect(responseData.accessToken).to.exist;\r",
+                  "    pm.expect(responseData.expiresIn).to.exist;\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"AccessToken is a non-empty string\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData.accessToken).to.be.a('string').and.to.have.lengthOf.at.least(1, \"AccessToken should be a non-empty string\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"ExpiresIn is a non-negative integer\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData.expiresIn).to.be.a('number').and.to.be.at.least(0, \"ExpiresIn should be a non-negative integer\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"mac\": \"D0EF76590B7C\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/scale_data/new",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "scale_data",
+                "new"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Scale Data",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Response time is less than 500ms\", function () {\r",
+                  "  pm.expect(pm.response.responseTime).to.be.below(500);\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"Content-Type header is application/json\", function () {\r",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"Response has the required fields - accessToken and expiresIn\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData).to.be.an('object');\r",
+                  "    pm.expect(responseData.accessToken).to.exist;\r",
+                  "    pm.expect(responseData.expiresIn).to.exist;\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"AccessToken is a non-empty string\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData.accessToken).to.be.a('string').and.to.have.lengthOf.at.least(1, \"AccessToken should be a non-empty string\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"ExpiresIn is a non-negative integer\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData.expiresIn).to.be.a('number').and.to.be.at.least(0, \"ExpiresIn should be a non-negative integer\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"id\":\"6784f9d2-ab64-4219-bb54-9a0e062d0861\",\r\n    \"mac\": \"D0EF76590B7C\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/scale_data/update",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "scale_data",
+                "update"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Search Scale Data by Id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Response time is less than 500ms\", function () {\r",
+                  "  pm.expect(pm.response.responseTime).to.be.below(500);\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"Content-Type header is application/json\", function () {\r",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"Response has the required fields - accessToken and expiresIn\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData).to.be.an('object');\r",
+                  "    pm.expect(responseData.accessToken).to.exist;\r",
+                  "    pm.expect(responseData.expiresIn).to.exist;\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"AccessToken is a non-empty string\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData.accessToken).to.be.a('string').and.to.have.lengthOf.at.least(1, \"AccessToken should be a non-empty string\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"ExpiresIn is a non-negative integer\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData.expiresIn).to.be.a('number').and.to.be.at.least(0, \"ExpiresIn should be a non-negative integer\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/scale_data/search/3b052da1-7680-4424-b8dd-0c6da587dda4",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "scale_data",
+                "search",
+                "3b052da1-7680-4424-b8dd-0c6da587dda4"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get QrCode by Id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Response time is less than 500ms\", function () {\r",
+                  "  pm.expect(pm.response.responseTime).to.be.below(500);\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"Content-Type header is application/json\", function () {\r",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"Response has the required fields - accessToken and expiresIn\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData).to.be.an('object');\r",
+                  "    pm.expect(responseData.accessToken).to.exist;\r",
+                  "    pm.expect(responseData.expiresIn).to.exist;\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"AccessToken is a non-empty string\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData.accessToken).to.be.a('string').and.to.have.lengthOf.at.least(1, \"AccessToken should be a non-empty string\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"ExpiresIn is a non-negative integer\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(responseData.expiresIn).to.be.a('number').and.to.be.at.least(0, \"ExpiresIn should be a non-negative integer\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/scale_data/qr/3b052da1-7680-4424-b8dd-0c6da587dda4",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "scale_data",
+                "qr",
+                "3b052da1-7680-4424-b8dd-0c6da587dda4"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "",
+      "type": "default"
+    },
+    {
+      "key": "token",
+      "value": ""
+    }
+  ]
 }
