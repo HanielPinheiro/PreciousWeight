@@ -24,8 +24,10 @@ class BabiesDetails extends StatefulWidget {
 }
 
 class _BabiesDetailsState extends State<BabiesDetails> {
+  bool _isLoading = true;
   BabyModel? _currentBaby;
   List<WeightModel>? _weights;
+  bool _hasScale = false;
 
   @override
   void initState() {
@@ -36,14 +38,49 @@ class _BabiesDetailsState extends State<BabiesDetails> {
   }
 
   Future<void> _loadData() async {
-    final baby = await context.read<BabyProvider>().getBabyById(context, widget.id);
-    final weights = await baby.getWeights();
+    final babyProvider = context.read<BabyProvider>();
+    final scalesProvider = context.read<ScalesProvider>();
+    final baby = await babyProvider.getBabyById(context, widget.id);
+
+    ScaleModel? assignedScale = baby.assignedScale;
+    if (baby.scaleId != null && assignedScale == null) {
+      try {
+        assignedScale = await scalesProvider.getScaleById(context, baby.scaleId!);
+      } catch (_) {
+        assignedScale = null;
+      }
+    }
+
+    final resolvedBaby = assignedScale != null ? baby.copyWith(assignedScale: assignedScale) : baby;
+    final weights = await resolvedBaby.getWeights();
 
     if (mounted) {
       setState(() {
-        _currentBaby = baby;
+        _currentBaby = resolvedBaby;
         _weights = weights;
+        _hasScale = resolvedBaby.scaleId != null || resolvedBaby.assignedScale != null;
+        _isLoading = false;
       });
+    }
+  }
+
+  Future<ScaleModel?> _getAssignedScale() async {
+    final currentBaby = _currentBaby;
+    if (currentBaby == null) return null;
+    if (currentBaby.assignedScale != null) return currentBaby.assignedScale;
+    if (currentBaby.scaleId == null) return null;
+
+    try {
+      final scale = await context.read<ScalesProvider>().getScaleById(context, currentBaby.scaleId!);
+      if (mounted) {
+        setState(() {
+          _currentBaby = currentBaby.copyWith(assignedScale: scale);
+          _hasScale = true;
+        });
+      }
+      return scale;
+    } catch (_) {
+      return null;
     }
   }
 
@@ -55,7 +92,12 @@ class _BabiesDetailsState extends State<BabiesDetails> {
   }
 
   Future<void> _unlinkScaleToBaby() async {
-    final _scale = _currentBaby!.assignedScale!;
+    final _scale = await _getAssignedScale();
+    if (_scale == null) {
+      if (!mounted) return;
+      await ElementsOfViews.showSimpleDialog(context, 'Balança Associada', 'Não foi possível carregar os dados da balança associada.');
+      return;
+    }
     final result = await ElementsOfViews.showConfirmDialog(context, 'Balança Associada', "ID: #${_scale.id}\n Hash: ${_scale.hash}\nStatus: ${ScaleModel.ScaleOperation(_scale.status)}", btnCancelLbl: 'Fechar', btnConfirmLbl: "Desassociar");
     if (!result) return;
     await context.read<ScalesProvider>().setOrUnsetBaby(context, _scale.id);
@@ -72,21 +114,15 @@ class _BabiesDetailsState extends State<BabiesDetails> {
       Row(mainAxisSize: MainAxisSize.max, crossAxisAlignment: CrossAxisAlignment.center, mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
         ElementsOfViews.SimpleButton(context, "Editar", () async {
           await Navigator.push(context, MaterialPageRoute(builder: (context) => BabiesEdit(baby: _currentBaby!)));
-          final new_data = await context.read<BabyProvider>().getBabyById(context, _currentBaby!.id!);
-          setState(() {
-            _currentBaby = new_data;
-          });
+          await _loadData();
         }),
         ElementsOfViews.SimpleButton(context, _currentBaby!.isActive! ? "Inativar Paciente" : "Ativar Paciente", () async {
           await context.read<BabyProvider>().toggleBabyStatus(context, _currentBaby!);
-          final new_data = await context.read<BabyProvider>().getBabyById(context, _currentBaby!.id!);
-          setState(() {
-            _currentBaby = new_data;
-          });
-        }, false, _currentBaby!.assignedScale != null)
+          await _loadData();
+        }, false, _hasScale)
       ]),
-      ElementsOfViews.SimpleButton(context, "${_currentBaby!.assignedScale != null ? 'Dados da Balança' : 'Associar Bebê à Balança'}", () async {
-        if (_currentBaby!.assignedScale == null) {
+      ElementsOfViews.SimpleButton(context, _hasScale ? 'Dados da Balança' : 'Associar Bebê à Balança', () async {
+        if (!_hasScale) {
           final scale = await Navigator.push(context, MaterialPageRoute(builder: (context) => ScaleBabies(baby: _currentBaby)));
           if (scale != null) await _linkScaleToBaby(scale);
         } else {
@@ -103,6 +139,7 @@ class _BabiesDetailsState extends State<BabiesDetails> {
 
   Widget _buildDataColumn() {
     final space = 10.0;
+    final linkedScale = _currentBaby!.assignedScale;
 
     return ListView(
       shrinkWrap: true,
@@ -118,6 +155,16 @@ class _BabiesDetailsState extends State<BabiesDetails> {
           Text("Data de Nascimento", style: titleLarge.copyWith(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold)),
           Text(dateFormatter_objToDb.format(_currentBaby!.birthDate!), style: headlineSmall.copyWith(color: Theme.of(context).colorScheme.primary)),
           SizedBox(height: space),
+          if (_hasScale) ...[
+            Text("Balança Associada", style: titleLarge.copyWith(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold)),
+            Text("#${linkedScale?.id ?? _currentBaby!.scaleId}", style: headlineSmall.copyWith(color: Theme.of(context).colorScheme.primary)),
+            if (linkedScale != null) ...[
+              SizedBox(height: space / 2),
+              Text("Hash: ${linkedScale.hash}", style: titleLarge.copyWith(color: Theme.of(context).colorScheme.primary), textAlign: TextAlign.center),
+              Text("Status: ${ScaleModel.ScaleOperation(linkedScale.status)}", style: titleLarge.copyWith(color: Theme.of(context).colorScheme.primary), textAlign: TextAlign.center),
+            ],
+            SizedBox(height: space),
+          ],
           if (_currentBaby!.qrCodeText != null) _qrIdData(space)
         ])
       ],
@@ -174,32 +221,28 @@ class _BabiesDetailsState extends State<BabiesDetails> {
         ));
   }
 
-  Future<List<Widget>> _renderData() async {
-    if (_currentBaby == null) return [const Center(child: CircularProgressIndicator())];
-    return [
-      Column(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-        Expanded(flex: 1, child: _showFlex1()),
-        Expanded(flex: 2, child: _showFlex2()),
-        Expanded(flex: 4, child: _showFlex3()),
-      ])
-    ];
-  }
-
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<List<Widget>>(
-      future: _renderData(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        } else if (snapshot.hasError) {
-          return AlertDialog(content: Text('Error: ${snapshot.error}'));
-        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return AlertDialog(content: Text('No babies found'));
-        } else {
-          return SafeArea(child: Scaffold(appBar: ElementsOfViews.SimpleAppBar(context, 'Dados do Bebê'), body: snapshot.data![0]));
-        }
-      },
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_currentBaby == null) {
+      return AlertDialog(content: Text('No babies found'));
+    }
+
+    return SafeArea(
+      child: Scaffold(
+        appBar: ElementsOfViews.SimpleAppBar(context, 'Dados do Bebê'),
+        body: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            Expanded(flex: 1, child: _showFlex1()),
+            Expanded(flex: 2, child: _showFlex2()),
+            Expanded(flex: 4, child: _showFlex3()),
+          ],
+        ),
+      ),
     );
   }
 }
