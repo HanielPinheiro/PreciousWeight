@@ -141,10 +141,9 @@ class _BabiesDetailsState extends State<BabiesDetails> {
     final space = 10.0;
     final linkedScale = _currentBaby!.assignedScale;
 
-    return ListView(
-      shrinkWrap: true,
-      physics: ClampingScrollPhysics(), // Prevents scrolling issues
-      children: [
+    return Scrollbar( thumbVisibility: true,
+        child:ListView(shrinkWrap: false, physics: const AlwaysScrollableScrollPhysics(),
+        children: [
         Column(mainAxisAlignment: MainAxisAlignment.spaceEvenly, crossAxisAlignment: CrossAxisAlignment.center, children: [
           Text("Nome do Bebê", style: titleLarge.copyWith(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold)),
           Text(_currentBaby!.name!, style: headlineSmall.copyWith(color: Theme.of(context).colorScheme.primary)),
@@ -166,9 +165,8 @@ class _BabiesDetailsState extends State<BabiesDetails> {
             SizedBox(height: space),
           ],
           if (_currentBaby!.qrCodeText != null) _qrIdData(space)
-        ])
-      ],
-    );
+        ]),
+        ]));
   }
 
   Widget _showFlex2() {
