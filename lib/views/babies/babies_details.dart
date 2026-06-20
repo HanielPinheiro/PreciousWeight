@@ -212,11 +212,9 @@ class _BabiesDetailsState extends State<BabiesDetails> {
         child: Column(
           children: [
             ElementsOfViews.CardToText(context, "Evolução Ponderal"),
-            _weights != null && _weights!.length > 1
+            _weights != null && _weights!.isNotEmpty
                 ? BabyWeightChart(historicWeight: _weights!)
-                : _weights != null && _weights!.length > 0
-                    ? Column(children: [_wrapText(context, "Último peso: ${_weights![0].weight} g"), _wrapText(context, "Data: ${dateFormatter_log.format(_weights![0].date)}")])
-                    : _wrapText(context, "Sem dados suficientes")
+                : _wrapText(context, "Sem dados suficientes")
           ],
         ));
   }
