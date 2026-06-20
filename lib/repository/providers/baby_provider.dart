@@ -1,26 +1,33 @@
+import 'dart:async';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 
 import '../../api/baby_api.dart';
 import '../../api/scale_api.dart';
 import '../../models/baby.dart';
-import '../helper/conversions.dart';
 import '../services/api_service.dart';
 
 class BabyProvider with ChangeNotifier {
-  final _scaleApi = new ScaleApi();
-  final _babyApi = new BabyApi();
+  final ScaleApi _scaleApi;
+  final BabyApi _babyApi;
 
   final Map<int, BabyModel> _babiesMap = {};
 
-  List<BabyModel> get babies => _babiesMap.values.toList();
+  List<BabyModel> get babies => _babiesMap.values.toList()..sort((a, b) => (a.id ?? 0).compareTo(b.id ?? 0));
+  List<BabyModel> get activeBabies => babies.where((baby) => baby.isActive == true).toList();
+  List<BabyModel> get inactiveBabies => babies.where((baby) => baby.isActive != true).toList();
+  List<BabyModel> get availableBabies => activeBabies.where((baby) => baby.scaleId == null).toList();
 
   bool _isLoading = false;
 
   bool get isLoading => _isLoading;
 
-  BabyProvider() {
-    _updateCache();
+  BabyProvider({BabyApi? babyApi, ScaleApi? scaleApi, bool autoload = true})
+      : _babyApi = babyApi ?? BabyApi(),
+        _scaleApi = scaleApi ?? ScaleApi() {
+    if (autoload) {
+      loadBabies();
+    }
   }
 
   Future<void> _updateCache() async {
@@ -28,21 +35,12 @@ class BabyProvider with ChangeNotifier {
       _isLoading = true;
       notifyListeners();
 
-      final bb = await _babyApi.listBabies();
-      if (bb == null) return;
+      final bb = await _babyApi.listBabies() ?? [];
       _babiesMap.clear();
       for (final newBaby in bb) {
-        BabyModel tempBaby = newBaby;
-        if (newBaby.hasQrCode) {
-          final qrData = await _babyApi.getQrCode(newBaby.id!.toString());
-          if (qrData != null) tempBaby = tempBaby.copyWith(qrCodeImage: Image.memory(qrData));
-        }
-
-        if (newBaby.scaleId != null) {
-          final scale = await _scaleApi.getScaleFromId(newBaby.scaleId!.toString());
-          tempBaby = tempBaby.copyWith(assignedScale: scale);
-        }
-        _babiesMap[tempBaby.id!] = tempBaby;
+        if (newBaby.id == null) continue;
+        _babiesMap[newBaby.id!] = newBaby;
+        unawaited(_populateBabyModelWithExtraData(newBaby));
       }
     } finally {
       _isLoading = false;
@@ -50,9 +48,69 @@ class BabyProvider with ChangeNotifier {
     }
   }
 
+  Future<void> _populateBabyModelWithExtraData(BabyModel newBaby) async {
+    final babyId = newBaby.id;
+    if (babyId == null) return;
+
+    try {
+      BabyModel tempBaby = newBaby;
+
+      if (newBaby.hasQrCode) {
+        final qrData = await _babyApi.getQrCode(babyId.toString());
+        if (qrData != null) {
+          tempBaby = tempBaby.copyWith(qrCodeImage: Image.memory(qrData), hasQr: true);
+        }
+      }
+
+      if (newBaby.scaleId != null) {
+        final scale = await _scaleApi.getScaleFromId(newBaby.scaleId!.toString());
+        tempBaby = tempBaby.copyWith(assignedScale: scale);
+      }
+
+      _babiesMap[babyId] = tempBaby;
+    } catch (_) {
+      _babiesMap[babyId] = newBaby;
+    } finally {
+      notifyListeners();
+    }
+  }
+
   bool _babyExists(int baby_id) => _babiesMap.containsKey(baby_id);
 
   BabyModel? _getBabyFromMap(int baby_id) => _babiesMap[baby_id];
+
+  void _validateBaby(BabyModel baby, {bool requireId = false}) {
+    if (requireId && baby.id == null) {
+      throw ArgumentError('Baby id is required');
+    }
+    if (baby.hospitalRegister.trim().isEmpty) {
+      throw ArgumentError('Hospital register is required');
+    }
+    if ((baby.name ?? '').trim().isEmpty) {
+      throw ArgumentError('Baby name is required');
+    }
+    if ((baby.motherName ?? '').trim().isEmpty) {
+      throw ArgumentError('Mother name is required');
+    }
+    if (baby.birthDate == null) {
+      throw ArgumentError('Birth date is required');
+    }
+    if (baby.isActive == null) {
+      throw ArgumentError('Baby active status is required');
+    }
+    if ((baby.weightHour ?? '').trim().isEmpty) {
+      throw ArgumentError('Weight schedule is required');
+    }
+  }
+
+  Future<void> _setNewBabyToCache(BabyModel baby) async {
+    final babyId = baby.id;
+    if (babyId == null) {
+      throw Exception('Baby id is required');
+    }
+    _babiesMap[babyId] = baby;
+    await _populateBabyModelWithExtraData(baby);
+  }
 
   Future<void> loadBabies() async {
     await _updateCache();
@@ -75,10 +133,18 @@ class BabyProvider with ChangeNotifier {
   }
 
   Future<void> toggleBabyStatus(BuildContext context, BabyModel baby) async {
+    await enableOrDisableBaby(context, baby);
+  }
+
+  Future<void> enableOrDisableBaby(BuildContext context, BabyModel baby, {bool? enable}) async {
     try {
-      final result = await SafeApi.call<bool>(context: context, apiCall: () async => await _babyApi.enableOrDisableBaby(baby.id.toString(), !baby.isActive!));
+      final babyId = baby.id;
+      if (babyId == null) throw Exception("Baby id is required");
+
+      final nextState = enable ?? !(baby.isActive ?? false);
+      final result = await SafeApi.call<bool>(context: context, apiCall: () async => await _babyApi.enableOrDisableBaby(babyId.toString(), nextState));
       if (!result) throw Exception("Erro ao alterar estado");
-      if (_babyExists(baby.id!)) _babiesMap[baby.id!] = baby.copyWith(isActive: !baby.isActive!);
+      if (_babyExists(babyId)) _babiesMap[babyId] = baby.copyWith(isActive: nextState);
     } catch (e) {
       return;
     } finally {
@@ -88,9 +154,10 @@ class BabyProvider with ChangeNotifier {
 
   Future<BabyModel> addBaby(BuildContext context, BabyModel newBaby) async {
     try {
+      _validateBaby(newBaby);
       final baby = await SafeApi.call<BabyModel?>(context: context, apiCall: () async => await _babyApi.insertBaby(babyToJson(newBaby)));
       if (baby == null) throw Exception("Falha ao adicionar novo bebê");
-      _babiesMap[baby.id!] = baby;
+      await _setNewBabyToCache(baby);
       return baby;
     } catch (e) {
       throw e;
@@ -101,10 +168,11 @@ class BabyProvider with ChangeNotifier {
 
   Future<BabyModel> updateBaby(BuildContext context, BabyModel updatedBaby) async {
     try {
+      _validateBaby(updatedBaby, requireId: true);
       final baby = await SafeApi.call<BabyModel?>(context: context, apiCall: () async => await _babyApi.updateBaby(updatedBaby.id.toString(), updatedBaby.toJson()));
       if (baby == null) throw Exception("Falha ao adicionar novo bebê");
-      _babiesMap[updatedBaby.id!] = updatedBaby;
-      return updatedBaby;
+      await _setNewBabyToCache(baby);
+      return baby;
     } catch (e) {
       throw e;
     } finally {
@@ -118,7 +186,10 @@ class BabyProvider with ChangeNotifier {
       if (baby == null) throw new Exception("Bebe não localizado!");
       final res = await SafeApi.call<bool>(context: context, apiCall: () async => await _babyApi.updateBabyQr(baby_id.toString(), qrImage));
       if (!res) throw Exception("Falha ao atualizar qr code!");
-      if (qrImage != null) _babiesMap[baby_id] = baby.copyWith(hasQr: true, qrCodeImage: Image.memory(qrImage));
+      _babiesMap[baby_id] = baby.copyWith(
+        hasQr: qrImage != null,
+        qrCodeImage: qrImage != null ? Image.memory(qrImage) : null,
+      );
     } catch (e) {
       throw e;
     } finally {

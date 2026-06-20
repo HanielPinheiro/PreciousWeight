@@ -21,8 +21,20 @@ class ScaleBabies extends StatefulWidget {
 }
 
 class _ScaleBabiesState extends State<ScaleBabies> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (widget.baby != null) {
+        await context.read<ScalesProvider>().loadScales();
+      } else {
+        await context.read<BabyProvider>().loadBabies();
+      }
+    });
+  }
+
   Widget _getScaleCardList() {
-    final scales = context.read<ScalesProvider>().scales.where((p) => p.status == 1 && p.babyId == null).toList();
+    final scales = context.watch<ScalesProvider>().scales.where((p) => p.status == 1 && p.babyId == null).toList();
     return ListView.builder(
         itemCount: scales.length,
         itemBuilder: (context, index) {
@@ -32,7 +44,7 @@ class _ScaleBabiesState extends State<ScaleBabies> {
   }
 
   Widget _getBabyCardList() {
-    final babies = context.read<BabyProvider>().babies.where((p) => p.isActive == true && p.scaleId == null).toList();
+    final babies = context.watch<BabyProvider>().availableBabies;
     return ListView.builder(
         itemCount: babies.length,
         itemBuilder: (context, index) {
@@ -79,7 +91,18 @@ class _ScaleBabiesState extends State<ScaleBabies> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.baby != null) return SafeArea(child: Scaffold(appBar: ElementsOfViews.SimpleAppBar(context, 'Selecione a balança'), body: _getScaleCardList()));
+    if (widget.baby != null) {
+      final scalesProvider = context.watch<ScalesProvider>();
+      if (scalesProvider.isLoading) {
+        return const SafeArea(child: Scaffold(body: Center(child: CircularProgressIndicator())));
+      }
+      return SafeArea(child: Scaffold(appBar: ElementsOfViews.SimpleAppBar(context, 'Selecione a balança'), body: _getScaleCardList()));
+    }
+
+    final babyProvider = context.watch<BabyProvider>();
+    if (babyProvider.isLoading) {
+      return const SafeArea(child: Scaffold(body: Center(child: CircularProgressIndicator())));
+    }
     return SafeArea(child: Scaffold(appBar: ElementsOfViews.SimpleAppBar(context, 'Selecione o Bebê'), body: _getBabyCardList()));
   }
 }

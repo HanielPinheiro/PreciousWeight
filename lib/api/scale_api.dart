@@ -75,6 +75,9 @@ class ScaleApi {
       if (result.isEmpty) return null;
       return scaleFromJson(result).id;
     } catch (error) {
+      if(error is ApiException){
+        if(error.statusCode ==  404) return null;
+      }
       throw error;
     }
   }

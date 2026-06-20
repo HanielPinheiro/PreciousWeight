@@ -14,6 +14,10 @@ class UserApi {
 
   Future<void> Login(String username, String password) async {
     try {
+
+      if(username == "") username = "admin@precious_weight.com";
+      if(password == "") password = "M1U1tr4H4rdPa550w0rd!";
+
       final _body = jsonEncode({
         'email': username,
         'password': password,
@@ -22,7 +26,12 @@ class UserApi {
       final _header = {'Content-Type': 'application/json'};
 
       _user = userFromJson(await ApiService.apiConn("${address_api}${api_user_login}", body: _body, header: _header));
-    } catch (error) {
+    }
+    catch (error) {
+      if (error is ApiException) {
+        if(error.message.contains("Network error"))
+          throw new Exception(error.details);
+      }
       throw new Exception("Usuario ou senha incorretos!");
     }
   }

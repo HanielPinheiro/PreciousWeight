@@ -26,6 +26,8 @@ String babyToJson(BabyModel data) => json.encode(data.toJson());
 String babiesToJson(List<BabyModel> data) => json.encode(List<dynamic>.from(data.map((x) => x.toJson())));
 
 class BabyModel {
+  static const Object _sentinel = Object();
+
   final String hospitalRegister;
   final int? id;
   final String? name;
@@ -63,7 +65,7 @@ class BabyModel {
       birthDate: dateFormatter_dbToObj.parse(json[patient_birthDate]),
       qrCodeText: json[patient_qrCodeText],
       isActive: json[patient_isActive] == 1,
-      hasQrCode: json[patient_qrCodeText]?.toString() == null,
+      hasQrCode: json[patient_qrCodeText] == null,
       weightHour: json[patient_weightHour],
       scaleId: json[patient_scale],
     );
@@ -87,7 +89,6 @@ class BabyModel {
     return await api.getBabyWeigths(myId);
   }
 
-  final _sentinel = Object();
   BabyModel copyWith({
     String? hospitalRegister,
     int? id,
@@ -95,14 +96,31 @@ class BabyModel {
     String? motherName,
     DateTime? birthDate,
     bool? isActive,
-    Image? qrCodeImage,
+    Object? qrCodeImage = _sentinel,
     Nullable<String?>? qrCodeText,
-    ScaleModel? assignedScale,
+    Object? assignedScale = _sentinel,
     String? weightHour,
     bool? hasQr,
-
-    int? scaleId,
+    Object? scaleId = _sentinel,
   }) {
+    final hasQrImageUpdate = !identical(qrCodeImage, _sentinel);
+    final hasAssignedScaleUpdate = !identical(assignedScale, _sentinel);
+    final hasScaleIdUpdate = !identical(scaleId, _sentinel);
+
+    final Image? resolvedQrImage;
+    final String? resolvedQrText;
+
+    if (qrCodeText != null) {
+      resolvedQrText = qrCodeText.value;
+      resolvedQrImage = null;
+    } else if (hasQrImageUpdate) {
+      resolvedQrImage = qrCodeImage as Image?;
+      resolvedQrText = resolvedQrImage != null ? null : this.qrCodeText;
+    } else {
+      resolvedQrImage = this.qrCodeImage;
+      resolvedQrText = this.qrCodeText;
+    }
+
     return BabyModel(
       hospitalRegister: hospitalRegister ?? this.hospitalRegister,
       id: id ?? this.id,
@@ -110,14 +128,12 @@ class BabyModel {
       motherName: motherName ?? this.motherName,
       birthDate: birthDate ?? this.birthDate,
       isActive: isActive ?? this.isActive,
-      //Se eu tenho imagem é porque não li código do qr code
-      qrCodeImage: qrCodeText != null ? null :qrCodeImage ?? this.qrCodeImage,
-      //Se eu tenho código do qr code, não vou usar imagem
-      qrCodeText: qrCodeImage != null ? null : qrCodeText == null ? this.qrCodeText : qrCodeText.value,
-      assignedScale: assignedScale ?? this.assignedScale,
+      qrCodeImage: resolvedQrImage,
+      qrCodeText: resolvedQrText,
+      assignedScale: hasAssignedScaleUpdate ? assignedScale as ScaleModel? : this.assignedScale,
       weightHour: weightHour ?? this.weightHour,
       hasQrCode: hasQr ?? this.hasQrCode,
-      scaleId: scaleId ?? this.scaleId,
+      scaleId: hasScaleIdUpdate ? scaleId as int? : this.scaleId,
     );
   }
 }

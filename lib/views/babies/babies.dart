@@ -20,11 +20,8 @@ class _BabiesPageState extends State<BabiesPage> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final provider = context.read<BabyProvider>();
-      if (provider.babies.isEmpty && !provider.isLoading) {
-        provider.loadBabies();
-      }
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await context.read<BabyProvider>().loadBabies();
     });
   }
 
@@ -33,7 +30,7 @@ class _BabiesPageState extends State<BabiesPage> {
   }
 
   Widget _empty() {
-    return Column(children:[ Expanded(child:Center(child: Text('No babies found', style: displayLarge.copyWith(color: Theme.of(context).colorScheme.primary))))]);
+    return Column(children:[ Expanded(child:Center(child: Text('Nenhum bebê cadastrado', style: displayLarge.copyWith(color: Theme.of(context).colorScheme.primary), textAlign: TextAlign.center,)))]);
   }
 
   Widget _notEmpty(List<BabyModel> filteredBabies) {
@@ -63,7 +60,7 @@ class _BabiesPageState extends State<BabiesPage> {
 
     if (babyProvider.isLoading) return const Center(child: CircularProgressIndicator());
 
-    final List<BabyModel> filteredBabies = babyProvider.babies.where((baby) => baby.isActive == !isDischarged).toList();
+    final List<BabyModel> filteredBabies = isDischarged ? babyProvider.inactiveBabies : babyProvider.activeBabies;
 
     return Scaffold(
       body: babyProvider.babies.isEmpty ? _empty() : _notEmpty(filteredBabies),

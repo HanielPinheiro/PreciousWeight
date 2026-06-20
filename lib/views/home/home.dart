@@ -1,9 +1,14 @@
+import 'dart:async';
 import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:precious_weight/repository/services/bluefi_service.dart';
+import 'package:provider/provider.dart';
+
+import '../../models/scales.dart';
 import '../../repository/design/fonts.dart';
+import '../../repository/providers/scales_provider.dart';
+import '../../repository/services/bluefi_service.dart';
 import '../../repository/widgets/elements.dart';
 import '../../repository/services/qrcode_service.dart';
 import '../babies/babies_register.dart';
@@ -36,6 +41,21 @@ class _HomePageState extends State<HomePage> {
         _currentText = result['text'];
         _currentImage = result['image'];
       });
+  }
+
+  Future<void> _handleScale(BuildContext context)  async {
+    final id = await context.read<ScalesProvider>().getScaleIdFromHash(context, _currentText!);
+    ScaleModel? scale = null;
+    if (id == null) { //balança não está adicionada então adiciona
+      scale = await context.read<ScalesProvider>().setNewScale(context, _currentText!);
+      if (scale == null) {
+        await ElementsOfViews.showSimpleDialog(context, "Erro!!", "Falha ao adicionar balança ao BD, reporte ao suporte!");
+        return;
+      }
+    }
+
+    if(scale != null && !scale.isConnected)
+        Navigator.push(context, MaterialPageRoute(builder: (context) => BluefiService(_currentText!)));
   }
 
   Future<void> _readBabyQr(BuildContext context) async {
@@ -93,15 +113,17 @@ class _HomePageState extends State<HomePage> {
             await _readQrCode(context);
             _currentText == null ?
             await ElementsOfViews.showSimpleDialog(context, "Erro ao escanear QR Code", "Não foi possível ler o conteúdo do QR code!")
-                : Navigator.push(context, MaterialPageRoute(builder: (context) => BluefiService(_currentText!)));
+                : _handleScale(context);
           }),
           SizedBox(height: 65),
-          ElementsOfViews.ScanButton(context, "Trocar de Balança", "home_btn3.jpg", () async {
+          /*ElementsOfViews.ScanButton(context, "Trocar de Balança", "home_btn3.jpg", () async {
             _changeScale(context);
           }),
-          SizedBox(height: 65),
+          SizedBox(height: 65),*/
         ]))]),
       ),
     );
   }
 }
+
+

@@ -193,6 +193,8 @@ class _BabiesRegisterState extends State<BabiesRegister> {
                           return;
                         }
 
+                        showDialog(context: context, barrierDismissible: false,builder: (_) => const AlertDialog(title: Text("Salvando no DB...")));
+
                         try {
                           final newBaby = BabyModel(
                             hospitalRegister: _hospIdController.text,
@@ -206,14 +208,19 @@ class _BabiesRegisterState extends State<BabiesRegister> {
 
                           // First add the baby
                           final addedBaby = await _babyProvider.addBaby(context, newBaby);
+                          await showDialog(context: context, builder: (context) => AlertDialog(content: Text("Novo bebê cadastrado com sucesso")));
 
                           // Update QR code if needed
                           if (_currentText == null && _currentImage != null) {
-                            await _babyProvider.updateQrCode(context, addedBaby.id!, _currentImage);
+                            showDialog(context: context, barrierDismissible: false,builder: (_) => const AlertDialog(title: Text("Salvando QR Code no DB...")));
+                            try {
+                              await _babyProvider.updateQrCode(context, addedBaby.id!, _currentImage);
+                              showDialog(context: context, barrierDismissible: false,builder: (_) => const AlertDialog(title: Text("QR Code salvo com sucesso!")));
+                            }catch(e){
+                              showDialog(context: context, barrierDismissible: false,builder: (_) => const AlertDialog(title: Text("Falha ao salvar QR Code")));
+                            }
                           }
 
-                          // Show success message
-                          await showDialog(context: context, builder: (context) => AlertDialog(content: Text("Novo bebê cadastrado com sucesso")));
                           Navigator.pop(context);
                         } catch (e) {
                           await showDialog(context: context, builder: (context) => AlertDialog(title: Text("Erro de requisição"), content: Text(e.toString())));

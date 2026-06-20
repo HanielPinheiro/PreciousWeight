@@ -87,7 +87,8 @@ Providers are injected in [main.dart](lib/main.dart) using `MultiProvider`.
 
 ### Networking & error handling
 
-- [ApiService](lib/repository/services/api_service.dart) wraps HTTP `POST` calls, decodes UTF-8 body bytes, and throws a structured `ApiException` when status codes are not 2xx.
+- [ApiService](lib/repository/services/api_service.dart) wraps HTTP `POST` calls, 
+- decodes UTF-8 body bytes, and throws a structured `ApiException` when status codes are not 2xx.
 - [SafeApi.call](lib/repository/services/api_service.dart#L87-L98) is used by screens/providers to:
   - centralize error handling
   - show UI dialogs
@@ -223,7 +224,8 @@ Screens in `lib/views/scales/`:
 
 ## BLE + Wi‑Fi Provisioning (Scale onboarding)
 
-Provisioning is implemented in [bluefi_service.dart](lib/repository/services/bluefi_service.dart) and is triggered after scanning a scale QR code (the QR contains a `hash`).
+Provisioning is implemented in [bluefi_service.dart](lib/repository/services/bluefi_service.dart) 
+and is triggered after scanning a scale QR code (the QR contains a `hash`).
 
 ### Step-by-step flow
 
@@ -231,7 +233,8 @@ Provisioning is implemented in [bluefi_service.dart](lib/repository/services/blu
 2. The app calls the backend to retrieve provisioning data for this hash:
    - `mac` (used by the backend/device identification)
    - `pop` (“Proof of Possession”) used by ESP provisioning
-3. The app requests required permissions (Android 12+ Bluetooth runtime permissions + location; iOS Bluetooth + location when required).
+3. The app requests required permissions (Android 12+ Bluetooth runtime permissions + location; 
+4. iOS Bluetooth + location when required).
 4. The app checks Bluetooth state and waits for it to be enabled.
 5. The app scans BLE devices using a prefix:
    - Prefix is currently hard-coded as `PW_` inside the provisioning flow.
@@ -284,7 +287,8 @@ Example currently present in the code:
 
 Note for Android emulator:
 
-- `localhost` from the emulator is not your machine. The file already documents that the correct alias is usually `10.0.2.2`.
+- `localhost` from the emulator is not your machine. The file already documents that the correct 
+- alias is usually `10.0.2.2`.
 
 ### Endpoints used
 
@@ -380,7 +384,8 @@ This README documents what the code currently does; it does not claim full healt
 - API base URL is plain HTTP in constants (no TLS), which is not suitable for sensitive environments.
 - No certificate pinning is implemented.
 
-If this app is intended to handle patient data in production environments, a security review and hardening workstream is recommended.
+If this app is intended to handle patient data in production environments, a security review and 
+hardening workstream is recommended.
 
 ---
 

@@ -68,21 +68,23 @@ class _BabiesDetailsState extends State<BabiesDetails> {
   }
 
   Widget _showFlex1() {
-    return Row(mainAxisSize: MainAxisSize.max, crossAxisAlignment: CrossAxisAlignment.center, mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-      ElementsOfViews.SimpleButton(context, "Editar", () async {
-        await Navigator.push(context, MaterialPageRoute(builder: (context) => BabiesEdit(baby: _currentBaby!)));
-        final new_data = await context.read<BabyProvider>().getBabyById(context, _currentBaby!.id!);
-        setState(() {
-          _currentBaby = new_data;
-        });
-      }),
-      ElementsOfViews.SimpleButton(context, _currentBaby!.isActive! ? "Inativar Paciente" : "Ativar Paciente", () async {
-        await context.read<BabyProvider>().toggleBabyStatus(context, _currentBaby!);
-        final new_data = await context.read<BabyProvider>().getBabyById(context, _currentBaby!.id!);
-        setState(() {
-          _currentBaby = new_data;
-        });
-      }, false, _currentBaby!.assignedScale != null),
+    return Column(mainAxisSize: MainAxisSize.max, crossAxisAlignment: CrossAxisAlignment.center, mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+      Row(mainAxisSize: MainAxisSize.max, crossAxisAlignment: CrossAxisAlignment.center, mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+        ElementsOfViews.SimpleButton(context, "Editar", () async {
+          await Navigator.push(context, MaterialPageRoute(builder: (context) => BabiesEdit(baby: _currentBaby!)));
+          final new_data = await context.read<BabyProvider>().getBabyById(context, _currentBaby!.id!);
+          setState(() {
+            _currentBaby = new_data;
+          });
+        }),
+        ElementsOfViews.SimpleButton(context, _currentBaby!.isActive! ? "Inativar Paciente" : "Ativar Paciente", () async {
+          await context.read<BabyProvider>().toggleBabyStatus(context, _currentBaby!);
+          final new_data = await context.read<BabyProvider>().getBabyById(context, _currentBaby!.id!);
+          setState(() {
+            _currentBaby = new_data;
+          });
+        }, false, _currentBaby!.assignedScale != null)
+      ]),
       ElementsOfViews.SimpleButton(context, "${_currentBaby!.assignedScale != null ? 'Dados da Balança' : 'Associar Bebê à Balança'}", () async {
         if (_currentBaby!.assignedScale == null) {
           final scale = await Navigator.push(context, MaterialPageRoute(builder: (context) => ScaleBabies(baby: _currentBaby)));

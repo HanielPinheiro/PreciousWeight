@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:precious_weight/repository/services/api_service.dart';
 
 import '../../api/user_api.dart';
 import '../../views/login/login.dart';
 
 class ApiErrorHandler {
   static Future<void> handleError(BuildContext context, dynamic error) async {
-    final message = error.toString();
+    var message = error.toString();
+    if(error is ApiException)
+      message = error.message + " -> " + error.details;
 
     if (message.contains("401")) {
       await _handleUnauthorized(context);

@@ -191,21 +191,6 @@ class ScalesProvider with ChangeNotifier {
     }
   }
 
-
-  Future<int?> getScaleIdFromHash(BuildContext context, String hash) async {
-    try {
-      return await SafeApi.call<int?>(
-          context: context,
-          apiCall: () async {
-            return await _scaleApi.getIdByHash(hash);
-          });
-    } catch (e) {
-      throw e;
-    } finally {
-      notifyListeners();
-    }
-  }
-
   Future<String> getWeightNow(BuildContext context, int scale_id) async {
     try {
       return await SafeApi.call<String>(
@@ -214,6 +199,21 @@ class ScalesProvider with ChangeNotifier {
           return await _scaleApi.requestWeightNow(scale_id.toString());
         },
       );
+    } catch (e) {
+      throw e;
+    } finally {
+      notifyListeners();
+    }
+  }
+
+
+  Future<int?> getScaleIdFromHash(BuildContext context, String hash) async {
+    try {
+      return await SafeApi.call<int?>(
+          context: context,
+          apiCall: () async {
+            return await _scaleApi.getIdByHash(hash);
+          });
     } catch (e) {
       throw e;
     } finally {

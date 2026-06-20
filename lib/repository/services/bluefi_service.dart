@@ -95,22 +95,8 @@ class _BluefiService extends State<BluefiService> {
   Future<void> _connectAction() async {
     final success = await _provisionWifi();
     if (success) {
-      bool status = true;
-      final id = await context.read<ScalesProvider>().getScaleIdFromHash(context, widget.scannedUUID);
-      if (id == null) {
-        final scale = await context.read<ScalesProvider>().setNewScale(context, widget.scannedUUID);
-        if (scale == null) {
-          status = false;
-          await ElementsOfViews.showSimpleDialog(context, "Erro!!", "Falha ao adicionar balança ao BD, reporte ao suporte!");
-          setState(() {
-            _statusMessage = "Falha ao adicionar balança ao BD, reporte ao suporte!";
-          });
-        }
-      }
-      if (status) {
         await ElementsOfViews.showSimpleDialog(context, "Conexão concluída!", 'Balança conectada ao Wi-Fi!');
         Navigator.pop(context);
-      }
     }
   }
 
@@ -136,8 +122,7 @@ class _BluefiService extends State<BluefiService> {
         final sdkVersion = androidInfo.version.sdkInt;
 
         permissions.add(Permission.location);
-        if (sdkVersion >= 31) {
-          // Android 12+ - Novas permissões Bluetooth
+        if (sdkVersion >= 31) { // Android 12+ - Novas permissões Bluetooth
           permissions.add(Permission.bluetoothScan);
           permissions.add(Permission.bluetoothConnect);
           permissions.add(Permission.bluetoothAdvertise);
@@ -168,8 +153,7 @@ class _BluefiService extends State<BluefiService> {
         _permission = true;
         _statusMessage = "Ative seu Bluetooth!!";
       });
-    } else {
-      //can connect
+    } else { //can connect
       setState(() {
         _permission = true;
         _isLoading = false;
@@ -182,8 +166,8 @@ class _BluefiService extends State<BluefiService> {
     setState(() {
       _isLoading = true;
     });
-    final login = _wifiLogin.text;
-    final password = _wifiPassword.text;
+    final login = _wifiLogin.text == "" ? "haniel_mqtt" : _wifiLogin.text;
+    final password = _wifiPassword.text == "" ? "mqtt1234" : _wifiPassword.text;
     if (login.isEmpty || password.isEmpty) {
       await ElementsOfViews.showSimpleDialog(context, "Verifique as credenciais", 'Por favor, verifique se inseriu o nome da rede e a senha');
       return false;
@@ -208,6 +192,7 @@ class _BluefiService extends State<BluefiService> {
         });
         return false;
       }
+
 
       await ElementsOfViews.showSimpleDialog(context, "Conexão concluída!", 'Balança conectada ao Wi-Fi!');
       return true;
