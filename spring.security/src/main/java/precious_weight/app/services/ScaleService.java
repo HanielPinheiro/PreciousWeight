@@ -17,6 +17,7 @@ import precious_weight.auth.services.ScaleDataService;
 import java.io.Console;
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static precious_weight.config.system.MqttConstants.*;
 
@@ -24,6 +25,7 @@ import static precious_weight.config.system.MqttConstants.*;
 public class ScaleService {
     private boolean trying = false;
     private long startTime = System.nanoTime();
+    private final Map<String, Boolean> brokerConnectionStatus = new ConcurrentHashMap<>();
 
     public enum ScaleStates {
         nonOperant(0), operant(1);
@@ -105,13 +107,28 @@ public class ScaleService {
     }
 
     public ScaleModel SetScaleToUser(UUID id) throws Exception {
-        if (scaleDataService.GetScaleFromId(id) == null) throw new Exception("Invalid ID!");
+        var scaleData = scaleDataService.GetScaleFromId(id);
+        if (scaleData == null) throw new Exception("Invalid ID!");
         if(GetScaleFromHash(id.toString()) != null) throw new Exception("Scale already inserted");
 
         ScaleModel newScale = new ScaleModel();
         newScale.setScaleHash(id.toString());
         newScale.setScaleState(0);
+        newScale.setIsConnected(Boolean.TRUE.equals(brokerConnectionStatus.get(scaleData.getMac())));
         return iScale.save(newScale);
+    }
+
+    public void UpdateConnectionStatusFromBroker(String scaleMac, boolean connected) {
+        brokerConnectionStatus.put(scaleMac, connected);
+
+        var authScale = scaleDataService.GetScaleFromMac(scaleMac);
+        if (authScale == null) return;
+
+        var commercialScale = GetScaleFromHash(authScale.getScaleId().toString());
+        if (commercialScale == null) return;
+
+        commercialScale.setIsConnected(connected);
+        iScale.save(commercialScale);
     }
   
     public ScaleModel SetOrUnsetBabyToScale(ScaleRequest scaleRequest, boolean set) throws Exception {

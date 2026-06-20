@@ -22,6 +22,9 @@ public class ScaleModel implements Serializable {
     @Column(name = App_ScaleTable_State, nullable = false)
     private Integer scaleState;
 
+    @Column(name = App_ScaleTable_IsConnected, nullable = false)
+    private Boolean isConnected = false;
+
     @OneToOne
     @JoinColumn(name = App_BabyTable_Id)  // Match your DB column
     private BabyModel assignedBaby;
@@ -47,6 +50,13 @@ public class ScaleModel implements Serializable {
     }
     public void setScaleState(Integer scaleState) {
         this.scaleState = scaleState;
+    }
+
+    public Boolean getIsConnected() {
+        return isConnected;
+    }
+    public void setIsConnected(Boolean connected) {
+        isConnected = connected;
     }
 }
 

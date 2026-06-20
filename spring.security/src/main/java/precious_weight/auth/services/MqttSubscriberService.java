@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import precious_weight.app.services.ScaleService;
 
 import static precious_weight.config.system.MqttConstants.MQTT_TOPIC_SUB_SCALE;
+import static precious_weight.config.system.MqttConstants.MQTT_TOPIC_SUB_STATUS;
 import static precious_weight.config.system.MqttConstants.MQTT_TOPIC_SUB_WEIGHT;
 
 @Service
@@ -34,6 +35,27 @@ public class MqttSubscriberService {
             log(messageTopic, payload);
         });
         logger.info("Subscription request sent for topic: {}", MQTT_TOPIC_SUB_SCALE);
+
+        logger.info("Attempting to subscribe to topic: {}", MQTT_TOPIC_SUB_STATUS);
+        mqttClient.subscribe(MQTT_TOPIC_SUB_STATUS, qos, (messageTopic, message) -> {
+            String payload = new String(message.getPayload());
+            String scaleMac = messageTopic.replace("/status/", "");
+
+            if ("CONNECTED".equalsIgnoreCase(payload)) {
+                scaleService.UpdateConnectionStatusFromBroker(scaleMac, true);
+                log(messageTopic, payload);
+                return;
+            }
+
+            if ("DISCONNECTED".equalsIgnoreCase(payload)) {
+                scaleService.UpdateConnectionStatusFromBroker(scaleMac, false);
+                log(messageTopic, payload);
+                return;
+            }
+
+            logger.warn("Ignoring unsupported status payload - Topic: {} | Payload: {}", messageTopic, payload);
+        });
+        logger.info("Subscription request sent for topic: {}", MQTT_TOPIC_SUB_STATUS);
 
         logger.info("Attempting to subscribe to topic: {}", MQTT_TOPIC_SUB_WEIGHT);
         mqttClient.subscribe(MQTT_TOPIC_SUB_WEIGHT, qos, (messageTopic, message) -> {

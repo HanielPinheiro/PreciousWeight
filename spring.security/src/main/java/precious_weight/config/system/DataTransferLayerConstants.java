@@ -17,6 +17,7 @@ public class DataTransferLayerConstants {
     public static final String App_ScaleTable_Id = "scale_id";
     public static final String App_ScaleTable_Hash = "scale_hash";
     public static final String App_ScaleTable_State = "scale_state";
+    public static final String App_ScaleTable_IsConnected = "is_connected";
 
     public static final String App_WeightTable_TableName = "weights";
     public static final String App_WeightTable_Id = "weight_id";

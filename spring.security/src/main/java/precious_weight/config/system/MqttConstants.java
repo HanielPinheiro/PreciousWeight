@@ -7,6 +7,7 @@ public class MqttConstants {
     public static final String MQTT_TOPIC_PUB_SCALE ="/scales/"; // send data to scale
 
     public static final String MQTT_TOPIC_SUB_SCALE ="/scales/#"; // check data to scale topic for all scales
+    public static final String MQTT_TOPIC_SUB_STATUS ="/status/#"; // check device connection state for all scales
     public static final String MQTT_TOPIC_SUB_WEIGHT ="/weights/#"; // check data in weight topic for all babies
 
     public static final String DEFAULT_WEIGHT_TIME= "12:00";

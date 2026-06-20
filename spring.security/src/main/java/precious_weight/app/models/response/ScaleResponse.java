@@ -7,6 +7,7 @@ public class ScaleResponse {
     private String scaleHash;
     private Integer scaleState;
     private Integer babyId;
+    private boolean connectionStatus;
 
     public ScaleResponse(){}
 
@@ -15,6 +16,7 @@ public class ScaleResponse {
         this.scaleHash = model.getScaleHash();
         this.scaleState = model.getScaleState();
         this.babyId = model.getAssignedBaby() != null ? model.getAssignedBaby().getBabyId() : null;
+        this.connectionStatus = Boolean.TRUE.equals(model.getIsConnected()) ? true : false;
     }
 
     public Integer getScaleId() {
@@ -49,6 +51,14 @@ public class ScaleResponse {
         this.babyId = babyId;
     }
 
+    public boolean getConnectionStatus() {
+        return connectionStatus;
+    }
+
+    public void setConnectionStatus(boolean connectionStatus) {
+        this.connectionStatus = connectionStatus;
+    }
+
     @Override
     public String toString() {
         return "ScaleResponse{" +
@@ -56,6 +66,7 @@ public class ScaleResponse {
                 ", scaleHash='" + scaleHash + '\'' +
                 ", scaleState=" + scaleState +
                 ", babyId=" + babyId +
+                ", connectionStatus='" + connectionStatus + '\'' +
                 '}';
     }
 }
