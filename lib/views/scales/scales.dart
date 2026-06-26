@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../models/scales.dart';
 import '../../repository/providers/scales_provider.dart';
 import '../../repository/services/bluefi_service.dart';
 import '../../repository/services/qrcode_service.dart';
@@ -64,7 +65,18 @@ class _ScalesPageState extends State<ScalesPage> {
             final result = await Navigator.push(context, MaterialPageRoute(builder: (context) => ScanQrCode()));
             if (result != null) {
               String qrText = result['text'];
-              await Navigator.push(context, MaterialPageRoute(builder: (context) => BluefiService(qrText)));
+              final id = await context.read<ScalesProvider>().getScaleIdFromHash(context, qrText);
+              ScaleModel? scale = null;
+              if (id == null) { //balança não está adicionada então adiciona
+                scale = await context.read<ScalesProvider>().setNewScale(context, qrText);
+                if (scale == null) {
+                  await ElementsOfViews.showSimpleDialog(context, "Erro!!", "Falha ao adicionar balança ao BD, reporte ao suporte!");
+                  return;
+                }
+              }
+
+              if(scale != null && !scale.isConnected)
+                Navigator.push(context, MaterialPageRoute(builder: (context) => BluefiService(qrText)));
             }
           },
           child: Icon(Icons.add),
