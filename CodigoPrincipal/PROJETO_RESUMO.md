@@ -119,9 +119,6 @@ Todos os tópicos incluem o sufixo `MQTT_SERVICE_NAME` (ex.: `D0EF76590B7C`).
 - Status (ESP32 publica):
   - `/status/<service>`
   - Ex.: `/status/D0EF76590B7C`
-- Telemetria agendada (ESP32 publica):
-  - `/sensors/<service>`
-  - Ex.: `/sensors/D0EF76590B7C`
 - Peso sob demanda + ACK de comandos (ESP32 publica):
   - `/weights/<service>`
   - Ex.: `/weights/D0EF76590B7C`

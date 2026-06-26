@@ -72,27 +72,15 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
 void mqtt_app_start(void)
 {
     const esp_mqtt_client_config_t mqtt_cfg = {
-        .broker = {
-            .address.uri = MQTT_ADDRESS,
-            .verification = {
-                .certificate = (const char *)ca_cert_pem_start,
-                .skip_cert_common_name_check = true}},
+        .broker = {.address.uri = MQTT_ADDRESS,
+                   .verification = {.certificate = (const char *)ca_cert_pem_start, .skip_cert_common_name_check = false}},
         .credentials = {.authentication = {
                             .certificate = (const char *)client_cert_pem_start,
                             .key = (const char *)client_key_pem_start,
                         },
                         .client_id = WIFI_DEVICE_NAME},
-        .session = {.keepalive = MQTT_KEEPALIVE, .disable_clean_session = true, .last_will = {.topic = MQTT_TOPIC_CONN_STATUS, .msg = "DISCONNECTED", .qos = 1, .retain = true}},
+        .session = {.keepalive = MQTT_KEEPALIVE, .disable_clean_session = true, .last_will = {.topic = MQTT_TOPIC_CONN_STATUS, .msg = MQTT_LAST_WILL_MSG, .msg_len = strlen(MQTT_LAST_WILL_MSG), .qos = 1, .retain = true}},
         .network = {.reconnect_timeout_ms = 10000, .disable_auto_reconnect = false}};
-
-    // const esp_mqtt_client_config_t mqtt_cfg = {
-    //     .broker = {
-    //         .address.uri = MQTT_ADDRESS,
-    //         // NÃO colocar .verification
-    //     },
-    //     // NÃO colocar .credentials
-    //     .session = {.keepalive = MQTT_KEEPALIVE, .disable_clean_session = true, .last_will = {.topic = MQTT_TOPIC_CONN_STATUS, .msg = "DISCONNECTED", .qos = 1, .retain = true}},
-    //     .network = {.reconnect_timeout_ms = 10000, .disable_auto_reconnect = false}};
 
     client = esp_mqtt_client_init(&mqtt_cfg);
     esp_mqtt_client_register_event(client, ESP_EVENT_ANY_ID, mqtt_event_handler, NULL);

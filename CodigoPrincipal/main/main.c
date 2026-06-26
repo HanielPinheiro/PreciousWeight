@@ -65,13 +65,13 @@ void app_main()
     sdcard_log(LOG_INFO, "Cartao SD inicializado.", ROTULO_LOCAL);
     sdcard_log(LOG_WARN, get_reset_reason_string(esp_reset_reason()), ROTULO_LOCAL);
 
-    // init_wifi();
-    // sdcard_log(LOG_INFO, "Wi-Fi inicializado com sucesso. Inicializando MQTT.", ROTULO_LOCAL);
+    init_wifi();
+    sdcard_log(LOG_INFO, "Wi-Fi inicializado com sucesso. Inicializando MQTT.", ROTULO_LOCAL);
 
-    // PW_ERROR_CHECK(start_date_time_routine());
+    PW_ERROR_CHECK(start_date_time_routine());
 
-    // PW_ERROR_CHECK(init_mqtt_task());
-    // sdcard_log(LOG_INFO, "Task MQTT inicializada com sucesso. Iniciando leitores HX711.", ROTULO_LOCAL);
+    PW_ERROR_CHECK(init_mqtt_task());
+    sdcard_log(LOG_INFO, "Task MQTT inicializada com sucesso. Iniciando leitores HX711.", ROTULO_LOCAL);
 
     PW_ERROR_CHECK(hx711_initialize_sensors());
     sdcard_log(LOG_INFO, "Sensores inicializados. Iniciando Tasks de SD Card e Sensores.", ROTULO_LOCAL);
@@ -80,11 +80,11 @@ void app_main()
     PW_ERROR_CHECK(init_sensors_task());
     sdcard_log(LOG_INFO, "Tasks de SD Card e Sensores inicializadas. Inicalizando Timers.", ROTULO_LOCAL);
 
-    // PW_ERROR_CHECK(init_weight_sensors_timer());
-    // update_current_time();
+    PW_ERROR_CHECK(init_weight_sensors_timer());
+    update_current_time();
 
-    // char m[90] = {0};
-    // snprintf(m, 90, "Sistema inicializado com sucesso em %s \r\n", current_time);
-    // sdcard_log(LOG_INFO, m, ROTULO_LOCAL);
+    char m[90] = {0};
+    snprintf(m, 90, "Sistema inicializado com sucesso em %s \r\n", current_time);
+    sdcard_log(LOG_INFO, m, ROTULO_LOCAL);
     ESP_ERROR_CHECK(set_pattern_to_led_task(BLINK_LED_NORMAL_OPER));
 }

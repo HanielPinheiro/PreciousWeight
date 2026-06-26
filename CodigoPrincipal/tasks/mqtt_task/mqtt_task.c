@@ -53,9 +53,8 @@ void mqtt_connection_status_callback(esp_mqtt_event_id_t connected)
          * A balança tem 4 canais de comunicação:
          *  /scales/ = balança recebe comandos
          *  /status/ = balança envia on/off mqtt3.c
-         *  /sensors/ = balança envia estado dos sensors (medidas)
          *  /weights/ = balança envia peso nos horarios
-         *  LOGO, balança publica em 3 canais, status, sensors, weights, e recebe dados em 1
+         *  LOGO, balança publica em 3 canais, status, weights, e recebe dados em 1 scales
          * A balança só recebe os dados dela -> /scales/MAC_ADDRESS_ESP32 (SERVICE NAME)
          */
         if (strncmp(event->topic, MQTT_TOPIC_SCALES, event->topic_len) == 0)

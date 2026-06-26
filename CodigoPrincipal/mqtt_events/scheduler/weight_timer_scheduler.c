@@ -1,6 +1,6 @@
 #include "../../config/config.h"
 
-static const char *ROTULO_LOCAL = "SENSOR_TASK";
+static const char *ROTULO_LOCAL = "TIME_SCHEDULER";
 static TimerHandle_t schedule_weight_measure_timer = NULL;
 static TaskHandle_t task_worker_handle = NULL;
 static bool control = false;
