@@ -55,13 +55,10 @@ static void sensor_processor_task(void *pvParams)
         if (valid_count > 0)
         {
             int64_t w = (int64_t)(sum / SCALE_MEASURE_FACTOR);
-            if (w >= 3000.0)
-                w = (int64_t)w * 0.99;
-            if (w <= 50)
-                w = 0;
-
             set_global_weight(w);
             ESP_LOGI(ROTULO_LOCAL, "Peso: %lld g ", w);
+            // if (w <= 50)
+            //     w = 0;
         }
         else
         {
@@ -125,10 +122,13 @@ esp_err_t init_sensors_task(void)
         }
     }
 
-    if (xTaskCreate(sensor_processor_task, "sensor_proc", 4096, NULL, TASK_PRIORITY_MEDIUM, NULL) != pdPASS)
+    if (!AT_CALIBRATION)
     {
-        ESP_LOGE(ROTULO_LOCAL, "Falha ao criar tarefa de processamento");
-        return ESP_ERR_NO_MEM;
+        if (xTaskCreate(sensor_processor_task, "sensor_proc", 4096, NULL, TASK_PRIORITY_MEDIUM, NULL) != pdPASS)
+        {
+            ESP_LOGE(ROTULO_LOCAL, "Falha ao criar tarefa de processamento");
+            return ESP_ERR_NO_MEM;
+        }
     }
 
     ESP_LOGI(ROTULO_LOCAL, "Sistema de leitura de sensores inicializado com %d tarefas leitoras", NUM_WEIGHT_SENSORS);

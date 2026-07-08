@@ -11,28 +11,34 @@
 #define SCALE1_DOUT GPIO_NUM_21
 #define SCALE1_SCK GPIO_NUM_22
 // #define SCALE1_FACTOR 300063     //Forma da impressora 3D
-#define SCALE1_FACTOR 2810624       //Forma plana de plástico
+// #define SCALE1_FACTOR 2810624 // Forma plana de plástico
+#define SCALE1_FACTOR 2464073 // Forma plana de madeira
 
 #define SCALE2_DOUT GPIO_NUM_16
-#define SCALE2_SCK GPIO_NUM_14      // PIN 17 original, 14 na atual pq deu problema na solda
+#define SCALE2_SCK GPIO_NUM_14 // PIN 17 original, 14 na atual pq deu problema na solda
 // #define SCALE2_FACTOR 4917632    //Forma da impressora 3D
-#define SCALE2_FACTOR 2711893       //Forma plana de plástico
+// #define SCALE2_FACTOR 2711893 // Forma plana de plástico
+#define SCALE2_FACTOR 2606864 // Forma plana de plástico
 
 #define SCALE3_DOUT GPIO_NUM_32
 #define SCALE3_SCK GPIO_NUM_33
 // #define SCALE3_FACTOR 295441     //Forma da impressora 3D
-#define SCALE3_FACTOR 2744573       //Forma plana de plástico
+// #define SCALE3_FACTOR 2744573 // Forma plana de plástico
+#define SCALE3_FACTOR 2503722 // Forma plana de madeira
 
 #define SCALE4_DOUT GPIO_NUM_25
 #define SCALE4_SCK GPIO_NUM_26
 // #define SCALE4_FACTOR 4619200    //Forma da impressora 3D
-#define SCALE4_FACTOR 2368005       //Forma plana de plástico
+// #define SCALE4_FACTOR 2368005 // Forma plana de plástico
+#define SCALE4_FACTOR 2512370 // Forma plana de madeira
 
 #define HX711_INVALID_READING 0x80000000
 #define AVERAGE_NUMBER 20
 #define TARE_NUMBER 200
 #define HX711_CHANNEL_A_128 25
 #define SCALE_MEASURE_FACTOR 1000000000
+
+#define AT_CALIBRATION 1
 
 #include <stdint.h>
 #include "driver/gpio.h"
