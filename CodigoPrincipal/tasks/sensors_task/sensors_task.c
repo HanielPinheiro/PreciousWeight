@@ -55,10 +55,10 @@ static void sensor_processor_task(void *pvParams)
         if (valid_count > 0)
         {
             int64_t w = (int64_t)(sum / SCALE_MEASURE_FACTOR);
+            if (w <= 0)
+                w = 0;
             set_global_weight(w);
             ESP_LOGI(ROTULO_LOCAL, "Peso: %lld g ", w);
-            // if (w <= 50)
-            //     w = 0;
         }
         else
         {

@@ -38,7 +38,7 @@
 #define HX711_CHANNEL_A_128 25
 #define SCALE_MEASURE_FACTOR 1000000000
 
-#define AT_CALIBRATION 1
+#define AT_CALIBRATION 0
 
 #include <stdint.h>
 #include "driver/gpio.h"
