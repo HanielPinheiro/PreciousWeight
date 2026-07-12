@@ -23,8 +23,9 @@ const lbl_scales = "Scales";
 const lbl_logs = "Registers";
 const lbl_connect_scale_to_network = "Connect Scale to WiFi";
 
-const address_api = "http://pw-api.velarsoluti.vps-kinghost.net";
-//const address_api = "http://100.96.1.34:8080";
+//const address_api = "http://pw-api.velarsoluti.vps-kinghost.net";
+const address_api = "http://191.252.159.22"; //vps via emulador
+//const address_api = "http://100.96.1.34:8080"; //quando emulava local
 
 const api_pattern_code = "{code}";
 const api_pattern_hash = "{hash}";
@@ -51,6 +52,8 @@ const api_scale_disable = "/scales/disable/{code}";
 const api_scale_setBaby = "/scales/baby/set";
 const api_scale_unsetBaby = "/scales/baby/unset";
 const api_scale_measure_now = "/scales/measure_now/{code}";
+const api_scale_change_wifi = "/scales/change_wifi/{code}";
+const api_scale_tare = "/scales/tare/{code}";
 const api_scaleData_get = "/scale_data/search/{hash}";
 const api_scaleData_getQr = "/scale_data/qr/{hash}";
 

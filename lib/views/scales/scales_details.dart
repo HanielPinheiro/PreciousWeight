@@ -34,6 +34,8 @@ class _ScaleDetailsState extends State<ScaleDetails> {
   bool _scaleActive = false;
   bool _hasBaby = false;
 
+  bool get _isScaleOnline => _currentScale?.isConnected ?? false;
+
   @override
   void initState() {
     super.initState();
@@ -107,6 +109,52 @@ class _ScaleDetailsState extends State<ScaleDetails> {
     }
   }
 
+  Future<void> _runScaleCommand({
+    required String loadingTitle,
+    required String successTitle,
+    required Future<String> Function() command,
+  }) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        title: Text(loadingTitle),
+        content: const SizedBox(
+          height: 72,
+          child: Center(child: CircularProgressIndicator()),
+        ),
+      ),
+    );
+
+    try {
+      final raw = await command();
+      if (!mounted) return;
+      Navigator.of(context, rootNavigator: true).pop();
+      await ElementsOfViews.showSimpleDialog(context, successTitle, raw.isEmpty ? 'Solicitação enviada com sucesso.' : raw);
+    } catch (_) {
+      if (!mounted) return;
+      Navigator.of(context, rootNavigator: true).pop();
+    }
+  }
+
+  Future<void> _changeWifi() async {
+    if (!_isScaleOnline) return;
+    await _runScaleCommand(
+      loadingTitle: 'Solicitando troca de Wi-Fi...',
+      successTitle: 'Trocar Wi-Fi',
+      command: () => context.read<ScalesProvider>().requestChangeWifi(context, _currentScale!.id),
+    );
+  }
+
+  Future<void> _tareScale() async {
+    if (!_scaleActive) return;
+    await _runScaleCommand(
+      loadingTitle: 'Solicitando tara...',
+      successTitle: 'Realizar Tara',
+      command: () => context.read<ScalesProvider>().requestTare(context, _currentScale!.id),
+    );
+  }
+
   Widget _showFlex1() {
     return Row(mainAxisSize: MainAxisSize.max, crossAxisAlignment: CrossAxisAlignment.center, mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
       ElementsOfViews.SimpleButton(context, _scaleActive ? "Inativar Balança" : "Ativar Balança", () async {
@@ -163,14 +211,36 @@ class _ScaleDetailsState extends State<ScaleDetails> {
   }
 
   Widget _showFlex3() {
+    final isActionDisabled = !_scaleActive || !_isScaleOnline;
+    final wifiIconColor = _isScaleOnline ? Colors.green.shade700 : Colors.orange.shade700;
+
     return Column(
       mainAxisSize: MainAxisSize.max,
       crossAxisAlignment: CrossAxisAlignment.center,
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        ElementsOfViews.SimpleButton(context, "Medir Peso Agora", () async {
-          await _measureWeightNow();
-        }, false, !_scaleActive),
+        Row(
+          mainAxisSize: MainAxisSize.max,
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.wifi,
+              color: wifiIconColor,
+              size: 32,
+            ),
+            ElementsOfViews.SimpleButton(context, "Medir Peso Agora", () async {
+              await _measureWeightNow();
+            }, false, isActionDisabled),
+            ElementsOfViews.SimpleButton(context, "Realizar Tara", () async {
+              await _tareScale();
+            }, false, isActionDisabled),
+          ],
+        ),
+        if (_isScaleOnline)
+          ElementsOfViews.SimpleButton(context, "Trocar Wi-Fi", () async {
+            await _changeWifi();
+          }, false, false),
         ElementsOfViews.CardToText(context, "Código Hash: \n${_currentScale!.hash}"),
         ElementsOfViews.CardToText(context, "Estado da balança: ${ScaleModel.ScaleOperation(_currentScale!.status)}"),
       ],

@@ -54,7 +54,9 @@ class _ScalesPageState extends State<ScalesPage> {
           ]),
           Padding(padding: EdgeInsets.all(12.0)),
           ...filteredScales.map((_scale) {
-            return ElementsOfViews.CardToList(context, Icons.scale, 'Código da Balança #${_scale.id}', 'Estado ${_scale.status == 1 ? 'Operante' : 'Inoperante'}', () {
+            final operationalStatus = _scale.status == 1 ? 'Operante' : 'Inoperante';
+            final connectivityStatus = _scale.isConnected ? 'Online' : 'Offline';
+            return ElementsOfViews.CardToList(context, Icons.scale, 'Código da Balança #${_scale.id}', 'Estado: $operationalStatus | Conectividade: $connectivityStatus', () {
               Navigator.push(context, MaterialPageRoute(builder: (context) => ScaleDetails(id:_scale.id)));
             });
           }).toList()

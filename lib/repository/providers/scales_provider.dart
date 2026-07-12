@@ -121,6 +121,7 @@ class ScalesProvider with ChangeNotifier {
           status: updatedScale.status,
           pop: updatedScale.pop,
           mac: updatedScale.mac,
+          isConnected: updatedScale.isConnected,
         );
         _scales[index] = s;
       } else {
@@ -134,6 +135,7 @@ class ScalesProvider with ChangeNotifier {
           status: updatedScale.status,
           pop: updatedScale.pop,
           mac: updatedScale.mac,
+          isConnected: updatedScale.isConnected,
         );
         _scales[index] = s;
       }
@@ -197,6 +199,36 @@ class ScalesProvider with ChangeNotifier {
         context: context,
         apiCall: () async {
           return await _scaleApi.requestWeightNow(scale_id.toString());
+        },
+      );
+    } catch (e) {
+      throw e;
+    } finally {
+      notifyListeners();
+    }
+  }
+
+  Future<String> requestChangeWifi(BuildContext context, int scale_id) async {
+    try {
+      return await SafeApi.call<String>(
+        context: context,
+        apiCall: () async {
+          return await _scaleApi.requestChangeWifi(scale_id.toString());
+        },
+      );
+    } catch (e) {
+      throw e;
+    } finally {
+      notifyListeners();
+    }
+  }
+
+  Future<String> requestTare(BuildContext context, int scale_id) async {
+    try {
+      return await SafeApi.call<String>(
+        context: context,
+        apiCall: () async {
+          return await _scaleApi.requestTare(scale_id.toString());
         },
       );
     } catch (e) {
