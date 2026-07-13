@@ -194,25 +194,23 @@ class _BabiesDetailsState extends State<BabiesDetails> {
             )));
   }
 
-  Widget _wrapText(BuildContext context, String text) {
-    return Expanded(
-      child: FittedBox(
-        fit: BoxFit.scaleDown,
-        alignment: Alignment.center,
-        child: Text(text, style: TextStyle(fontSize: 18, color: Theme.of(context).colorScheme.primary), overflow: TextOverflow.ellipsis),
-      ),
-    );
-  }
-
   Widget _showFlex3() {
     return Padding(
         padding: EdgeInsets.only(top: 25.0),
         child: Column(
           children: [
             ElementsOfViews.CardToText(context, "Evolução Ponderal"),
-            _weights != null && _weights!.isNotEmpty
-                ? BabyWeightChart(historicWeight: _weights!)
-                : _wrapText(context, "Sem dados suficientes")
+            Expanded(
+              child: _weights != null && _weights!.isNotEmpty
+                  ? BabyWeightChart(historicWeight: _weights!)
+                  : Center(
+                      child: Text(
+                        "Sem dados suficientes",
+                        style: TextStyle(fontSize: 18, color: Theme.of(context).colorScheme.primary),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+            )
           ],
         ));
   }
