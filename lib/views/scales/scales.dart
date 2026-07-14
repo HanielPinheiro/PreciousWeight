@@ -56,7 +56,7 @@ class _ScalesPageState extends State<ScalesPage> {
           ...filteredScales.map((_scale) {
             final operationalStatus = _scale.status == 1 ? 'Operante' : 'Inoperante';
             final connectivityStatus = _scale.isConnected ? 'Online' : 'Offline';
-            return ElementsOfViews.CardToList(context, Icons.scale, 'Código da Balança #${_scale.id}', 'Estado: $operationalStatus | Conectividade: $connectivityStatus', () {
+            return ElementsOfViews.CardToList(context, Icons.scale, 'Código da Balança #${_scale.id}', 'Estado: $operationalStatus | Wi-Fi: $connectivityStatus', () {
               Navigator.push(context, MaterialPageRoute(builder: (context) => ScaleDetails(id:_scale.id)));
             });
           }).toList()

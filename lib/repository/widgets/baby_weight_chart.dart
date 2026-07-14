@@ -269,13 +269,9 @@ class _BabyWeightChartState extends State<BabyWeightChart> {
   }
 
   TextStyle _selectorLabelStyle(BuildContext context) {
-    return Theme.of(context).textTheme.titleMedium?.copyWith(
+    return TextStyle(
           color: Theme.of(context).colorScheme.primary,
-          fontWeight: FontWeight.w600,
-        ) ??
-        TextStyle(
-          color: Theme.of(context).colorScheme.primary,
-          fontSize: 16,
+          fontSize: 14,
           fontWeight: FontWeight.w600,
         );
   }
@@ -293,11 +289,15 @@ class _BabyWeightChartState extends State<BabyWeightChart> {
         alignment: WrapAlignment.center,
         children: [
           ChoiceChip(
+            selectedColor: Theme.of(context).colorScheme.onSecondary,
+            checkmarkColor: Theme.of(context).colorScheme.primary,
             label: Text('Resumo', style: labelStyle),
             selected: _chartMode == _ChartMode.summary,
             onSelected: (_) => _selectMode(_ChartMode.summary, summaries),
           ),
           ChoiceChip(
+            selectedColor: Theme.of(context).colorScheme.onSecondary,
+            checkmarkColor: Theme.of(context).colorScheme.primary,
             label: Text(detailLabel, style: labelStyle),
             selected: _chartMode == _ChartMode.detail,
             onSelected: summaries.isEmpty ? null : (_) => _selectMode(_ChartMode.detail, summaries),
@@ -605,7 +605,7 @@ class _BabyWeightChartState extends State<BabyWeightChart> {
             child: Text(
               BabyWeightChart.monthLabel(selectedMonth),
               textAlign: TextAlign.center,
-              style: selectorLabelStyle.copyWith(fontSize: (selectorLabelStyle.fontSize ?? 16) + 4),
+              style: selectorLabelStyle.copyWith(fontSize: 18),
             ),
           ),
           IconButton(

@@ -109,11 +109,7 @@ class _ScaleDetailsState extends State<ScaleDetails> {
     }
   }
 
-  Future<void> _runScaleCommand({
-    required String loadingTitle,
-    required String successTitle,
-    required Future<String> Function() command,
-  }) async {
+  Future<void> _runScaleCommand({ required String loadingTitle, required String successTitle, required Future<String> Function() command }) async {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -155,20 +151,17 @@ class _ScaleDetailsState extends State<ScaleDetails> {
     );
   }
 
-  Widget _showFlex1() {
+  Widget _flex1WithoutBaby(){
     return Row(mainAxisSize: MainAxisSize.max, crossAxisAlignment: CrossAxisAlignment.center, mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-      ElementsOfViews.SimpleButton(context, _scaleActive ? "Inativar Balança" : "Ativar Balança", () async {
-        await context.read<ScalesProvider>().enableOrDisableScale(context, _currentScale!);
-        await _loadData();
-      }, false, _hasBaby),
-      ElementsOfViews.SimpleButton(context, _hasBaby ? "Trocar Bebê de Balança" : "Associar Balança a um Bebê", () async {
-        if (!_hasBaby) {
-          final baby = await Navigator.push(context, MaterialPageRoute(builder: (context) => ScaleBabies(scale: _currentScale)));
-          if (baby != null) await _linkBabyToScale(baby);
-        } else {
-          await _unlinkBabyFromScale();
-        }
-      }, false, !_scaleActive)
+        ElementsOfViews.SimpleButton(context, _scaleActive ? "Inativar Balança" : "Ativar Balança", () async {
+          await context.read<ScalesProvider>().enableOrDisableScale(context, _currentScale!);
+          await _loadData();
+        }, false, _hasBaby),
+
+        ElementsOfViews.SimpleButton(context, "Associar Balança a um Bebê", () async {
+            final baby = await Navigator.push(context, MaterialPageRoute(builder: (context) => ScaleBabies(scale: _currentScale)));
+            if (baby != null) await _linkBabyToScale(baby);
+          }, false, !_scaleActive)
     ]);
   }
 
@@ -176,7 +169,7 @@ class _ScaleDetailsState extends State<ScaleDetails> {
     return Expanded(child: FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.center, child: Text(text, style: TextStyle(fontSize: 20, color: Theme.of(context).colorScheme.primary), overflow: TextOverflow.ellipsis)));
   }
 
-  Widget _showFlex2() {
+  Widget _showBabyDetails() {
     if (_currentScale?.assignedBaby == null) {
       return ElementsOfViews.CardToText(context, "Nenhum bebê associado");
     }
@@ -198,11 +191,17 @@ class _ScaleDetailsState extends State<ScaleDetails> {
               SizedBox(width: 10),
               Expanded(
                   child: Column(mainAxisAlignment: MainAxisAlignment.spaceEvenly, crossAxisAlignment: CrossAxisAlignment.center, children: [
-                Text("Bebê na Balança", style: displaySmall.copyWith(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 24)),
-                _wrapText(context, "Nome: ${_currentScale!.assignedBaby!.name!}"),
-                _wrapText(context, "Nome da mãe: ${_currentScale!.assignedBaby!.motherName!}"),
-                _wrapText(context, "Data de Nascimento: ${dateFormatter_objToDb.format(_currentScale!.assignedBaby!.birthDate!)}"),
-              ])),
+                    SizedBox(height: 20),
+                    Text("Bebê na Balança", style: displaySmall.copyWith(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 24)),
+                    SizedBox(height: 20),
+                    _wrapText(context, "Nome: ${_currentScale!.assignedBaby!.name!}"),
+                    _wrapText(context, "Nome da mãe: ${_currentScale!.assignedBaby!.motherName!}"),
+                    _wrapText(context, "Data de Nascimento: ${dateFormatter_objToDb.format(_currentScale!.assignedBaby!.birthDate!)}"),
+                    SizedBox(height: 20),
+                    ElementsOfViews.SimpleButton(context, "Trocar Bebê de Balança",  () async {await _unlinkBabyFromScale();}, false, !_scaleActive),
+                    SizedBox(height: 20),
+                  ])
+              ),
             ],
           ),
         ),
@@ -210,40 +209,60 @@ class _ScaleDetailsState extends State<ScaleDetails> {
     );
   }
 
-  Widget _showFlex3() {
+  Widget _showScaleCommands() {
     final isActionDisabled = !_scaleActive || !_isScaleOnline;
-    final wifiIconColor = _isScaleOnline ? Colors.green.shade700 : Colors.orange.shade700;
-
+    final wifiIcon = _isScaleOnline ? Icons.wifi : Icons.wifi_off;
+    final wifiIconColor = _isScaleOnline ? Theme.of(context).colorScheme.onSecondary : Theme.of(context).colorScheme.error;
+    final wifiText = _isScaleOnline ? "Balança Conectada" : "Balança Desconectada";
     return Column(
       mainAxisSize: MainAxisSize.max,
       crossAxisAlignment: CrossAxisAlignment.center,
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
         Row(
-          mainAxisSize: MainAxisSize.max,
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.wifi,
-              color: wifiIconColor,
-              size: 32,
-            ),
-            ElementsOfViews.SimpleButton(context, "Medir Peso Agora", () async {
-              await _measureWeightNow();
-            }, false, isActionDisabled),
-            ElementsOfViews.SimpleButton(context, "Realizar Tara", () async {
-              await _tareScale();
-            }, false, isActionDisabled),
-          ],
+              mainAxisSize: MainAxisSize.max,
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Row(children: [
+                  Icon(wifiIcon, color: wifiIconColor, size: 36),
+                  SizedBox(width: 10),
+                  Text(wifiText, style: displaySmall.copyWith(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.normal, fontSize: 17)),
+                ]),
+                ElementsOfViews.SimpleButton(context, "Trocar Wi-Fi", () async { await _changeWifi(); }, false, false),
+              ]
         ),
-        if (_isScaleOnline)
-          ElementsOfViews.SimpleButton(context, "Trocar Wi-Fi", () async {
-            await _changeWifi();
-          }, false, false),
-        ElementsOfViews.CardToText(context, "Código Hash: \n${_currentScale!.hash}"),
-        ElementsOfViews.CardToText(context, "Estado da balança: ${ScaleModel.ScaleOperation(_currentScale!.status)}"),
-      ],
+        Row(
+            mainAxisSize: MainAxisSize.max,
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              ElementsOfViews.SimpleButton(context, "Medir Peso Agora", () async { await _measureWeightNow(); }, false, isActionDisabled),
+              ElementsOfViews.SimpleButton(context, "Realizar Tara", () async { await _tareScale(); }, false, isActionDisabled),
+            ]
+        )
+      ]);
+  }
+
+  Widget _showScaleDetails() {
+    return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 25),
+        child: InkWell(
+            borderRadius: BorderRadius.circular(15),
+            child: Container(
+                padding: EdgeInsets.all(9),
+                decoration: MyDecorations().GetBoxDecoration(context),
+                child: Column(
+                    mainAxisSize: MainAxisSize.max,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _wrapText(context,"Código Hash: "),
+                      _wrapText(context, _currentScale!.hash),
+                      _wrapText(context, "Estado da balança: ${ScaleModel.ScaleOperation(_currentScale!.status)}")
+                    ]),
+            ),
+        ),
     );
   }
 
@@ -262,9 +281,13 @@ class _ScaleDetailsState extends State<ScaleDetails> {
       body: Column(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          Expanded(flex: 1, child: _showFlex1()),
-          Expanded(flex: 2, child: _showFlex2()),
-          Expanded(flex: 4, child: _showFlex3()),
+          SizedBox(height: 20),
+          Expanded(flex: 1, child: _showScaleDetails()),
+          SizedBox(height: 20),
+          Expanded(flex: 1, child: _showScaleCommands()),
+          SizedBox(height: 20),
+          Expanded(flex: 2, child: _hasBaby ? _showBabyDetails() : _flex1WithoutBaby()),
+          SizedBox(height: 20),
         ],
       ),
     );

@@ -116,19 +116,19 @@ class _BabiesDetailsState extends State<BabiesDetails> {
           await Navigator.push(context, MaterialPageRoute(builder: (context) => BabiesEdit(baby: _currentBaby!)));
           await _loadData();
         }),
+        _hasScale ? ElementsOfViews.SimpleButton(context, _hasScale ? 'Dados da Balança' : 'Associar Bebê à Balança', () async {
+          if (!_hasScale) {
+            final scale = await Navigator.push(context, MaterialPageRoute(builder: (context) => ScaleBabies(baby: _currentBaby)));
+            if (scale != null) await _linkScaleToBaby(scale);
+          } else {
+            await _unlinkScaleToBaby();
+          }
+        }, false, !_currentBaby!.isActive!) :
         ElementsOfViews.SimpleButton(context, _currentBaby!.isActive! ? "Inativar Paciente" : "Ativar Paciente", () async {
           await context.read<BabyProvider>().toggleBabyStatus(context, _currentBaby!);
           await _loadData();
         }, false, _hasScale)
       ]),
-      ElementsOfViews.SimpleButton(context, _hasScale ? 'Dados da Balança' : 'Associar Bebê à Balança', () async {
-        if (!_hasScale) {
-          final scale = await Navigator.push(context, MaterialPageRoute(builder: (context) => ScaleBabies(baby: _currentBaby)));
-          if (scale != null) await _linkScaleToBaby(scale);
-        } else {
-          await _unlinkScaleToBaby();
-        }
-      }, false, !_currentBaby!.isActive!)
     ]);
   }
 
@@ -154,16 +154,6 @@ class _BabiesDetailsState extends State<BabiesDetails> {
           Text("Data de Nascimento", style: titleLarge.copyWith(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold)),
           Text(dateFormatter_objToDb.format(_currentBaby!.birthDate!), style: headlineSmall.copyWith(color: Theme.of(context).colorScheme.primary)),
           SizedBox(height: space),
-          if (_hasScale) ...[
-            Text("Balança Associada", style: titleLarge.copyWith(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold)),
-            Text("#${linkedScale?.id ?? _currentBaby!.scaleId}", style: headlineSmall.copyWith(color: Theme.of(context).colorScheme.primary)),
-            if (linkedScale != null) ...[
-              SizedBox(height: space / 2),
-              Text("Hash: ${linkedScale.hash}", style: titleLarge.copyWith(color: Theme.of(context).colorScheme.primary), textAlign: TextAlign.center),
-              Text("Status: ${ScaleModel.ScaleOperation(linkedScale.status)}", style: titleLarge.copyWith(color: Theme.of(context).colorScheme.primary), textAlign: TextAlign.center),
-            ],
-            SizedBox(height: space),
-          ],
           if (_currentBaby!.qrCodeText != null) _qrIdData(space)
         ]),
         ]));
