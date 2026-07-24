@@ -2,6 +2,7 @@
 
 static char *ROTULO_LOCAL = "BABY_CONTROL";
 static bool has_baby = false;
+static const uint8_t MAX_MQTT_PUBLISH_RETRIES = 3;
 
 char baby_id[12] = {0};
 SemaphoreHandle_t has_baby_mutex = NULL;
@@ -36,33 +37,29 @@ static esp_err_t clear_routine()
 
 static esp_err_t run_routine()
 {
-    log_entry_t entry;
-    entry.path = BABY_HOURS_FILE;
-
+    char routine_snapshot[256] = {0};
     int offset = 0;
-    offset += snprintf(entry.message, sizeof(entry.message), "baby_id:%s;\n", baby_id);
-    for (int i = 0; i < number_of_weight_times && offset < sizeof(entry.message); i++)
-        offset += snprintf(entry.message + offset, sizeof(entry.message) - offset, "weight_time:%02d:%02d;\n", weight_times[i].hour, weight_times[i].minutes);
+    offset += snprintf(routine_snapshot, sizeof(routine_snapshot), "baby_id:%s;\n", baby_id);
+    for (int i = 0; i < number_of_weight_times && offset < sizeof(routine_snapshot); i++)
+        offset += snprintf(routine_snapshot + offset, sizeof(routine_snapshot) - offset, "weight_time:%02d:%02d;\n", weight_times[i].hour, weight_times[i].minutes);
 
-    ESP_LOGW(ROTULO_LOCAL, "Vai salvar no SD: %s", entry.message);
-
-    while (1)
+    if (offset <= 0 || offset >= sizeof(routine_snapshot))
     {
-        if (sdcard_log_queue == NULL)
-        {
-            ESP_LOGW(ROTULO_LOCAL, "Queue ainda não criada, aguardando...");
-            vTaskDelay(pdMS_TO_TICKS(500));
-            continue;
-        }
-
-        if (xQueueSend(sdcard_log_queue, &entry, pdMS_TO_TICKS(100)) == pdTRUE)
-            break;
-
-        vTaskDelay(pdMS_TO_TICKS(500));
+        sdcard_log(LOG_ERROR, "Falha ao montar snapshot da rotina", ROTULO_LOCAL);
+        return ESP_FAIL;
     }
 
+    ESP_LOGW(ROTULO_LOCAL, "Vai salvar no SD: %s", routine_snapshot);
+
+    if (sdcard_overwrite_file(BABY_HOURS_FILE, routine_snapshot) != ESP_OK)
+        return ESP_FAIL;
+
     if (scale_has_baby() && number_of_weight_times > 0)
-        schedule_next_measure();
+    {
+        esp_err_t schedule_ret = schedule_next_measure();
+        if (schedule_ret != ESP_OK && schedule_ret != ESP_ERR_INVALID_STATE)
+            return schedule_ret;
+    }
 
     return ESP_OK;
 }
@@ -88,6 +85,9 @@ static esp_err_t baby_routine(const char *data)
 static esp_err_t weight_times_routine(const char *data)
 {
     weight_time_t weight;
+    if (number_of_weight_times >= MAX_WEIGHT_TIMES)
+        return ESP_ERR_NO_MEM;
+
     // Verifica se a string tem formato HH:MM (ex: "08:00")
     if (strlen(data) >= 5 && data[2] == ':')
     {
@@ -111,13 +111,13 @@ static esp_err_t measure_routine(const char *data)
     (void)data;
     snprintf(m, sizeof(m), "%s{%.2f}", RECEIVED_MEASURE, global_weight); //[MEA]{1256.00}
     sdcard_log(LOG_INFO, m, ROTULO_LOCAL);
-    while (true)
+    for (uint8_t attempt = 0; attempt < MAX_MQTT_PUBLISH_RETRIES; attempt++)
     {
         if (mqtt_publish(MQTT_TOPIC_WEIGHTS, m, 1))
-            break;
+            return ESP_OK;
         vTaskDelay(pdMS_TO_TICKS(300));
     }
-    return ESP_OK;
+    return ESP_FAIL;
 }
 
 static esp_err_t wifi_strength_routine(const char *data)
@@ -131,13 +131,13 @@ static esp_err_t wifi_strength_routine(const char *data)
 
     snprintf(m, sizeof(m), "%s{%d}", RECEIVED_WIFI_STRENGTH, wifi_strength);
     sdcard_log(LOG_INFO, m, ROTULO_LOCAL);
-    while (true)
+    for (uint8_t attempt = 0; attempt < MAX_MQTT_PUBLISH_RETRIES; attempt++)
     {
         if (mqtt_publish(MQTT_TOPIC_WEIGHTS, m, 1))
-            break;
+            return ESP_OK;
         vTaskDelay(pdMS_TO_TICKS(300));
     }
-    return ESP_OK;
+    return ESP_FAIL;
 }
 
 static esp_err_t calibrate_routine(const char *data)
@@ -149,13 +149,7 @@ static esp_err_t calibrate_routine(const char *data)
 static esp_err_t wifi_routine()
 {
     sdcard_log(LOG_WARN, "Desligando MQTT", ROTULO_LOCAL);
-    esp_mqtt_client_handle_t client = mqtt_get_client_handle();
-    if (client)
-    {
-        esp_mqtt_client_stop(client);
-        esp_mqtt_client_destroy(client);
-        client = NULL;
-    }
+    mqtt_stop_client();
     sdcard_log(LOG_WARN, "MQTT desligado, desligando wifi", ROTULO_LOCAL);
     reset_wifi();
     return ESP_OK;
@@ -227,7 +221,7 @@ void process_mqtt_data(const char *mqtt_data)
         size_t len = strlen(h->prefix);
         if (strncmp(mqtt_data, h->prefix, len) == 0)
         {
-            if (number_of_weight_times >= MAX_WEIGHT_TIMES && strcmp(h->prefix, RECEIVED_TIMES))
+            if (number_of_weight_times >= MAX_WEIGHT_TIMES && strcmp(h->prefix, RECEIVED_TIMES) == 0)
             {
                 mqtt_publish(MQTT_TOPIC_WEIGHTS, "ERROR_MAX_WEIGHT_TIMES_ACHIEVED", 1);
                 return;

@@ -130,54 +130,83 @@ esp_err_t initialize_sdcard()
 
 #pragma region Files
 
+static esp_err_t sdcard_write_locked(const char *path, const char *data, const char *mode)
+{
+    if (MORE_LOGS)
+        ESP_LOGI(ROTULO_LOCAL, "Executando escrita no arquivo {%s}", path);
+
+    if (stat(path, &st) < 0)
+    {
+        ESP_LOGI(ROTULO_LOCAL, "Arquivo nao encontrado. Criando arquivo {%s}", path);
+        esp_err_t resultado = sdcard_create_file((char *)path);
+        if (resultado != ESP_OK)
+        {
+            ESP_LOGE(ROTULO_LOCAL, "Falha ao criar o arquivo {%s} para escrita.", path);
+            return ESP_FAIL;
+        }
+    }
+
+    FILE *file = fopen(path, mode);
+    if (file == NULL)
+    {
+        ESP_LOGE(ROTULO_LOCAL, "Falha ao abrir o arquivo {%s} para escrita.", path);
+        return ESP_FAIL;
+    }
+
+    int result = strcmp(mode, "a") == 0 ? fprintf(file, "%s\n", data) : fprintf(file, "%s", data);
+    fclose(file);
+
+    if (result < 0)
+    {
+        ESP_LOGE(ROTULO_LOCAL, "Erro ao tentar escrever os dados no arquivo, no caminho {%s}.", path);
+        return ESP_FAIL;
+    }
+
+    if (MORE_LOGS)
+        ESP_LOGI(ROTULO_LOCAL, "Arquivo escrito com sucesso.");
+
+    return ESP_OK;
+}
+
 esp_err_t sdcard_write_file(char *path, char *data)
 {
-    if (xSemaphoreTake(sd_mutex, pdMS_TO_TICKS(300)) == pdTRUE)
-    {
-        if (MORE_LOGS)
-            ESP_LOGI(ROTULO_LOCAL, "Executando sdcard_write_file para salvar mensagem");
-
-        if (stat(path, &st) < 0)
-        {
-            ESP_LOGI(ROTULO_LOCAL, "Arquivo nao encontrado. Criando arquivo {%s}", path);
-            esp_err_t resultado = sdcard_create_file(path);
-            if (resultado != ESP_OK)
-            {
-                ESP_LOGE(ROTULO_LOCAL, "Falha ao criar o arquivo {%s} para escrita.", path);
-                return ESP_FAIL;
-            }
-        }
-
-        if (MORE_LOGS)
-            ESP_LOGI(ROTULO_LOCAL, "Abrindo arquivo {%s}", path);
-
-        FILE *file = fopen(path, "a");
-        if (file == NULL)
-        {
-            ESP_LOGE(ROTULO_LOCAL, "Falha ao abrir o arquivo {%s} para escrita.", path);
-            return ESP_FAIL;
-        }
-
-        int result = fprintf(file, "%s\n", data);
-        fclose(file);
-        xSemaphoreGive(sd_mutex);
-
-        if (result < 0)
-        {
-            ESP_LOGE(ROTULO_LOCAL, "Erro ao tentar escrever os dados {%s} no arquivo, no caminho {%s}.", data, path);
-            return ESP_FAIL;
-        }
-
-        if (MORE_LOGS)
-            ESP_LOGI(ROTULO_LOCAL, "Arquivo escrito com sucesso.");
-
-        return ESP_OK;
-    }
-    else
+    if (xSemaphoreTake(sd_mutex, pdMS_TO_TICKS(300)) != pdTRUE)
     {
         ESP_LOGE(ROTULO_LOCAL, "Falha ao obter o semáforo para escrita no arquivo.");
         return ESP_FAIL;
     }
+
+    esp_err_t ret = sdcard_write_locked(path, data, "a");
+    xSemaphoreGive(sd_mutex);
+    return ret;
+}
+
+esp_err_t sdcard_overwrite_file(const char *path, const char *data)
+{
+    if (xSemaphoreTake(sd_mutex, pdMS_TO_TICKS(300)) != pdTRUE)
+    {
+        ESP_LOGE(ROTULO_LOCAL, "Falha ao obter o semáforo para sobrescrever arquivo.");
+        return ESP_FAIL;
+    }
+
+    char temp_path[64];
+    snprintf(temp_path, sizeof(temp_path), "%s.tmp", path);
+
+    remove(temp_path);
+    esp_err_t ret = sdcard_write_locked(temp_path, data, "w");
+    if (ret == ESP_OK)
+    {
+        remove(path);
+        if (rename(temp_path, path) != 0)
+        {
+            ESP_LOGE(ROTULO_LOCAL, "Falha ao promover arquivo temporario para {%s}: %s", path, strerror(errno));
+            remove(temp_path);
+            ret = ESP_FAIL;
+        }
+    }
+
+    xSemaphoreGive(sd_mutex);
+    return ret;
 }
 
 esp_err_t sdcard_create_file(char *path)
@@ -198,9 +227,7 @@ esp_err_t sdcard_create_file(char *path)
 
 void sdcard_clear_file(const char *filename)
 {
-    FILE *file = fopen(filename, "w"); // Modo "w" sobrescreve o arquivo
-    if (file != NULL)
-        fclose(file);
+    (void)sdcard_overwrite_file(filename, "");
 }
 
 #pragma endregion

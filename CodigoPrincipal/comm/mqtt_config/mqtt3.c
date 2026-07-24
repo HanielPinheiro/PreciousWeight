@@ -30,8 +30,31 @@ extern const uint8_t client_key_pem_end[] asm("_binary_client_key_end");
 extern const uint8_t ca_cert_pem_start[] asm("_binary_ca_crt_start");
 extern const uint8_t ca_cert_pem_end[] asm("_binary_ca_crt_end");
 
-esp_mqtt_client_handle_t mqtt_get_client_handle() { return client; }
-void mqtt_reset_client_handle() { client = NULL; }
+static bool mqtt_lock(TickType_t timeout_ticks)
+{
+    return mqtt_mutex != NULL && xSemaphoreTake(mqtt_mutex, timeout_ticks) == pdTRUE;
+}
+
+static void mqtt_unlock(void)
+{
+    if (mqtt_mutex != NULL)
+        xSemaphoreGive(mqtt_mutex);
+}
+
+static esp_err_t mqtt_destroy_client_locked(void)
+{
+    if (client == NULL)
+    {
+        connected = false;
+        return ESP_OK;
+    }
+
+    esp_mqtt_client_stop(client);
+    esp_mqtt_client_destroy(client);
+    client = NULL;
+    connected = false;
+    return ESP_OK;
+}
 
 static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data)
 {
@@ -82,35 +105,93 @@ void mqtt_app_start(void)
         .session = {.keepalive = MQTT_KEEPALIVE, .disable_clean_session = true, .last_will = {.topic = MQTT_TOPIC_CONN_STATUS, .msg = MQTT_LAST_WILL_MSG, .msg_len = strlen(MQTT_LAST_WILL_MSG), .qos = 1, .retain = true}},
         .network = {.reconnect_timeout_ms = 10000, .disable_auto_reconnect = false}};
 
+    if (!mqtt_lock(pdMS_TO_TICKS(1000)))
+    {
+        ESP_LOGE(ROTULO_LOCAL, "Falha ao adquirir mutex para iniciar MQTT");
+        return;
+    }
+
+    if (client != NULL)
+    {
+        ESP_LOGW(ROTULO_LOCAL, "Cliente MQTT ja inicializado");
+        mqtt_unlock();
+        return;
+    }
+
+    connected = false;
     client = esp_mqtt_client_init(&mqtt_cfg);
+    if (client == NULL)
+    {
+        ESP_LOGE(ROTULO_LOCAL, "Falha ao inicializar cliente MQTT");
+        mqtt_unlock();
+        return;
+    }
+
     esp_mqtt_client_register_event(client, ESP_EVENT_ANY_ID, mqtt_event_handler, NULL);
-    esp_mqtt_client_start(client);
+    esp_err_t err = esp_mqtt_client_start(client);
+    if (err != ESP_OK)
+    {
+        ESP_LOGE(ROTULO_LOCAL, "Falha ao iniciar cliente MQTT: %s", esp_err_to_name(err));
+        esp_mqtt_client_destroy(client);
+        client = NULL;
+    }
+
+    mqtt_unlock();
 }
 
 void mqtt_init(mqtt_connection_callback_t ext_connection_cb)
 {
     connection_cb = ext_connection_cb;
-    mqtt_mutex = xSemaphoreCreateMutex();
+    if (mqtt_mutex == NULL)
+        mqtt_mutex = xSemaphoreCreateMutex();
     mqtt_app_start();
 }
 
 bool mqtt_publish(const char *topic, const char *data, int qos)
 {
-    if (!client || !connected)
-    {
-        ESP_LOGW(ROTULO_LOCAL, "Cannot publish - not connected");
-        return false;
-    }
-
-    if (xSemaphoreTake(mqtt_mutex, pdMS_TO_TICKS(1000)) == pdTRUE)
-    {
-        int msg_id = esp_mqtt_client_publish(client, topic, data, strlen(data), qos, 0);
-        xSemaphoreGive(mqtt_mutex);
-        return msg_id >= 0;
-    }
-    else
+    if (!mqtt_lock(pdMS_TO_TICKS(1000)))
     {
         ESP_LOGW(ROTULO_LOCAL, "Timeout ao tentar pegar mutex do MQTT");
         return false;
     }
+
+    bool can_publish = client != NULL && connected;
+    int msg_id = -1;
+    if (!can_publish)
+        ESP_LOGW(ROTULO_LOCAL, "Cannot publish - not connected");
+    else
+        msg_id = esp_mqtt_client_publish(client, topic, data, strlen(data), qos, 0);
+
+    mqtt_unlock();
+    return msg_id >= 0;
+}
+
+esp_err_t mqtt_stop_client(void)
+{
+    if (!mqtt_lock(pdMS_TO_TICKS(2000)))
+    {
+        ESP_LOGE(ROTULO_LOCAL, "Falha ao adquirir mutex para parar MQTT");
+        return ESP_ERR_TIMEOUT;
+    }
+
+    esp_err_t err = mqtt_destroy_client_locked();
+    mqtt_unlock();
+    return err;
+}
+
+esp_err_t mqtt_restart_client(void)
+{
+    if (!mqtt_lock(pdMS_TO_TICKS(2000)))
+    {
+        ESP_LOGE(ROTULO_LOCAL, "Falha ao adquirir mutex para reiniciar MQTT");
+        return ESP_ERR_TIMEOUT;
+    }
+
+    esp_err_t err = mqtt_destroy_client_locked();
+    mqtt_unlock();
+    if (err != ESP_OK)
+        return err;
+
+    mqtt_app_start();
+    return ESP_OK;
 }

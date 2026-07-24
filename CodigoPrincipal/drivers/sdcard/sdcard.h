@@ -34,6 +34,7 @@ extern sdmmc_card_t *sdcard;
 
 esp_err_t initialize_sdcard(void);
 esp_err_t sdcard_write_file(char *path, char *data);
+esp_err_t sdcard_overwrite_file(const char *path, const char *data);
 esp_err_t sdcard_create_file(char *path);
 esp_err_t sdcard_log(log_type_t log_type, char *message, const char *trace);
 void esp_log_at_terminal(const char *stack_trace, char *message);

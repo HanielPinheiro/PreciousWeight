@@ -2,7 +2,6 @@
 
 static const char *ROTULO_LOCAL = "SDCARD_TASK";
 static uint8_t sd_failure_counter = 0;
-static TaskHandle_t sd_task_handler = NULL;
 QueueHandle_t sdcard_log_queue = NULL;
 
 static void sdcard_writer_task(void *pv_params)
@@ -19,10 +18,10 @@ static void sdcard_writer_task(void *pv_params)
                 vTaskDelay(pdMS_TO_TICKS(1000));
                 sd_failure_counter++;
                 if (sd_failure_counter == 5)
-                {
-                    vTaskSuspend(sd_task_handler);
-                }
+                    ESP_LOGE(ROTULO_LOCAL, "Falhas recorrentes no SD. Mantendo retries para evitar perda silenciosa de recuperacao.");
             }
+            else if (sd_failure_counter > 0)
+                sd_failure_counter = 0;
         }
     }
 }
@@ -36,7 +35,7 @@ esp_err_t init_sdcard_task()
         return ESP_FAIL;
     }
 
-    if (xTaskCreate(sdcard_writer_task, "gravar_logs_sd", 4096, NULL, TASK_PRIORITY_MEDIUM, &sd_task_handler) != pdPASS)
+    if (xTaskCreate(sdcard_writer_task, "gravar_logs_sd", 4096, NULL, TASK_PRIORITY_MEDIUM, NULL) != pdPASS)
     {
         sdcard_log(LOG_ERROR, "Falha ao criar task de gravação de logs", ROTULO_LOCAL);
         return ESP_FAIL;

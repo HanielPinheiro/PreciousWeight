@@ -17,7 +17,7 @@ extern esp_mqtt_event_handle_t event;
 void mqtt_app_start(void);
 void mqtt_init(mqtt_connection_callback_t ext_connection_cb);
 bool mqtt_publish(const char *topic, const char *data, int qos);
-esp_mqtt_client_handle_t mqtt_get_client_handle();
-void mqtt_reset_client_handle();
+esp_err_t mqtt_stop_client(void);
+esp_err_t mqtt_restart_client(void);
 
 #endif // MQTT3_H

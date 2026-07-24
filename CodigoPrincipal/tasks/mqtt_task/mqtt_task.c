@@ -3,6 +3,24 @@
 static TaskHandle_t mqtt_manager_task_handle = NULL;
 static SemaphoreHandle_t mqtt_restart_sem = NULL;
 static char *ROTULO_LOCAL = "MQTT_TASK";
+static QueueHandle_t mqtt_command_queue = NULL;
+
+#define MQTT_COMMAND_MAX_LENGTH 128
+
+typedef struct
+{
+    char payload[MQTT_COMMAND_MAX_LENGTH];
+} mqtt_command_entry_t;
+
+static void mqtt_command_worker_task(void *pvParameters)
+{
+    mqtt_command_entry_t entry;
+    while (1)
+    {
+        if (xQueueReceive(mqtt_command_queue, &entry, portMAX_DELAY) == pdTRUE)
+            process_mqtt_data(entry.payload);
+    }
+}
 
 void mqtt_manager_task(void *pvParameters)
 { // Wait for restart signal or periodic check
@@ -11,21 +29,9 @@ void mqtt_manager_task(void *pvParameters)
         if (xSemaphoreTake(mqtt_restart_sem, pdMS_TO_TICKS(10000)))
         {
             ESP_LOGI(ROTULO_LOCAL, "Processing MQTT restart request");
-            esp_mqtt_client_handle_t client = mqtt_get_client_handle();
-            if (client)
-            {
-                ESP_LOGI(ROTULO_LOCAL, "Stopping MQTT client");
-                esp_mqtt_client_stop(client);
-                vTaskDelay(pdMS_TO_TICKS(500));
-
-                ESP_LOGI(ROTULO_LOCAL, "Destroying MQTT client");
-                esp_mqtt_client_destroy(client);
-                vTaskDelay(pdMS_TO_TICKS(1000));
-                mqtt_reset_client_handle();
-            }
-
             ESP_LOGI(ROTULO_LOCAL, "Reinitializing MQTT");
-            mqtt_app_start();
+            if (mqtt_restart_client() != ESP_OK)
+                ESP_LOGE(ROTULO_LOCAL, "Falha ao reiniciar cliente MQTT");
         }
     }
 }
@@ -59,17 +65,18 @@ void mqtt_connection_status_callback(esp_mqtt_event_id_t connected)
          */
         if (strncmp(event->topic, MQTT_TOPIC_SCALES, event->topic_len) == 0)
         {
-            // Cria uma cópia null-terminated segura dos dados
-            char msg_copy[event->data_len + 1]; // +1 para o null terminator
-            memcpy(msg_copy, event->data, event->data_len);
-            msg_copy[event->data_len] = '\0'; // Garante terminação nula
+            mqtt_command_entry_t entry = {0};
+            size_t copy_len = event->data_len < (MQTT_COMMAND_MAX_LENGTH - 1) ? event->data_len : (MQTT_COMMAND_MAX_LENGTH - 1);
+            memcpy(entry.payload, event->data, copy_len);
+            entry.payload[copy_len] = '\0';
 
             update_current_time();
             sdcard_log(LOG_INFO, current_time, ROTULO_LOCAL);
             sdcard_log(LOG_INFO, "MENSAGEM RECEBIDA VIA MQTT:", ROTULO_LOCAL);
-            sdcard_log(LOG_INFO, msg_copy, ROTULO_LOCAL);
+            sdcard_log(LOG_INFO, entry.payload, ROTULO_LOCAL);
 
-            process_mqtt_data(msg_copy);
+            if (xQueueSend(mqtt_command_queue, &entry, pdMS_TO_TICKS(50)) != pdTRUE)
+                sdcard_log(LOG_ERROR, "Fila de comandos MQTT cheia", ROTULO_LOCAL);
         }
         break;
 
@@ -81,9 +88,21 @@ void mqtt_connection_status_callback(esp_mqtt_event_id_t connected)
 esp_err_t init_mqtt_task()
 {
     mqtt_restart_sem = xSemaphoreCreateBinary();
+    mqtt_command_queue = xQueueCreate(10, sizeof(mqtt_command_entry_t));
+    if (mqtt_restart_sem == NULL || mqtt_command_queue == NULL)
+    {
+        ESP_LOGE(ROTULO_LOCAL, "Falha ao criar recursos da task MQTT");
+        return ESP_FAIL;
+    }
+
     if (xTaskCreate(mqtt_manager_task, ROTULO_LOCAL, 4096, NULL, 5, &mqtt_manager_task_handle) != pdPASS)
     {
         ESP_LOGE(ROTULO_LOCAL, "Falha ao criar 'mqtt_manager_task'");
+        return ESP_FAIL;
+    }
+    if (xTaskCreate(mqtt_command_worker_task, "mqtt_cmd_worker", 4096, NULL, TASK_PRIORITY_MEDIUM, NULL) != pdPASS)
+    {
+        ESP_LOGE(ROTULO_LOCAL, "Falha ao criar 'mqtt_command_worker_task'");
         return ESP_FAIL;
     }
     mqtt_init(mqtt_connection_status_callback);
