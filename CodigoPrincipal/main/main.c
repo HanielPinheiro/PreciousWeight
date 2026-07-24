@@ -9,10 +9,10 @@
 char *ROTULO_LOCAL = "MAIN";
 
 hx711_t sensors[NUM_WEIGHT_SENSORS] = {
-    {.id = 0, .dout_pin = SCALE1_DOUT, .sck_pin = SCALE1_SCK, .offset = DEFAULT_OFFSET, .calib_factor_in_1e9 = SCALE1_FACTOR},
-    {.id = 1, .dout_pin = SCALE2_DOUT, .sck_pin = SCALE2_SCK, .offset = DEFAULT_OFFSET, .calib_factor_in_1e9 = SCALE2_FACTOR},
-    {.id = 2, .dout_pin = SCALE3_DOUT, .sck_pin = SCALE3_SCK, .offset = DEFAULT_OFFSET, .calib_factor_in_1e9 = SCALE3_FACTOR},
-    {.id = 3, .dout_pin = SCALE4_DOUT, .sck_pin = SCALE4_SCK, .offset = DEFAULT_OFFSET, .calib_factor_in_1e9 = SCALE4_FACTOR}};
+    {.id = 0, .dout_pin = SCALE1_DOUT, .sck_pin = SCALE1_SCK, .offset = DEFAULT_OFFSET, .calib_factor_in_1e9 = 0.002464073379},
+    {.id = 1, .dout_pin = SCALE2_DOUT, .sck_pin = SCALE2_SCK, .offset = DEFAULT_OFFSET, .calib_factor_in_1e9 = 0.002606863625},
+    {.id = 2, .dout_pin = SCALE3_DOUT, .sck_pin = SCALE3_SCK, .offset = DEFAULT_OFFSET, .calib_factor_in_1e9 = 0.002503721628},
+    {.id = 3, .dout_pin = SCALE4_DOUT, .sck_pin = SCALE4_SCK, .offset = DEFAULT_OFFSET, .calib_factor_in_1e9 = 0.002512369584}};
 
 static char *get_reset_reason_string(esp_reset_reason_t reason)
 {

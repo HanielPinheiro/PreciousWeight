@@ -2,10 +2,10 @@
 
 static const char *ROTULO_LOCAL = "SENSOR_TASK";
 
-static int64_t s_last_readings[NUM_WEIGHT_SENSORS];
+static double s_last_readings[NUM_WEIGHT_SENSORS];
 static SemaphoreHandle_t s_data_mutex[NUM_WEIGHT_SENSORS];
 static SemaphoreHandle_t global_weight_mutex;
-static int64_t final_weight;
+static double final_weight;
 
 #pragma region tasks functions
 
@@ -17,7 +17,7 @@ static void sensor_reader_task(void *arg)
 
     while (1)
     {
-        int64_t raw_avg = hx711_read_sensor_weight(id);
+        double raw_avg = hx711_read_sensor_weight(id);
         if (raw_avg != HX711_INVALID_READING)
         {
             xSemaphoreTake(s_data_mutex[id], portMAX_DELAY);
@@ -36,9 +36,9 @@ static void sensor_processor_task(void *pvParams)
     while (1)
     {
         // Coleta todas as leituras atuais sob mutex
-        int64_t readings = 0;
+        double readings = 0;
         int8_t valid_count = 0;
-        int64_t sum = 0;
+        double sum = 0;
         for (int i = 0; i < NUM_WEIGHT_SENSORS; i++)
         {
             if (s_data_mutex[i] != NULL)
@@ -54,15 +54,14 @@ static void sensor_processor_task(void *pvParams)
 
         if (valid_count > 0)
         {
-            int64_t w = (int64_t)(sum / SCALE_MEASURE_FACTOR);
-            if (w <= 0)
-                w = 0;
-            set_global_weight(w);
-            ESP_LOGI(ROTULO_LOCAL, "Peso: %lld g ", w);
+            if (sum <= 0)
+                sum = 0;
+            set_global_weight(sum);
+            ESP_LOGI(ROTULO_LOCAL, "Peso: %f g ", sum);
         }
         else
         {
-            set_global_weight((int64_t)0);
+            set_global_weight(0);
             ESP_LOGW(ROTULO_LOCAL, "Nenhum sensor gerando leitura válida");
             sdcard_log(LOG_ERROR, "Falha HX711: nenhuma leitura valida disponivel para compor o peso.", ROTULO_LOCAL);
         }
@@ -73,7 +72,7 @@ static void sensor_processor_task(void *pvParams)
 
 #pragma endregion
 
-int64_t get_global_weight()
+double get_global_weight()
 {
     if (global_weight_mutex == NULL)
     {
@@ -81,14 +80,14 @@ int64_t get_global_weight()
         return -1;
     }
 
-    int64_t w;
+    double w;
     xSemaphoreTake(global_weight_mutex, portMAX_DELAY);
     w = final_weight;
     xSemaphoreGive(global_weight_mutex);
     return w;
 }
 
-void set_global_weight(int64_t new_value)
+void set_global_weight(double new_value)
 {
     xSemaphoreTake(global_weight_mutex, portMAX_DELAY);
     final_weight = new_value;

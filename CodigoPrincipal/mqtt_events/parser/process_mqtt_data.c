@@ -104,11 +104,32 @@ static esp_err_t weight_times_routine(const char *data)
     return ESP_FAIL;
 }
 
-static esp_err_t measure_routine()
+static esp_err_t measure_routine(const char *data)
 {
-    int64_t global_weight = get_global_weight();
+    double global_weight = get_global_weight();
     char m[50];
-    snprintf(m, 50, "%s{%lld}", RECEIVED_MEASURE, global_weight); //[MEA]{1256}
+    (void)data;
+    snprintf(m, sizeof(m), "%s{%.2f}", RECEIVED_MEASURE, global_weight); //[MEA]{1256.00}
+    sdcard_log(LOG_INFO, m, ROTULO_LOCAL);
+    while (true)
+    {
+        if (mqtt_publish(MQTT_TOPIC_WEIGHTS, m, 1))
+            break;
+        vTaskDelay(pdMS_TO_TICKS(300));
+    }
+    return ESP_OK;
+}
+
+static esp_err_t wifi_strength_routine(const char *data)
+{
+    int wifi_strength = 0;
+    char m[50];
+    (void)data;
+
+    if (get_wifi_strength(&wifi_strength) != ESP_OK)
+        return ESP_FAIL;
+
+    snprintf(m, sizeof(m), "%s{%d}", RECEIVED_WIFI_STRENGTH, wifi_strength);
     sdcard_log(LOG_INFO, m, ROTULO_LOCAL);
     while (true)
     {
@@ -146,6 +167,7 @@ static const CommandHandler handlers[] = {
     {RECEIVED_RUN, run_routine, "Bebe e horarios salvos", "ERRO AO LER RUN"},
     {RECEIVED_CLEAR, clear_routine, "Bebe e horarios apagados", "ERRO AO LER CLEAR"},
     {RECEIVED_MEASURE, measure_routine, "Medida realizada", "ERRO AO LER MEASURE"},
+    {RECEIVED_WIFI_STRENGTH, wifi_strength_routine, "Intensidade do WiFi enviada", "ERRO AO LER INTENSIDADE WIFI"},
     {RECEIVED_CALIBRATE, calibrate_routine, "Calibração realizada", "ERRO AO LER CALIBRATE"},
     {RECEIVED_WIFI, wifi_routine, "Reset de WiFi realizado", "ERRO AO LER WIFI"},
 };

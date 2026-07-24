@@ -150,22 +150,6 @@ void hx711_set_offset(int8_t id, int32_t new_offset)
     xSemaphoreGive(s_mutex);
 }
 
-int64_t hx711_get_calib_factor(int8_t id)
-{
-    int64_t cal;
-    xSemaphoreTake(s_mutex, portMAX_DELAY);
-    cal = sensors[id].calib_factor_in_1e9;
-    xSemaphoreGive(s_mutex);
-    return cal;
-}
-
-void hx711_set_calib_factor(int8_t id, int64_t new_factor)
-{
-    xSemaphoreTake(s_mutex, portMAX_DELAY);
-    sensors[id].calib_factor_in_1e9 = new_factor;
-    xSemaphoreGive(s_mutex);
-}
-
 esp_err_t hx711_tare_safe(int8_t id)
 {
     gpio_num_t dout_pin;
@@ -219,12 +203,12 @@ esp_err_t hx711_initialize_sensors()
     return ESP_OK;
 }
 
-int64_t hx711_read_sensor_weight(int8_t id)
+double hx711_read_sensor_weight(int8_t id)
 {
     gpio_num_t dout_pin;
     gpio_num_t sck_pin;
     int32_t offset_local;
-    int64_t calib_local;
+    double calib_local;
     xSemaphoreTake(s_mutex, portMAX_DELAY);
     dout_pin = sensors[id].dout_pin;
     sck_pin = sensors[id].sck_pin;
@@ -239,12 +223,12 @@ int64_t hx711_read_sensor_weight(int8_t id)
         return (int64_t)HX711_INVALID_READING;
     }
 
-    int32_t diff = raw - offset_local;
+    double diff = raw - offset_local;
 
-    if (AT_CALIBRATION)
-        ESP_LOGI(ROTULO_LOCAL, "Sensor[%d]:Raw{%ld}|Offset{%ld}|Diff{%ld}", id, raw, offset_local, diff);
+    // if (AT_CALIBRATION)
+    //     ESP_LOGI(ROTULO_LOCAL, "Sensor[%d]:Raw{%ld}|Offset{%ld}|Diff{%ld}", id, raw, offset_local, diff);
 
-    return (int64_t)(diff * calib_local);
+    return diff * calib_local;
 }
 
 #pragma endregion

@@ -11,7 +11,7 @@ typedef struct
 } sensor_data_t;
 
 esp_err_t init_sensors_task(void);
-void set_global_weight(int64_t new_value);
-int64_t get_global_weight(void);
+void set_global_weight(double new_value);
+double get_global_weight(void);
 
 #endif // SENSORS_TASK_H

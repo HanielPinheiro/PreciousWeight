@@ -50,7 +50,7 @@ typedef struct
     gpio_num_t dout_pin;
     gpio_num_t sck_pin;
     int32_t offset;
-    int64_t calib_factor_in_1e9;
+    double calib_factor_in_1e9;
 } hx711_t;
 
 int32_t hx711_get_offset(int8_t sensor_id);
@@ -61,6 +61,6 @@ void hx711_set_calib_factor(int8_t sensor_id, int64_t new_factor);
 esp_err_t hx711_tare_safe(int8_t id);
 
 esp_err_t hx711_initialize_sensors(void);
-int64_t hx711_read_sensor_weight(int8_t id);
+double hx711_read_sensor_weight(int8_t id);
 
 #endif // HX711_H

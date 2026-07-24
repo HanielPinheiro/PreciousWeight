@@ -24,9 +24,9 @@ static void task_worker(void *pvParams)
     {
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 
-        int64_t w = get_global_weight();
+        double w = get_global_weight();
 
-        snprintf(log_msg, sizeof(log_msg), "%s{%lld}", RECEIVED_MEASURE, w);
+        snprintf(log_msg, sizeof(log_msg), "%s{%.2f}", RECEIVED_MEASURE, w);
         sdcard_log(LOG_INFO, log_msg, ROTULO_LOCAL);
         mqtt_publish(MQTT_TOPIC_WEIGHTS, log_msg, 2);
 

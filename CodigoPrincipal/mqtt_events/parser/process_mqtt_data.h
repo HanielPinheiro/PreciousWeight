@@ -10,6 +10,7 @@
 #define RECEIVED_CLEAR "[CLE]"
 #define RECEIVED_TIMES "[TIM]"
 #define RECEIVED_MEASURE "[MEA]"
+#define RECEIVED_WIFI_STRENGTH "[WFS]"
 #define RECEIVED_CALIBRATE "[CAL]"
 
 typedef struct

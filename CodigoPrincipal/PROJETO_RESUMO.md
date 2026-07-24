@@ -43,6 +43,7 @@ Hoje o projeto usa strings fixas em `config/config.h`:
 - PoP do provisioning BLE (Security 1): `MQTT_POP`: `"KwS2@y6G"`
 
 Consequência:
+
 - Todos os tópicos MQTT do dispositivo são derivados de `MQTT_SERVICE_NAME`.
 - Se você clonar esse firmware para outro ESP32 sem mudar essas constantes, vários dispositivos podem colidir nos mesmos tópicos.
 
@@ -78,7 +79,8 @@ Em `tasks/sensors_task/sensors_task.c`:
   - Armazena em `final_weight` (protegido por mutex).
 
 Unidade:
-- O payload publicado usa “g” (gramas) e as strings de log mostram “Peso: %lld g”.
+
+- O payload publicado usa “g” (gramas) com duas casas decimais no MQTT, no formato `[MEA]{123.45}`.
 
 ## 6) Provisionamento Wi‑Fi via BLE (o que um app Flutter precisa suportar)
 
@@ -97,6 +99,7 @@ Fluxo:
   - Se não provisionado: inicia provisioning BLE e aguarda finalização.
 
 Reset Wi‑Fi:
+
 - Função `reset_wifi()` faz: `wifi_prov_mgr_deinit()` → `esp_wifi_stop()` → `esp_wifi_restore()` → `esp_wifi_deinit()` → `esp_restart()`.
 - Existe comando MQTT `[WIF]` que aciona esse reset (mas só funciona quando você já consegue mandar MQTT).
 
@@ -124,7 +127,8 @@ Todos os tópicos incluem o sufixo `MQTT_SERVICE_NAME` (ex.: `D0EF76590B7C`).
   - Ex.: `/weights/D0EF76590B7C`
 
 Observação importante:
-- O tópico `/weights/<service>` é “multiplexado”: nele aparecem tanto ACKs (“1”/“0”) quanto resultados de medida (`[MEA];Peso{...}`), e também mensagens de erro textuais (ex.: `ERROR_MAX_WEIGHT_TIMES_ACHIEVED`).
+
+- O tópico `/weights/<service>` é “multiplexado”: nele aparecem ACKs (`"1"`/`"0"`), resultados de medida (`[MEA]{...}`), força do Wi‑Fi (`[WFS]{...}`) e mensagens de erro textuais (ex.: `ERROR_MAX_WEIGHT_TIMES_ACHIEVED`).
 
 ### 7.3 QoS e retain
 
@@ -132,8 +136,8 @@ Observação importante:
 - Publish status:
   - Ao conectar: `"CONNECTED"` (QoS 1).
   - Last Will (LWT): `"DISCONNECTED"` com `retain=true` (QoS 1).
-- Publish telemetria agendada em `/sensors`: QoS 2.
-- Publish em `/weights`: em geral QoS 1.
+- Publish de pesos agendados em `/weights`: QoS 2.
+- Publish em `/weights` sob demanda e respostas simples: em geral QoS 1.
 
 ### 7.4 Status (como “ver o status da balança”)
 
@@ -148,33 +152,35 @@ Para saber se o firmware está online no broker:
 
 Os comandos são enviados como payload (string) para `/scales/<service>`. O parser reconhece prefixos fixos:
 
-| Comando | Payload exemplo | Efeito no ESP32 | Resposta (publish em `/weights/<service>`) |
-|---|---|---|---|
-| Definir bebê | `[BAB]123456` | Limpa estado atual e define `baby_id` | `"1"` (OK) ou `"0"` (erro) |
-| Adicionar horário | `[TIM]08:00` | Adiciona um horário à lista | `"1"` ou `"0"` |
-| Rodar/agendar | `[RUN]` | Salva `baby_id`+horários no SD (`/sdcard/baby.txt`) e arma o timer | `"1"` ou `"0"` |
-| Limpar rotina | `[CLE]` | Zera bebê+horários, apaga arquivo e para o timer | `"1"` ou `"0"` |
-| Medir agora | `[MEA]` | Publica uma medida imediata | Publica o resultado e também publica `"1"` |
-| Calibrar | `[CAL]...` | Hoje é stub (retorna OK, não altera calibração) | `"1"` (mas não calibra de fato) |
-| Reset Wi‑Fi | `[WIF]` | Para MQTT, reseta Wi‑Fi e reinicia o ESP32 | geralmente não dá tempo de observar ACK consistente |
+| Comando           | Payload exemplo | Efeito no ESP32                                                    | Resposta (publish em `/weights/<service>`)               |
+| ----------------- | --------------- | ------------------------------------------------------------------ | -------------------------------------------------------- |
+| Definir bebê      | `[BAB]123456`   | Limpa estado atual e define `baby_id`                              | `"1"` (OK) ou `"0"` (erro)                               |
+| Adicionar horário | `[TIM]08:00`    | Adiciona um horário à lista                                        | `"1"` ou `"0"`                                           |
+| Rodar/agendar     | `[RUN]`         | Salva `baby_id`+horários no SD (`/sdcard/baby.txt`) e arma o timer | `"1"` ou `"0"`                                           |
+| Limpar rotina     | `[CLE]`         | Zera bebê+horários, apaga arquivo e para o timer                   | `"1"` ou `"0"`                                           |
+| Medir agora       | `[MEA]`         | Publica uma medida imediata                                        | Publica `[MEA]{<gramas com .00>}` e também publica `"1"` |
+| Força do Wi‑Fi    | `[WFS]`         | Publica o RSSI atual do Wi‑Fi                                      | Publica `[WFS]{<rssi>}` e também publica `"1"`           |
+| Calibrar          | `[CAL]...`      | Hoje é stub (retorna OK, não altera calibração)                    | `"1"` (mas não calibra de fato)                          |
+| Reset Wi‑Fi       | `[WIF]`         | Para MQTT, reseta Wi‑Fi e reinicia o ESP32                         | geralmente não dá tempo de observar ACK consistente      |
 
 ### 8.1 “Medida em tempo real” (passo a passo)
 
-1) Publique:
+1. Publique:
 
 ```text
 topic: /scales/D0EF76590B7C
 payload: [MEA]
 ```
 
-2) Escute:
+2. Escute:
 
 ```text
 topic: /weights/D0EF76590B7C
-payload esperado: [MEA];Peso{<gramas>}
+payload esperado: [MEA]{<gramas com .00>}
 ```
 
 Observação:
+
 - O mesmo tópico também receberá `"1"` como ACK de comando.
 
 ### 8.2 “Configurar horários e receber medidas automáticas”
@@ -192,8 +198,8 @@ Sequência típica:
 Depois disso, em cada horário escolhido, o firmware publica em:
 
 ```text
-topic: /sensors/D0EF76590B7C
-payload: Peso{<gramas>}
+topic: /weights/D0EF76590B7C
+payload: [MEA]{<gramas com .00>}
 ```
 
 ## 9) Scheduler (como o agendamento funciona)
@@ -205,7 +211,7 @@ O scheduler em `mqtt_events/scheduler/weight_timer_scheduler.c`:
 - Usa um timer one-shot (FreeRTOS) para disparar a próxima medida.
 - Ao disparar:
   - Lê `get_global_weight()`
-  - Enfileira e um worker publica em `/sensors/<service>` como `Peso{...}`
+  - Um worker publica em `/weights/<service>` como `[MEA]{...}`
   - Agenda o próximo disparo (se ainda existir schedule).
 
 ## 10) Persistência e logs (SD Card)
@@ -231,19 +237,18 @@ Em `drivers/sdcard/sdcard.h`:
 
 Não existe (ainda) um tópico MQTT de logs do ESP32. Então, para observar “logs” no caminho app→API→MQTT→ESP32, você tem 3 opções:
 
-1) No broker/API, registre (log) cada publish feito para `/scales/<service>` e cada mensagem recebida de `/weights`, `/sensors`, `/status` (isso cobre a trilha completa pelo MQTT).
-2) No ESP32, use logs seriais (`ESP_LOGx`) via monitor serial.
-3) No ESP32, leia o arquivo `/sdcard/logs.txt` (log persistente).
+1. No broker/API, registre (log) cada publish feito para `/scales/<service>` e cada mensagem recebida de `/weights`, `/status` (isso cobre a trilha completa pelo MQTT).
+2. No ESP32, use logs seriais (`ESP_LOGx`) via monitor serial.
+3. No ESP32, leia o arquivo `/sdcard/logs.txt` (log persistente).
 
 ## 11) Integração com API e app (checklist prático)
 
 ### 11.1 Para uma API “ponte” (HTTP ↔ MQTT)
 
-- Publish comandos em `/scales/<service>` (payloads `[BAB]`, `[TIM]`, `[RUN]`, `[CLE]`, `[MEA]`, `[WIF]`).
+- Publish comandos em `/scales/<service>` (payloads `[BAB]`, `[TIM]`, `[RUN]`, `[CLE]`, `[MEA]`, `[WFS]`, `[WIF]`).
 - Subscribe em:
   - `/status/<service>` (para online/offline; considerar retained do LWT)
-  - `/weights/<service>` (ACK + resultados de `[MEA]` + possíveis erros textuais)
-  - `/sensors/<service>` (medidas agendadas)
+  - `/weights/<service>` (ACK + resultados de `[MEA]` + resultados de `[WFS]` + medidas agendadas + possíveis erros textuais)
 - Correlação recomendada:
   - Como o ACK é apenas `"1"`/`"0"` (sem ID de comando), a API deve serializar comandos por dispositivo (evitar enviar múltiplos em paralelo) para não confundir qual comando foi confirmado.
 
@@ -255,14 +260,15 @@ Se o app precisa “usar todas as features” do firmware, o app (ou um módulo 
 - Exibir status online/offline via `/status/<service>`.
 - Configurar rotina:
   - enviar bebê e horários e executar `[RUN]`
-  - exibir resultados agendados (via `/sensors/<service>`)
+  - exibir resultados agendados (via `/weights/<service>`)
 - “Medir agora”:
-  - enviar `[MEA]` e capturar `[MEA];Peso{...}` via `/weights/<service>`
+  - enviar `[MEA]` e capturar `[MEA]{...}` via `/weights/<service>`
+- Força do Wi‑Fi:
+  - enviar `[WFS]` e capturar `[WFS]{...}` via `/weights/<service>`
 
 ## 12) Pontos de atenção (estado atual e limitações)
 
 - `/weights/<service>` mistura ACK e dados; não há “message id” para correlacionar respostas.
-- O comentário em `mqtt_task.c` sugere que pesos agendados vão para `/weights`, mas o código atual publica agendados em `/sensors`.
 - Limite de horários:
   - Existe `MAX_WEIGHT_TIMES = 10`, mas o handler de `[TIM]` incrementa `number_of_weight_times` sem checar limite antes de escrever em `weight_times[]`.
   - A checagem em `process_mqtt_data()` não bloqueia corretamente o comando `[TIM]` quando o limite é atingido.
@@ -274,16 +280,15 @@ Se o app precisa “usar todas as features” do firmware, o app (ou um módulo 
 
 ### 13.1 Comandos (controle)
 
-1) App/API publica comando → `/scales/<service>`  
-2) ESP32 recebe → valida prefixo → executa rotina  
-3) ESP32 publica:
+1. App/API publica comando → `/scales/<service>`
+2. ESP32 recebe → valida prefixo → executa rotina
+3. ESP32 publica:
    - ACK em `/weights/<service>`: `"1"` ou `"0"`
-   - e, no caso de `[MEA]`, também publica o payload com peso: `[MEA];Peso{<g>}`
-4) API/app consome e atualiza UI/estado
+   - e, no caso de `[MEA]` e `[WFS]`, também publica o payload de retorno no mesmo tópico
+4. API/app consome e atualiza UI/estado
 
 ### 13.2 Telemetria (pesos agendados)
 
-1) Scheduler dispara no horário  
-2) ESP32 publica em `/sensors/<service>`: `Peso{<g>}`  
-3) API/app consome e registra/exibe
-
+1. Scheduler dispara no horário
+2. ESP32 publica em `/weights/<service>`: `[MEA]{<g com .00>}`
+3. API/app consome e registra/exibe

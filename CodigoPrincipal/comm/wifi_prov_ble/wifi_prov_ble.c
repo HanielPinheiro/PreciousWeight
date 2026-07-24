@@ -408,6 +408,14 @@ bool is_wifi_connected()
     }
 }
 
+esp_err_t get_wifi_strength(int *wifi_strength)
+{
+    if (wifi_strength == NULL)
+        return ESP_ERR_INVALID_ARG;
+
+    return esp_wifi_sta_get_rssi(wifi_strength);
+}
+
 char current_time[SIZE_TIME];
 void update_current_time()
 {

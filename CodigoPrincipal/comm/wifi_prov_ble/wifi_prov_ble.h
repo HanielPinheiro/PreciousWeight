@@ -13,5 +13,6 @@ void start_ble_provisioning();
 void reset_wifi();
 void init_wifi();
 bool is_wifi_connected();
+esp_err_t get_wifi_strength(int *wifi_strength);
 
 #endif // WIFI_H
