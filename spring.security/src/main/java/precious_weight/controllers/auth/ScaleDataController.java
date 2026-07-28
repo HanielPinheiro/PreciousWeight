@@ -71,7 +71,7 @@ public class ScaleDataController {
         boolean exist = scaleDataService.GetScaleFromId(request.getId()) != null;
         if (!exist) return ResponseEntity.badRequest().body(Map.of("error", "Scale Data not found."));
 
-        exist = scaleDataService.GetScaleFromMac(request.getMac()) != null;
+        exist = scaleDataService.GetScaleFromMac(request.getId(), request.getMac()) != null;
         if (exist) return ResponseEntity.badRequest().body(Map.of("error", "This mac address already was registered."));
 
         return ResponseEntity.ok(new ScaleDataResponse(scaleDataService.NewOrUpdateScaleData(request)));

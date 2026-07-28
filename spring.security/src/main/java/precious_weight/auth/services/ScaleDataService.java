@@ -53,6 +53,10 @@ public class ScaleDataService {
         return GetScales().stream().filter(model -> model.getMac().equals(scaleMac)).findFirst().orElse(null);
     }
 
+    public ScaleDataModel GetScaleFromMac(UUID scaleId, String scaleMac) {
+        return GetScales().stream().filter(model -> model.getMac().equals(scaleMac) && !model.getScaleId().equals(scaleId)).findFirst().orElse(null);
+    }
+
     public String GetScaleMacFromScaleHashId(String scaleHashId) throws Exception {
         var result = GetScales().stream().filter(model -> model.getScaleId().equals(UUID.fromString(scaleHashId))).findFirst().orElse(null);
         if (result == null) throw new Exception("Scale Data not Found");
