@@ -25,11 +25,17 @@ static void task_worker(void *pvParams)
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 
         double w = get_global_weight();
+        uint32_t seq = pw_next_sequence_id();
+        int64_t now = pw_now_epoch();
 
-        snprintf(log_msg, sizeof(log_msg), "%s{%.2f}", RECEIVED_MEASURE, w);
-        sdcard_log(LOG_INFO, log_msg, ROTULO_LOCAL);
-        if (!mqtt_publish(MQTT_TOPIC_WEIGHTS, log_msg, 2))
-            sdcard_log(LOG_ERROR, "Falha ao publicar pesagem agendada", ROTULO_LOCAL);
+        pw_log_measurement(seq, "scheduled", w);
+        snprintf(log_msg, sizeof(log_msg), "MEA|%lu|%lld|scheduled|%.2f", (unsigned long)seq, (long long)now, w);
+        if (!mqtt_publish(MQTT_TOPIC_MEASUREMENTS, log_msg, 2))
+            pw_outbox_add(seq, MQTT_TOPIC_MEASUREMENTS, 2, log_msg);
+
+        char legacy[64];
+        snprintf(legacy, sizeof(legacy), "%s{%.2f}", RECEIVED_MEASURE, w);
+        mqtt_publish(MQTT_TOPIC_WEIGHTS, legacy, 2);
 
         if (scale_has_baby() && number_of_weight_times > 0)
         {

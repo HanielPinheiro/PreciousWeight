@@ -3,6 +3,13 @@
 static char *ROTULO_LOCAL = "BABY_CONTROL";
 static bool has_baby = false;
 static const uint8_t MAX_MQTT_PUBLISH_RETRIES = 3;
+static const uint8_t OUTBOX_QOS = 1;
+
+static void mqtt_send_or_spool(uint32_t seq, const char *topic, int qos, const char *payload)
+{
+    if (!mqtt_publish(topic, payload, qos))
+        pw_outbox_add(seq, topic, qos, payload);
+}
 
 char baby_id[12] = {0};
 SemaphoreHandle_t has_baby_mutex = NULL;
@@ -31,6 +38,7 @@ static esp_err_t clear_routine()
     number_of_weight_times = 0;
     update_has_baby_flag(false);
     sdcard_clear_file(BABY_HOURS_FILE);
+    pw_state_save();
     stop_schedule_timer();
     return ESP_OK;
 }
@@ -53,6 +61,7 @@ static esp_err_t run_routine()
 
     if (sdcard_overwrite_file(BABY_HOURS_FILE, routine_snapshot) != ESP_OK)
         return ESP_FAIL;
+    pw_state_save();
 
     if (scale_has_baby() && number_of_weight_times > 0)
     {
@@ -75,6 +84,7 @@ static esp_err_t baby_routine(const char *data)
         strncpy(baby_id, data, sizeof(baby_id) - 1);
         baby_id[sizeof(baby_id) - 1] = '\0'; // Garante terminação nula
         update_has_baby_flag(true);
+        pw_state_save();
 
         ESP_LOGW(ROTULO_LOCAL, "BABY_ID: %s", baby_id);
         return ESP_OK;
@@ -98,6 +108,7 @@ static esp_err_t weight_times_routine(const char *data)
         weight_times[number_of_weight_times] = weight;
         ESP_LOGW(ROTULO_LOCAL, "[%d] Horário: %02d:%02d", number_of_weight_times, weight_times[number_of_weight_times].hour, weight_times[number_of_weight_times].minutes);
         number_of_weight_times++;
+        pw_state_save();
 
         return ESP_OK;
     }
@@ -107,37 +118,45 @@ static esp_err_t weight_times_routine(const char *data)
 static esp_err_t measure_routine(const char *data)
 {
     double global_weight = get_global_weight();
-    char m[50];
+    uint32_t seq = pw_next_sequence_id();
+    int64_t now = pw_now_epoch();
+    char m[PW_OUTBOX_PAYLOAD_MAX];
     (void)data;
-    snprintf(m, sizeof(m), "%s{%.2f}", RECEIVED_MEASURE, global_weight); //[MEA]{1256.00}
-    sdcard_log(LOG_INFO, m, ROTULO_LOCAL);
-    for (uint8_t attempt = 0; attempt < MAX_MQTT_PUBLISH_RETRIES; attempt++)
-    {
-        if (mqtt_publish(MQTT_TOPIC_WEIGHTS, m, 1))
-            return ESP_OK;
-        vTaskDelay(pdMS_TO_TICKS(300));
-    }
-    return ESP_FAIL;
+    snprintf(m, sizeof(m), "MEA|%lu|%lld|manual|%.2f", (unsigned long)seq, (long long)now, global_weight);
+    pw_log_measurement(seq, "manual", global_weight);
+    if (mqtt_publish(MQTT_TOPIC_MEASUREMENTS, m, OUTBOX_QOS))
+        ;
+    else if (pw_outbox_add(seq, MQTT_TOPIC_MEASUREMENTS, OUTBOX_QOS, m) != ESP_OK)
+        return ESP_FAIL;
+
+    char legacy[50];
+    snprintf(legacy, sizeof(legacy), "%s{%.2f}", RECEIVED_MEASURE, global_weight);
+    mqtt_publish(MQTT_TOPIC_WEIGHTS, legacy, 1);
+    return ESP_OK;
 }
 
 static esp_err_t wifi_strength_routine(const char *data)
 {
     int wifi_strength = 0;
-    char m[50];
+    uint32_t seq = pw_next_sequence_id();
+    int64_t now = pw_now_epoch();
+    char m[PW_OUTBOX_PAYLOAD_MAX];
     (void)data;
 
     if (get_wifi_strength(&wifi_strength) != ESP_OK)
         return ESP_FAIL;
 
-    snprintf(m, sizeof(m), "%s{%d}", RECEIVED_WIFI_STRENGTH, wifi_strength);
-    sdcard_log(LOG_INFO, m, ROTULO_LOCAL);
-    for (uint8_t attempt = 0; attempt < MAX_MQTT_PUBLISH_RETRIES; attempt++)
-    {
-        if (mqtt_publish(MQTT_TOPIC_WEIGHTS, m, 1))
-            return ESP_OK;
-        vTaskDelay(pdMS_TO_TICKS(300));
-    }
-    return ESP_FAIL;
+    snprintf(m, sizeof(m), "EVT|%lu|%lld|INFO|WIFI_RSSI|%d", (unsigned long)seq, (long long)now, wifi_strength);
+    pw_log_event(PW_SEV_INFO, "WIFI_RSSI", ROTULO_LOCAL, "wifi_rssi");
+    if (mqtt_publish(MQTT_TOPIC_EVENTS, m, OUTBOX_QOS))
+        ;
+    else
+        pw_outbox_add(seq, MQTT_TOPIC_EVENTS, OUTBOX_QOS, m);
+
+    char legacy[50];
+    snprintf(legacy, sizeof(legacy), "%s{%d}", RECEIVED_WIFI_STRENGTH, wifi_strength);
+    mqtt_publish(MQTT_TOPIC_WEIGHTS, legacy, 1);
+    return ESP_OK;
 }
 
 static esp_err_t calibrate_routine(const char *data)
@@ -221,8 +240,13 @@ void process_mqtt_data(const char *mqtt_data)
         size_t len = strlen(h->prefix);
         if (strncmp(mqtt_data, h->prefix, len) == 0)
         {
+            uint32_t cmd_seq = pw_next_sequence_id();
+            pw_log_command(cmd_seq, mqtt_data);
             if (number_of_weight_times >= MAX_WEIGHT_TIMES && strcmp(h->prefix, RECEIVED_TIMES) == 0)
             {
+                char ack[PW_OUTBOX_PAYLOAD_MAX];
+                snprintf(ack, sizeof(ack), "ACK|%lu|%lld|%s|ERR|MAX_WEIGHT_TIMES", (unsigned long)cmd_seq, (long long)pw_now_epoch(), h->prefix);
+                mqtt_send_or_spool(cmd_seq, MQTT_TOPIC_ACKS, OUTBOX_QOS, ack);
                 mqtt_publish(MQTT_TOPIC_WEIGHTS, "ERROR_MAX_WEIGHT_TIMES_ACHIEVED", 1);
                 return;
             }
@@ -233,6 +257,9 @@ void process_mqtt_data(const char *mqtt_data)
             esp_err_t result = h->handler(data);
             if (result == ESP_OK)
             {
+                char ack[PW_OUTBOX_PAYLOAD_MAX];
+                snprintf(ack, sizeof(ack), "ACK|%lu|%lld|%s|OK", (unsigned long)cmd_seq, (long long)pw_now_epoch(), h->prefix);
+                mqtt_send_or_spool(cmd_seq, MQTT_TOPIC_ACKS, OUTBOX_QOS, ack);
                 mqtt_publish(MQTT_TOPIC_WEIGHTS, SUCCESS_MSG, 1);
                 ESP_LOGI(ROTULO_LOCAL, "%s", h->log_success);
                 // if (strstr(h->log_success, "%s"))
@@ -243,6 +270,9 @@ void process_mqtt_data(const char *mqtt_data)
             else
             {
                 sdcard_log(LOG_ERROR, h->log_error, ROTULO_LOCAL);
+                char ack[PW_OUTBOX_PAYLOAD_MAX];
+                snprintf(ack, sizeof(ack), "ACK|%lu|%lld|%s|ERR", (unsigned long)cmd_seq, (long long)pw_now_epoch(), h->prefix);
+                mqtt_send_or_spool(cmd_seq, MQTT_TOPIC_ACKS, OUTBOX_QOS, ack);
                 mqtt_publish(MQTT_TOPIC_WEIGHTS, ERROR_MSG, 1);
             }
             return;

@@ -12,6 +12,9 @@
 
 static EventGroupHandle_t wifi_event_group;
 static const char *ROTULO_LOCAL = "WIFI";
+static bool prov_mgr_inited = false;
+static uint8_t wifi_disconnect_count = 0;
+static const uint8_t WIFI_DISCONNECT_MAX = 15;
 
 static void initialize_sntp(void)
 {
@@ -160,10 +163,7 @@ static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_
         case WIFI_PROV_CRED_RECV:
         {
             wifi_sta_config_t *wifi_sta_cfg = (wifi_sta_config_t *)event_data;
-            ESP_LOGI(ROTULO_LOCAL, "Received Wi-Fi credentials"
-                                   "\n\tSSID     : %s\n\tPassword : %s",
-                     (const char *)wifi_sta_cfg->ssid,
-                     (const char *)wifi_sta_cfg->password);
+            ESP_LOGI(ROTULO_LOCAL, "Received Wi-Fi credentials\n\tSSID: %s", (const char *)wifi_sta_cfg->ssid);
             break;
         }
         case WIFI_PROV_CRED_FAIL:
@@ -182,6 +182,7 @@ static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_
             break;
         case WIFI_PROV_END: /* De-initialize manager once provisioning is finished */
             wifi_prov_mgr_deinit();
+            prov_mgr_inited = false;
             break;
         default:
             break;
@@ -206,7 +207,11 @@ static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_
         case WIFI_EVENT_STA_DISCONNECTED:
             ESP_LOGI(ROTULO_LOCAL, "Disconnected. Connecting to the AP again...");
             esp_netif_sntp_deinit();
-            esp_wifi_connect();
+            wifi_disconnect_count++;
+            if (wifi_disconnect_count >= WIFI_DISCONNECT_MAX)
+                reset_wifi();
+            else
+                esp_wifi_connect();
             break;
         default:
             break;
@@ -314,6 +319,7 @@ static void start_wifi_sta() // Conectar usando dados salvos(modo STA)
         ESP_LOGW(ROTULO_LOCAL, "Timeout sem obter IP. Entrando em reprovisionamento via BLE...");
         reset_wifi();
     }
+    wifi_disconnect_count = 0;
 }
 
 void reset_wifi()
@@ -321,7 +327,11 @@ void reset_wifi()
     ESP_LOGI(ROTULO_LOCAL, "Performing full WiFi reset...");
 
     // After stop mqtt client Deinit provisioning manager
-    wifi_prov_mgr_deinit();
+    if (prov_mgr_inited)
+    {
+        wifi_prov_mgr_deinit();
+        prov_mgr_inited = false;
+    }
 
     // Stop WiFi
     ESP_ERROR_CHECK(esp_wifi_stop());
@@ -336,11 +346,11 @@ void reset_wifi()
     esp_restart();
 }
 
-void start_ble_provisioning()
-{ // Provisionamento via BLE pela primeira vez
-    ESP_LOGI(ROTULO_LOCAL, "Iniciando provisioning BLE...");
+static void init_prov_manager()
+{
+    if (prov_mgr_inited)
+        return;
 
-    /* Configuration for the provisioning manager */
     wifi_prov_mgr_config_t config = {
         .wifi_prov_conn_cfg = {
             .wifi_conn_attempts = 3,
@@ -348,8 +358,14 @@ void start_ble_provisioning()
         .scheme = wifi_prov_scheme_ble,
         .scheme_event_handler = WIFI_PROV_SCHEME_BLE_EVENT_HANDLER_FREE_BTDM};
 
-    /* Initialize provisioning manager with the configuration parameters set above */
     ESP_ERROR_CHECK(wifi_prov_mgr_init(config));
+    prov_mgr_inited = true;
+}
+
+void start_ble_provisioning()
+{ // Provisionamento via BLE pela primeira vez
+    ESP_LOGI(ROTULO_LOCAL, "Iniciando provisioning BLE...");
+    init_prov_manager();
     ESP_ERROR_CHECK(wifi_prov_scheme_ble_set_service_uuid(my_bluetooth_uuid));
     ESP_ERROR_CHECK(wifi_prov_mgr_endpoint_create("PW_PROVISION_DATA"));
     ESP_ERROR_CHECK(wifi_prov_mgr_start_provisioning(WIFI_PROV_SECURITY_1, MQTT_POP, WIFI_DEVICE_NAME, NULL));
@@ -362,11 +378,14 @@ void init_wifi()
 {
     wifi_init_all();
 
+    init_prov_manager();
     bool provisioned = false;
     ESP_ERROR_CHECK(wifi_prov_mgr_is_provisioned(&provisioned));
 
     if (provisioned)
     {
+        wifi_prov_mgr_deinit();
+        prov_mgr_inited = false;
         ESP_LOGI(ROTULO_LOCAL, "Dispositivo já provisionado. Conectando...");
         start_wifi_sta();
         ESP_LOGI(ROTULO_LOCAL, "Conectado");

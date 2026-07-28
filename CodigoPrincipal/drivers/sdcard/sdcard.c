@@ -10,6 +10,7 @@ static const char *ROTULO_LOCAL = "SD_CARD";
 struct stat st;
 static sdmmc_host_t host = SDSPI_HOST_DEFAULT(); // Define que estou usando o modulo sd na configuração de conexão (pinos)   SPI
 static SemaphoreHandle_t sd_mutex;               // semaphore to protect open the file that is already open by other task
+static int last_sd_errno = 0;
 
 sdmmc_card_t *sdcard = NULL;
 
@@ -135,6 +136,7 @@ static esp_err_t sdcard_write_locked(const char *path, const char *data, const c
     if (MORE_LOGS)
         ESP_LOGI(ROTULO_LOCAL, "Executando escrita no arquivo {%s}", path);
 
+    last_sd_errno = 0;
     if (stat(path, &st) < 0)
     {
         ESP_LOGI(ROTULO_LOCAL, "Arquivo nao encontrado. Criando arquivo {%s}", path);
@@ -149,6 +151,7 @@ static esp_err_t sdcard_write_locked(const char *path, const char *data, const c
     FILE *file = fopen(path, mode);
     if (file == NULL)
     {
+        last_sd_errno = errno;
         ESP_LOGE(ROTULO_LOCAL, "Falha ao abrir o arquivo {%s} para escrita.", path);
         return ESP_FAIL;
     }
@@ -158,6 +161,7 @@ static esp_err_t sdcard_write_locked(const char *path, const char *data, const c
 
     if (result < 0)
     {
+        last_sd_errno = errno;
         ESP_LOGE(ROTULO_LOCAL, "Erro ao tentar escrever os dados no arquivo, no caminho {%s}.", path);
         return ESP_FAIL;
     }
@@ -189,6 +193,7 @@ esp_err_t sdcard_overwrite_file(const char *path, const char *data)
         return ESP_FAIL;
     }
 
+    last_sd_errno = 0;
     char temp_path[64];
     snprintf(temp_path, sizeof(temp_path), "%s.tmp", path);
 
@@ -199,6 +204,7 @@ esp_err_t sdcard_overwrite_file(const char *path, const char *data)
         remove(path);
         if (rename(temp_path, path) != 0)
         {
+            last_sd_errno = errno;
             ESP_LOGE(ROTULO_LOCAL, "Falha ao promover arquivo temporario para {%s}: %s", path, strerror(errno));
             remove(temp_path);
             ret = ESP_FAIL;
@@ -214,10 +220,12 @@ esp_err_t sdcard_create_file(char *path)
     FILE *file = fopen(path, "ab+");
     if (file)
     {
+        last_sd_errno = 0;
         fclose(file);
         return ESP_OK;
     }
 
+    last_sd_errno = errno;
     char m[80];
     snprintf(m, 80, "Erro ao criar arquivo %s: %s", path, strerror(errno));
     sdcard_log(LOG_ERROR, m, ROTULO_LOCAL);
@@ -264,6 +272,11 @@ void esp_log_at_terminal(const char *stack_trace, char *message)
     if (!MODO_DEBUG)
         return;
     ESP_LOGI(stack_trace, "%s", message);
+}
+
+int sdcard_last_errno(void)
+{
+    return last_sd_errno;
 }
 
 #pragma endregion

@@ -48,6 +48,7 @@
 #include "wifi_prov_ble.h"
 #include "mqtt3.h"
 #include "sdcard.h"
+#include "pw_persistence.h"
 #include "hx711.h"
 #include "process_mqtt_data.h"
 #include "weight_timer_scheduler.h"

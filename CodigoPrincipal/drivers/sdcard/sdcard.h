@@ -16,6 +16,12 @@
 #define LOG_FILE MOUNT_POINT "/logs.txt"
 #define WEIGHT_FILE MOUNT_POINT "/weights.txt"
 #define BABY_HOURS_FILE MOUNT_POINT "/baby.txt"
+#define STATE_FILE MOUNT_POINT "/state.txt"
+#define AUDIT_FILE MOUNT_POINT "/audit.log"
+#define COMMANDS_FILE MOUNT_POINT "/commands.log"
+#define MEASUREMENTS_FILE MOUNT_POINT "/measurements.log"
+#define CRITICAL_FILE MOUNT_POINT "/critical.log"
+#define OUTBOX_FILE MOUNT_POINT "/outbox.log"
 
 typedef struct
 {
@@ -38,6 +44,7 @@ esp_err_t sdcard_overwrite_file(const char *path, const char *data);
 esp_err_t sdcard_create_file(char *path);
 esp_err_t sdcard_log(log_type_t log_type, char *message, const char *trace);
 void esp_log_at_terminal(const char *stack_trace, char *message);
+int sdcard_last_errno(void);
 
 esp_err_t sdcard_load_weight_times();
 void sdcard_clear_file(const char *filename);

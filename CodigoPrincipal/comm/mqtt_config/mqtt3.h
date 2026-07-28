@@ -9,6 +9,9 @@
 #define MQTT_TOPIC_SCALES "/scales/" MQTT_SERVICE_NAME
 #define MQTT_TOPIC_WEIGHTS "/weights/" MQTT_SERVICE_NAME
 #define MQTT_TOPIC_CONN_STATUS "/status/" MQTT_SERVICE_NAME
+#define MQTT_TOPIC_EVENTS "/events/" MQTT_SERVICE_NAME
+#define MQTT_TOPIC_MEASUREMENTS "/measurements/" MQTT_SERVICE_NAME
+#define MQTT_TOPIC_ACKS "/acks/" MQTT_SERVICE_NAME
 #define MQTT_LAST_WILL_MSG "DISCONNECTED"
 
 typedef void (*mqtt_connection_callback_t)(esp_mqtt_event_id_t connected);

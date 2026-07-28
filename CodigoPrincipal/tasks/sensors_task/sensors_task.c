@@ -64,6 +64,7 @@ static void sensor_processor_task(void *pvParams)
             set_global_weight(0);
             ESP_LOGW(ROTULO_LOCAL, "Nenhum sensor gerando leitura válida");
             sdcard_log(LOG_ERROR, "Falha HX711: nenhuma leitura valida disponivel para compor o peso.", ROTULO_LOCAL);
+            pw_log_event(PW_SEV_ERROR, "SENSOR_NO_VALID_READING", ROTULO_LOCAL, "Nenhum sensor gerando leitura valida");
         }
 
         vTaskDelayUntil(&last_wake, pdMS_TO_TICKS(1000)); // Aguarda o próximo ciclo de processamento

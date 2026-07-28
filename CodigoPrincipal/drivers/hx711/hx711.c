@@ -186,10 +186,12 @@ esp_err_t hx711_initialize_sensors()
         {
             snprintf(msg, sizeof(msg), "FALHA AO INICIALIZAR SENSOR %d, PORTAS: %d [DOUT] e %d [SCK].", i, (int8_t)dout_pin, (int8_t)sck_pin);
             sdcard_log(LOG_ERROR, msg, ROTULO_LOCAL);
+            pw_log_event(PW_SEV_CRITICAL, "SENSOR_INIT_FAIL", ROTULO_LOCAL, msg);
             return ESP_FAIL;
         }
         snprintf(msg, sizeof(msg), "SENSOR %d INICIALIZADO: %d [DOUT], %d [SCK]. INICIANDO TARA.", i, (int8_t)dout_pin, (int8_t)sck_pin);
         sdcard_log(LOG_INFO, msg, ROTULO_LOCAL);
+        pw_log_event(PW_SEV_INFO, "SENSOR_INIT_OK", ROTULO_LOCAL, msg);
 
         esp_err_t r = hx711_tare(i, dout_pin, sck_pin);
         if (r != ESP_OK)
@@ -197,6 +199,7 @@ esp_err_t hx711_initialize_sensors()
 
         snprintf(msg, sizeof(msg), "SENSOR %d TARA REALIZADA", i);
         sdcard_log(LOG_INFO, msg, ROTULO_LOCAL);
+        pw_log_event(PW_SEV_INFO, "SENSOR_TARE_OK", ROTULO_LOCAL, msg);
     }
     // Aguarda dois segundos para estabilização térmica dos sensores
     vTaskDelay(pdMS_TO_TICKS(2000));

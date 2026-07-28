@@ -69,6 +69,9 @@ void app_main()
     sdcard_log(LOG_INFO, "Wi-Fi inicializado com sucesso. Inicializando MQTT.", ROTULO_LOCAL);
 
     PW_ERROR_CHECK(start_date_time_routine());
+    pw_persistence_init();
+    pw_state_save_boot(esp_reset_reason(), pw_now_epoch());
+    pw_log_event(PW_SEV_INFO, "BOOT", ROTULO_LOCAL, get_reset_reason_string(esp_reset_reason()));
 
     PW_ERROR_CHECK(init_mqtt_task());
     sdcard_log(LOG_INFO, "Task MQTT inicializada com sucesso. Iniciando leitores HX711.", ROTULO_LOCAL);
@@ -86,5 +89,6 @@ void app_main()
     char m[90] = {0};
     snprintf(m, 90, "Sistema inicializado com sucesso em %s \r\n", current_time);
     sdcard_log(LOG_INFO, m, ROTULO_LOCAL);
+    pw_state_save();
     ESP_ERROR_CHECK(set_pattern_to_led_task(BLINK_LED_NORMAL_OPER));
 }

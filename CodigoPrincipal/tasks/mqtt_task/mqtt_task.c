@@ -4,6 +4,7 @@ static TaskHandle_t mqtt_manager_task_handle = NULL;
 static SemaphoreHandle_t mqtt_restart_sem = NULL;
 static char *ROTULO_LOCAL = "MQTT_TASK";
 static QueueHandle_t mqtt_command_queue = NULL;
+static TaskHandle_t mqtt_outbox_task_handle = NULL;
 
 #define MQTT_COMMAND_MAX_LENGTH 128
 
@@ -19,6 +20,26 @@ static void mqtt_command_worker_task(void *pvParameters)
     {
         if (xQueueReceive(mqtt_command_queue, &entry, portMAX_DELAY) == pdTRUE)
             process_mqtt_data(entry.payload);
+    }
+}
+
+static void mqtt_outbox_worker_task(void *pvParameters)
+{
+    while (1)
+    {
+        pw_outbox_entry_t entries[10] = {0};
+        size_t count = 0;
+        if (pw_outbox_load_pending(entries, 10, &count) == ESP_OK && count > 0)
+        {
+            for (size_t i = 0; i < count; i++)
+            {
+                if (mqtt_publish(entries[i].topic, entries[i].payload, entries[i].qos))
+                    pw_outbox_mark_sent(entries[i].seq);
+                else
+                    break;
+            }
+        }
+        vTaskDelay(pdMS_TO_TICKS(5000));
     }
 }
 
@@ -43,14 +64,17 @@ void mqtt_connection_status_callback(esp_mqtt_event_id_t connected)
     case MQTT_EVENT_CONNECTED:
         ESP_LOGI(ROTULO_LOCAL, "MQTT - Connected to MQTT broker");
         mqtt_publish(MQTT_TOPIC_CONN_STATUS, "CONNECTED", 1);
+        pw_log_event(PW_SEV_INFO, "MQTT_CONNECTED", ROTULO_LOCAL, "connected");
         break;
 
     case MQTT_EVENT_DISCONNECTED:
         ESP_LOGW(ROTULO_LOCAL, "MQTT - Disconnected from broker");
+        pw_log_event(PW_SEV_WARN, "MQTT_DISCONNECTED", ROTULO_LOCAL, "disconnected");
         break;
 
     case MQTT_EVENT_ERROR:
         ESP_LOGW(ROTULO_LOCAL, "MQTT - Error, forcing full reinitialization");
+        pw_log_event(PW_SEV_ERROR, "MQTT_ERROR", ROTULO_LOCAL, "error");
         xSemaphoreGive(mqtt_restart_sem); // Signal the manager task
         break;
 
@@ -74,6 +98,7 @@ void mqtt_connection_status_callback(esp_mqtt_event_id_t connected)
             sdcard_log(LOG_INFO, current_time, ROTULO_LOCAL);
             sdcard_log(LOG_INFO, "MENSAGEM RECEBIDA VIA MQTT:", ROTULO_LOCAL);
             sdcard_log(LOG_INFO, entry.payload, ROTULO_LOCAL);
+            pw_log_event(PW_SEV_INFO, "MQTT_COMMAND_RX", ROTULO_LOCAL, entry.payload);
 
             if (xQueueSend(mqtt_command_queue, &entry, pdMS_TO_TICKS(50)) != pdTRUE)
                 sdcard_log(LOG_ERROR, "Fila de comandos MQTT cheia", ROTULO_LOCAL);
@@ -103,6 +128,11 @@ esp_err_t init_mqtt_task()
     if (xTaskCreate(mqtt_command_worker_task, "mqtt_cmd_worker", 4096, NULL, TASK_PRIORITY_MEDIUM, NULL) != pdPASS)
     {
         ESP_LOGE(ROTULO_LOCAL, "Falha ao criar 'mqtt_command_worker_task'");
+        return ESP_FAIL;
+    }
+    if (xTaskCreate(mqtt_outbox_worker_task, "mqtt_outbox_worker", 4096, NULL, TASK_PRIORITY_MEDIUM, &mqtt_outbox_task_handle) != pdPASS)
+    {
+        ESP_LOGE(ROTULO_LOCAL, "Falha ao criar 'mqtt_outbox_worker_task'");
         return ESP_FAIL;
     }
     mqtt_init(mqtt_connection_status_callback);

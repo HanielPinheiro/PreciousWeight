@@ -8,6 +8,7 @@ set(EXTRA_COMPONENT_DIRS
 
     "${CMAKE_CURRENT_SOURCE_DIR}/drivers/hx711"
     "${CMAKE_CURRENT_SOURCE_DIR}/drivers/sdcard"
+    "${CMAKE_CURRENT_SOURCE_DIR}/drivers/pw_persistence"
    
     "${CMAKE_CURRENT_SOURCE_DIR}/mqtt_events/parser"    
     "${CMAKE_CURRENT_SOURCE_DIR}/mqtt_events/scheduler"    
