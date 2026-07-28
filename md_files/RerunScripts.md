@@ -1,5 +1,5 @@
 # Rerun Scripts
-//Data 23-07-26, comando pra alterar a tabela no Banco de dados manualmente
+
 ## App DB
 
 ```sql
@@ -25,6 +25,5 @@ CREATE TABLE wifi_strengths (
 ## Observacao
 
 ```sql
--- Se as colunas ou a tabela ja existirem, ajuste o script manualmente
--- antes de executar novamente no mesmo banco.
+-- Execute only if these columns and table do not exist yet.
 ```
