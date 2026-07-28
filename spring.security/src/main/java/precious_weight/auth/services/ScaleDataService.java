@@ -25,7 +25,8 @@ public class ScaleDataService {
         UUID id = scaleData.getId();
         ScaleDataModel model = (id != null) ? GetScaleFromId(id) : new ScaleDataModel();
         model.setMac(scaleData.getMac());
-        model.setPop(generatePop());
+        String userSetPop = scaleData.getPop();
+        model.setPop(Objects.equals(userSetPop, "") || userSetPop == null ? generatePop() : userSetPop);
         return iScaleData.save(model);
     }
 
