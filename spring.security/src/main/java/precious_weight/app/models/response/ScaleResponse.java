@@ -2,12 +2,16 @@ package precious_weight.app.models.response;
 
 import precious_weight.app.models.ScaleModel;
 
+import java.time.LocalDateTime;
+
 public class ScaleResponse {
     private Integer scaleId;
     private String scaleHash;
     private Integer scaleState;
     private Integer babyId;
     private boolean connectionStatus;
+    private LocalDateTime lastConnectedAt;
+    private LocalDateTime lastDisconnectedAt;
 
     public ScaleResponse(){}
 
@@ -17,6 +21,8 @@ public class ScaleResponse {
         this.scaleState = model.getScaleState();
         this.babyId = model.getAssignedBaby() != null ? model.getAssignedBaby().getBabyId() : null;
         this.connectionStatus = Boolean.TRUE.equals(model.getIsConnected()) ? true : false;
+        this.lastConnectedAt = model.getLastConnectedAt();
+        this.lastDisconnectedAt = model.getLastDisconnectedAt();
     }
 
     public Integer getScaleId() {
@@ -59,6 +65,22 @@ public class ScaleResponse {
         this.connectionStatus = connectionStatus;
     }
 
+    public LocalDateTime getLastConnectedAt() {
+        return lastConnectedAt;
+    }
+
+    public void setLastConnectedAt(LocalDateTime lastConnectedAt) {
+        this.lastConnectedAt = lastConnectedAt;
+    }
+
+    public LocalDateTime getLastDisconnectedAt() {
+        return lastDisconnectedAt;
+    }
+
+    public void setLastDisconnectedAt(LocalDateTime lastDisconnectedAt) {
+        this.lastDisconnectedAt = lastDisconnectedAt;
+    }
+
     @Override
     public String toString() {
         return "ScaleResponse{" +
@@ -67,6 +89,8 @@ public class ScaleResponse {
                 ", scaleState=" + scaleState +
                 ", babyId=" + babyId +
                 ", connectionStatus='" + connectionStatus + '\'' +
+                ", lastConnectedAt=" + lastConnectedAt +
+                ", lastDisconnectedAt=" + lastDisconnectedAt +
                 '}';
     }
 }

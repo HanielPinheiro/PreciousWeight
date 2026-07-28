@@ -6,8 +6,10 @@ import org.springframework.stereotype.Service;
 import precious_weight.app.interfaces.iBaby;
 import precious_weight.app.interfaces.iScale;
 import precious_weight.app.interfaces.iWeight;
+import precious_weight.app.interfaces.iWifiStrength;
 import precious_weight.app.models.ScaleModel;
 import precious_weight.app.models.BabyModel;
+import precious_weight.app.models.WifiStrengthModel;
 import precious_weight.app.models.WeightModel;
 import precious_weight.app.models.request.ScaleRequest;
 import precious_weight.app.models.request.WeightRequest;
@@ -16,8 +18,11 @@ import precious_weight.auth.services.ScaleDataService;
 
 import java.io.Console;
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static precious_weight.config.system.MqttConstants.*;
 
@@ -46,15 +51,21 @@ public class ScaleService {
     private iWeight iWeight;
 
     @Autowired
+    private iWifiStrength iWifiStrength;
+
+    @Autowired
     private MqttPublisherService mqttPublisherService;
 
     @Autowired
     private ScaleDataService scaleDataService;
 
     private int _globalFlagWeightNow = 0;
+    private int _globalFlagWifiStrengthNow = 0;
 
     public int GetFlagWeightNow(){ return _globalFlagWeightNow; }
     public void SetFlagWeightNow(Integer v){ _globalFlagWeightNow = v; }
+    public int GetFlagWifiStrengthNow(){ return _globalFlagWifiStrengthNow; }
+    public void SetFlagWifiStrengthNow(Integer v){ _globalFlagWifiStrengthNow = v; }
 
     public List<ScaleModel> GetScales() {
         return iScale.findAll();
@@ -128,6 +139,8 @@ public class ScaleService {
         if (commercialScale == null) return;
 
         commercialScale.setIsConnected(connected);
+        if (connected) commercialScale.setLastConnectedAt(LocalDateTime.now());
+        else commercialScale.setLastDisconnectedAt(LocalDateTime.now());
         iScale.save(commercialScale);
     }
   
@@ -190,6 +203,26 @@ public class ScaleService {
         this.SetFlagWeightNow(1);
     }
 
+    public boolean SaveWifiStrengthFromScale(String scaleMac, String payload) throws Exception {
+        Integer wifiStrengthValue = ExtractWifiStrengthValue(payload);
+        if (wifiStrengthValue == null) return false;
+
+        var authScale = scaleDataService.GetScaleFromMac(scaleMac);
+        if (authScale == null) throw new Exception(String.format("Can't find scale by mac %s", scaleMac));
+
+        var commercialScale = GetScaleFromHash(authScale.getScaleId().toString());
+        if (commercialScale == null) throw new Exception(String.format("Can't find scale by hash %s", authScale.getScaleId()));
+
+        WifiStrengthModel wifiStrengthModel = new WifiStrengthModel();
+        wifiStrengthModel.setScaleId(commercialScale.getScaleId());
+        wifiStrengthModel.setWifiStrengthDate(LocalDateTime.now());
+        wifiStrengthModel.setWifiStrengthValue(wifiStrengthValue);
+
+        iWifiStrength.save(wifiStrengthModel);
+        this.SetFlagWifiStrengthNow(1);
+        return true;
+    }
+
     public void SendNewWeightTimesToScale(Integer babyId, String babyWeightTime) throws Exception {
         String hash = iBaby.getReferenceById(babyId).getAssignedScale().getScaleHash();
         String mac = GetMacFromScaleByHash(hash);
@@ -239,6 +272,41 @@ public class ScaleService {
         var lastWeight =iWeight.findByScaleId(id).getLast();
         System.out.printf("Last weight received from esp32 %.2f %n", lastWeight.getWeightValue());
         return lastWeight;
+    }
+
+    public WifiStrengthModel MeasureWifiStrengthRightNowViaMqtt(Integer id) throws Exception{
+        var mac = GetMacFromScaleId(id);
+        this.SetFlagWifiStrengthNow(0);
+        mqttPublisherService.sendCriticalCommand(mac, MQTT_COMMAND_WIFI_STRENGTH);
+
+        System.out.println("Waiting Esp32 WiFi Strength Answer ");
+        startTime = System.nanoTime();
+        while(this.GetFlagWifiStrengthNow() == 0){
+            long durationInSeconds = (System.nanoTime() - startTime) / 1_000_000_000;
+            if (durationInSeconds < 5) System.out.print(".");
+            else throw new Exception(String.format("Can't receive wifi strength from scale %d", id));
+            Thread.sleep(Duration.ofMillis(200));
+        };
+
+        var lastWifiStrength = iWifiStrength.findFirstByScaleIdOrderByWifiStrengthDateDesc(id)
+                .orElseThrow(() -> new Exception(String.format("Can't find wifi strength from scale %d", id)));
+        System.out.printf("Last wifi strength received from esp32 %d %n", lastWifiStrength.getWifiStrengthValue());
+        return lastWifiStrength;
+    }
+
+    private Integer ExtractWifiStrengthValue(String payload) throws Exception {
+        if (payload == null) return null;
+
+        String normalizedPayload = payload.trim();
+        if (!normalizedPayload.startsWith(MQTT_COMMAND_WIFI_STRENGTH)) return null;
+
+        String valuePart = normalizedPayload.substring(MQTT_COMMAND_WIFI_STRENGTH.length()).trim();
+        if (valuePart.isEmpty()) return null;
+
+        Matcher matcher = Pattern.compile("-?\\d+").matcher(valuePart);
+        if (!matcher.find()) throw new Exception(String.format("Invalid wifi strength payload: %s", payload));
+
+        return Integer.parseInt(matcher.group());
     }
 
  

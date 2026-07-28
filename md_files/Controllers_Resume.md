@@ -4,7 +4,7 @@
 - All mapped API endpoints use `POST`, including reads and list operations, with route constants defined in `ApiConstants`.
 - Security is enforced primarily by `@PreAuthorize`; HTTP security globally permits requests, then method-level rules decide access in `SecurityConfig`.
 - The ESP32 firmware, documented in `PROJETO_RESUMO.md`, reads 4 HX711 sensors, provisions Wi-Fi over BLE, stores config/logs on SD, accepts MQTT control commands, and publishes measurement/status telemetry.
-- The current Java backend supports command dispatch and direct `/weights/#` ingestion, but it does not currently subscribe to the firmware's `/status/<service>` or `/sensors/<service>` channels, so online/offline and scheduled telemetry are not yet fully integrated.
+- The current Java backend supports command dispatch and direct `/weights/#` ingestion, but it does not currently subscribe to the firmware's `/status/<service>` channels, so online/offline and scheduled telemetry are not yet fully integrated.
 
 # Backend Architecture
 

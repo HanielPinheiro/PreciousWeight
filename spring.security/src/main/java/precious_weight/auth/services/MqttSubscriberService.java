@@ -30,9 +30,14 @@ public class MqttSubscriberService {
         int qos = 2;
         logger.info("Attempting to subscribe to topic: {}", MQTT_TOPIC_SUB_SCALE);
         mqttClient.subscribe(MQTT_TOPIC_SUB_SCALE, qos, (messageTopic, message) -> {
-            //esse metodo apenas loga o trafego no topico scale
             String payload = new String(message.getPayload());
-            log(messageTopic, payload);
+            try {
+                boolean saved = scaleService.SaveWifiStrengthFromScale(messageTopic.replace("/scales/", ""), payload);
+                log(messageTopic, payload);
+                if (saved) logger.info("WiFi strength saved in topic: {}", messageTopic);
+            } catch (Exception e) {
+                logger.error("Error when try to save wifi strength - Topic: {} | Payload: {} - Error: {}", messageTopic, payload, e.getMessage(), e);
+            }
         });
         logger.info("Subscription request sent for topic: {}", MQTT_TOPIC_SUB_SCALE);
 

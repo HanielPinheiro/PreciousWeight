@@ -1,9 +1,11 @@
 package precious_weight.app.models;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import org.hibernate.envers.Audited;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 import static precious_weight.config.system.DataTransferLayerConstants.*;
 
@@ -24,6 +26,14 @@ public class ScaleModel implements Serializable {
 
     @Column(name = App_ScaleTable_IsConnected, nullable = false)
     private Boolean isConnected = false;
+
+    @Column(name = App_ScaleTable_LastConnectedAt)
+    @JsonFormat(timezone = "America/Sao_Paulo")
+    private LocalDateTime lastConnectedAt;
+
+    @Column(name = App_ScaleTable_LastDisconnectedAt)
+    @JsonFormat(timezone = "America/Sao_Paulo")
+    private LocalDateTime lastDisconnectedAt;
 
     @OneToOne
     @JoinColumn(name = App_BabyTable_Id)  // Match your DB column
@@ -57,6 +67,22 @@ public class ScaleModel implements Serializable {
     }
     public void setIsConnected(Boolean connected) {
         isConnected = connected;
+    }
+
+    public LocalDateTime getLastConnectedAt() {
+        return lastConnectedAt;
+    }
+
+    public void setLastConnectedAt(LocalDateTime lastConnectedAt) {
+        this.lastConnectedAt = lastConnectedAt;
+    }
+
+    public LocalDateTime getLastDisconnectedAt() {
+        return lastDisconnectedAt;
+    }
+
+    public void setLastDisconnectedAt(LocalDateTime lastDisconnectedAt) {
+        this.lastDisconnectedAt = lastDisconnectedAt;
     }
 }
 

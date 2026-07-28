@@ -3,6 +3,7 @@ package precious_weight.controllers.app;
 import precious_weight.app.models.ScaleModel;
 import precious_weight.app.models.request.ScaleRequest;
 import precious_weight.app.models.response.ScaleResponse;
+import precious_weight.app.models.response.WifiStrengthResponse;
 
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -116,6 +117,29 @@ public class ScaleController {
     public ResponseEntity<?> measureWeightRightNow(@PathVariable Integer scaleId) {
         try {
             return ResponseEntity.ok(scaleService.MeasureWeightRightNowViaMqtt(scaleId));
+        } catch (Exception ex) {
+            Map<String, String> error = Map.of("error", ex.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        }
+    }
+
+    @PreAuthorize("isAuthenticated()")
+    @PostMapping(ScaleController_WifiStrengthNow)
+    public ResponseEntity<?> measureWifiStrengthRightNow(@PathVariable Integer scaleId) {
+        try {
+            return ResponseEntity.ok(new WifiStrengthResponse(scaleService.MeasureWifiStrengthRightNowViaMqtt(scaleId)));
+        } catch (Exception ex) {
+            Map<String, String> error = Map.of("error", ex.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        }
+    }
+
+    @PreAuthorize("isAuthenticated()")
+    @PostMapping(ScaleController_ConnectionStatus)
+    public ResponseEntity<?> getConnectionStatus(@PathVariable Integer scaleId) {
+        try {
+            ScaleModel model = scaleService.GetScaleFromId(scaleId);
+            return model != null ? ResponseEntity.ok(new ScaleResponse(model)) : ResponseEntity.notFound().build();
         } catch (Exception ex) {
             Map<String, String> error = Map.of("error", ex.getMessage());
             return ResponseEntity.badRequest().body(error);

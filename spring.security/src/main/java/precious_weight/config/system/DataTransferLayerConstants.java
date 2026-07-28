@@ -18,11 +18,18 @@ public class DataTransferLayerConstants {
     public static final String App_ScaleTable_Hash = "scale_hash";
     public static final String App_ScaleTable_State = "scale_state";
     public static final String App_ScaleTable_IsConnected = "is_connected";
+    public static final String App_ScaleTable_LastConnectedAt = "scale_last_connected_at";
+    public static final String App_ScaleTable_LastDisconnectedAt = "scale_last_disconnected_at";
 
     public static final String App_WeightTable_TableName = "weights";
     public static final String App_WeightTable_Id = "weight_id";
     public static final String App_WeightTable_Date = "weight_date";
     public static final String App_WeightTable_Value = "weight_value";
+
+    public static final String App_WifiStrengthTable_TableName = "wifi_strengths";
+    public static final String App_WifiStrengthTable_Id = "wifi_strength_id";
+    public static final String App_WifiStrengthTable_Date = "wifi_strength_date";
+    public static final String App_WifiStrengthTable_Value = "wifi_strength_value";
 
     public static final String Auth_UserTable_TableName = "users";
     public static final String Auth_UserTable_Id = "user_id";
