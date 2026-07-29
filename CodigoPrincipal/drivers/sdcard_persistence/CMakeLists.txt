@@ -1,5 +1,5 @@
 idf_component_register(
-    SRCS "pw_persistence.c"
+    SRCS "sdcard_persistence.c"
     INCLUDE_DIRS "."
     REQUIRES config sdcard
 )

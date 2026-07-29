@@ -1,8 +1,8 @@
 #include "../../config/config.h"
 
-static char *ROTULO_LOCAL = "BABY_CONTROL";
+static char *ROTULO_LOCAL = "PROCESS_MQTT_DATA";
 static bool has_baby = false;
-static const uint8_t MAX_MQTT_PUBLISH_RETRIES = 3;
+// static const uint8_t MAX_MQTT_PUBLISH_RETRIES = 3;
 static const uint8_t OUTBOX_QOS = 1;
 
 static void mqtt_send_or_spool(uint32_t seq, const char *topic, int qos, const char *payload)

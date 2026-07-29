@@ -1,7 +1,7 @@
 #include "../../config/config.h"
 
-static QueueHandle_t led_queue = NULL;
 static const char *ROTULO_LOCAL = "LED_TASK";
+static QueueHandle_t led_queue = NULL;
 static const int8_t PATTERNS_NUM = 5;
 
 static bool initialized = false;

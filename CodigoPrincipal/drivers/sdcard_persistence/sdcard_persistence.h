@@ -1,6 +1,6 @@
 #pragma once
-#ifndef PW_PERSISTENCE_H
-#define PW_PERSISTENCE_H
+#ifndef SDCARD_PERSISTENCE_H
+#define SDCARD_PERSISTENCE_H
 
 typedef enum
 {
@@ -21,7 +21,7 @@ typedef struct
     char payload[PW_OUTBOX_PAYLOAD_MAX];
 } pw_outbox_entry_t;
 
-esp_err_t pw_persistence_init(void);
+esp_err_t sdcard_persistence_init(void);
 uint32_t pw_next_sequence_id(void);
 uint32_t pw_current_sequence_id(void);
 int64_t pw_now_epoch(void);

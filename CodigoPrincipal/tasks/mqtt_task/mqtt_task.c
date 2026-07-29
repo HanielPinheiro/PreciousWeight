@@ -1,9 +1,9 @@
 #include "../../config/config.h"
 
-static TaskHandle_t mqtt_manager_task_handle = NULL;
-static SemaphoreHandle_t mqtt_restart_sem = NULL;
 static char *ROTULO_LOCAL = "MQTT_TASK";
+static SemaphoreHandle_t mqtt_restart_sem = NULL;
 static QueueHandle_t mqtt_command_queue = NULL;
+static TaskHandle_t mqtt_manager_task_handle = NULL;
 static TaskHandle_t mqtt_outbox_task_handle = NULL;
 
 #define MQTT_COMMAND_MAX_LENGTH 128

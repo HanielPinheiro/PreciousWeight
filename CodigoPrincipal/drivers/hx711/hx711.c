@@ -216,7 +216,7 @@ double hx711_read_sensor_weight(int8_t id)
     dout_pin = sensors[id].dout_pin;
     sck_pin = sensors[id].sck_pin;
     offset_local = sensors[id].offset;
-    calib_local = sensors[id].calib_factor_in_1e9;
+    calib_local = sensors[id].calib_factor;
     xSemaphoreGive(s_mutex);
 
     int32_t raw = hx711_read_average(dout_pin, sck_pin, AVERAGE_NUMBER);

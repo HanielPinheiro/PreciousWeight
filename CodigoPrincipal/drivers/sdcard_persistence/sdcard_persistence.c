@@ -15,7 +15,7 @@ static esp_err_t pw_nvs_open(nvs_handle_t *out)
     return ESP_OK;
 }
 
-esp_err_t pw_persistence_init(void)
+esp_err_t sdcard_persistence_init(void)
 {
     nvs_handle_t h = 0;
     if (pw_nvs_open(&h) != ESP_OK)
@@ -289,4 +289,3 @@ esp_err_t pw_outbox_load_pending(pw_outbox_entry_t *entries, size_t max_entries,
     *out_count = out_idx;
     return ESP_OK;
 }
-
