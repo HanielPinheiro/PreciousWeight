@@ -4,14 +4,17 @@
 
 #define DEBOUNCE_COUNT 4
 #define MAX_WEIGHT_TIMES 10
-#define RECEIVED_RUN "[RUN]"
+
 #define RECEIVED_BABY "[BAB]"
-#define RECEIVED_WIFI "[WIF]"
 #define RECEIVED_CLEAR "[CLE]"
 #define RECEIVED_TIMES "[TIM]"
+#define RECEIVED_RUN "[RUN]"
+
 #define RECEIVED_MEASURE "[MEA]"
+#define RECEIVED_TARE "[TAR]"
+
+#define RECEIVED_WIFI "[WIF]"
 #define RECEIVED_WIFI_STRENGTH "[WFS]"
-#define RECEIVED_CALIBRATE "[CAL]"
 
 typedef struct
 {

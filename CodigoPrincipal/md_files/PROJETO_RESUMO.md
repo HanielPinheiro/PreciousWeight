@@ -59,7 +59,7 @@ Current boot order in `app_main()`:
 ### Wi-Fi
 
 - The device boots in STA mode if already provisioned.
-- If it does not obtain an IP within the configured wait window, it calls `reset_wifi()` and reboots.
+- If it does not obtain an IP within the configured wait window (60s), it calls `reset_wifi()` and reboots.
 - If repeated runtime disconnections reach the configured threshold, it also resets Wi-Fi and reboots.
 
 ### BLE Provisioning
@@ -103,16 +103,16 @@ All topics are device-scoped by `MQTT_SERVICE_NAME`.
 
 Commands are sent as payloads to `/scales/<service>`.
 
-| Command | Example        | Effect                                              |
-| ------- | -------------- | --------------------------------------------------- |
-| `[BAB]` | `[BAB]BEBE001` | Defines active baby ID and clears previous routine  |
-| `[TIM]` | `[TIM]08:00`   | Adds one schedule time                              |
-| `[RUN]` | `[RUN]`        | Persists current routine and arms scheduler         |
-| `[CLE]` | `[CLE]`        | Clears baby and schedule state                      |
-| `[MEA]` | `[MEA]`        | Publishes a manual measurement                      |
-| `[WFS]` | `[WFS]`        | Publishes current Wi-Fi RSSI                        |
-| `[CAL]` | `[CAL]...`     | Stub only, returns success but does not recalibrate |
-| `[WIF]` | `[WIF]`        | Stops MQTT, resets Wi-Fi, and reboots               |
+| Command | Example        | Effect                                             |
+| ------- | -------------- | -------------------------------------------------- |
+| `[BAB]` | `[BAB]BEBE001` | Defines active baby ID and clears previous routine |
+| `[TIM]` | `[TIM]08:00`   | Adds one schedule time                             |
+| `[RUN]` | `[RUN]`        | Persists current routine and arms scheduler        |
+| `[CLE]` | `[CLE]`        | Clears baby and schedule state                     |
+| `[MEA]` | `[MEA]`        | Publishes a manual measurement                     |
+| `[WFS]` | `[WFS]`        | Publishes current Wi-Fi RSSI                       |
+| `[TAR]` | `[TAR]`        | Tare the scale                                     |
+| `[WIF]` | `[WIF]`        | Stops MQTT, resets Wi-Fi, and reboots              |
 
 ## 7. Message Formats
 
@@ -257,7 +257,7 @@ Implemented safeguards in the current branch:
 
 These are still true in the current solution:
 
-- `[CAL]` is still not implemented.
+- `[TAR]` is still not implemented.
 - `/weights/<service>` remains as a legacy mixed channel for backward compatibility.
 - Device identity is still compile-time fixed by `MQTT_SERVICE_NAME` and `WIFI_DEVICE_NAME`.
 - The app/API must consume `/acks`, `/events`, and `/measurements` to use the full architecture; consuming only `/weights` is no longer sufficient.

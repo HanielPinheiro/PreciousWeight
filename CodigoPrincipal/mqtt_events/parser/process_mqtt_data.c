@@ -2,7 +2,6 @@
 
 static char *ROTULO_LOCAL = "PROCESS_MQTT_DATA";
 static bool has_baby = false;
-// static const uint8_t MAX_MQTT_PUBLISH_RETRIES = 3;
 static const uint8_t OUTBOX_QOS = 1;
 
 static void mqtt_send_or_spool(uint32_t seq, const char *topic, int qos, const char *payload)
@@ -135,6 +134,21 @@ static esp_err_t measure_routine(const char *data)
     return ESP_OK;
 }
 
+static esp_err_t tare_routine(const char *data)
+{
+    uint32_t seq = pw_next_sequence_id();
+    int64_t now = pw_now_epoch();
+    char m[PW_OUTBOX_PAYLOAD_MAX];
+    (void)data;
+    snprintf(m, sizeof(m), "EVT|%lu|%lld|INFO|TARE", (unsigned long)seq, (long long)now);
+    pw_log_event(PW_SEV_INFO, "TARE", ROTULO_LOCAL, "tare");
+
+    for (int8_t i = 0; i < NUM_WEIGHT_SENSORS; i++)
+        if (hx711_tare_safe(i) != ESP_OK)
+            return ESP_FAIL;
+    return ESP_OK;
+}
+
 static esp_err_t wifi_strength_routine(const char *data)
 {
     int wifi_strength = 0;
@@ -148,20 +162,13 @@ static esp_err_t wifi_strength_routine(const char *data)
 
     snprintf(m, sizeof(m), "EVT|%lu|%lld|INFO|WIFI_RSSI|%d", (unsigned long)seq, (long long)now, wifi_strength);
     pw_log_event(PW_SEV_INFO, "WIFI_RSSI", ROTULO_LOCAL, "wifi_rssi");
-    if (mqtt_publish(MQTT_TOPIC_EVENTS, m, OUTBOX_QOS))
-        ;
-    else
+
+    if (!mqtt_publish(MQTT_TOPIC_EVENTS, m, OUTBOX_QOS))
         pw_outbox_add(seq, MQTT_TOPIC_EVENTS, OUTBOX_QOS, m);
 
     char legacy[50];
     snprintf(legacy, sizeof(legacy), "%s{%d}", RECEIVED_WIFI_STRENGTH, wifi_strength);
-    mqtt_publish(MQTT_TOPIC_WEIGHTS, legacy, 1);
-    return ESP_OK;
-}
-
-static esp_err_t calibrate_routine(const char *data)
-{
-    // To do => precisa apenas trocar os fatores, vai receber do mqtt e aplicar nos sensores. Talvez precisa usar NVS.
+    mqtt_publish(MQTT_TOPIC_SCALES, legacy, 1);
     return ESP_OK;
 }
 
@@ -177,11 +184,11 @@ static esp_err_t wifi_routine()
 static const CommandHandler handlers[] = {
     {RECEIVED_BABY, baby_routine, "Baby ID recebido", "ERRO AO LER BABY ID"},
     {RECEIVED_TIMES, weight_times_routine, "Horario recebido", "ERRO AO LER WEIGHTS"},
-    {RECEIVED_RUN, run_routine, "Bebe e horarios salvos", "ERRO AO LER RUN"},
     {RECEIVED_CLEAR, clear_routine, "Bebe e horarios apagados", "ERRO AO LER CLEAR"},
+    {RECEIVED_RUN, run_routine, "Bebe e horarios salvos", "ERRO AO LER RUN"},
     {RECEIVED_MEASURE, measure_routine, "Medida realizada", "ERRO AO LER MEASURE"},
+    {RECEIVED_TARE, tare_routine, "Tara Realizada", "ERRO AO REALIZAR TARA"},
     {RECEIVED_WIFI_STRENGTH, wifi_strength_routine, "Intensidade do WiFi enviada", "ERRO AO LER INTENSIDADE WIFI"},
-    {RECEIVED_CALIBRATE, calibrate_routine, "Calibração realizada", "ERRO AO LER CALIBRATE"},
     {RECEIVED_WIFI, wifi_routine, "Reset de WiFi realizado", "ERRO AO LER WIFI"},
 };
 
@@ -262,10 +269,6 @@ void process_mqtt_data(const char *mqtt_data)
                 mqtt_send_or_spool(cmd_seq, MQTT_TOPIC_ACKS, OUTBOX_QOS, ack);
                 mqtt_publish(MQTT_TOPIC_WEIGHTS, SUCCESS_MSG, 1);
                 ESP_LOGI(ROTULO_LOCAL, "%s", h->log_success);
-                // if (strstr(h->log_success, "%s"))
-                //     ESP_LOGI(ROTULO_LOCAL, "%s - %s", h->log_success, baby_id);
-                // else
-                // ESP_LOGI(ROTULO_LOCAL, "%s", h->log_success);
             }
             else
             {
