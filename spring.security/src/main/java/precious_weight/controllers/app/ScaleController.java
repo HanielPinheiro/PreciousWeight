@@ -22,6 +22,12 @@ public class ScaleController {
     @Autowired
     private ScaleService scaleService;
 
+    /**
+     ******************************************************************************************
+     * CRUD OPERATIONS IN API AND DATABASE
+     * ******************************************************************************************
+     */
+
     @PreAuthorize("isAuthenticated()")
     @PostMapping(Controller_List)
     public ResponseEntity<?> listAll() {
@@ -112,11 +118,16 @@ public class ScaleController {
         }
     }
 
+    /**
+     ******************************************************************************************
+     * Commands to mqtt
+     * ******************************************************************************************
+     */
     @PreAuthorize("isAuthenticated()")
-    @PostMapping(ScaleController_MeasureNow)
-    public ResponseEntity<?> measureWeightRightNow(@PathVariable Integer scaleId) {
+    @PostMapping(ScaleController_Measure)
+    public ResponseEntity<?> measureWeight(@PathVariable Integer scaleId) {
         try {
-            return ResponseEntity.ok(scaleService.MeasureWeightRightNowViaMqtt(scaleId));
+            return ResponseEntity.ok(scaleService.MeasureWeightViaMqtt(scaleId));
         } catch (Exception ex) {
             Map<String, String> error = Map.of("error", ex.getMessage());
             return ResponseEntity.badRequest().body(error);
@@ -124,10 +135,10 @@ public class ScaleController {
     }
 
     @PreAuthorize("isAuthenticated()")
-    @PostMapping(ScaleController_WifiStrengthNow)
-    public ResponseEntity<?> measureWifiStrengthRightNow(@PathVariable Integer scaleId) {
+    @PostMapping(ScaleController_Tare)
+    public ResponseEntity<?> tare(@PathVariable Integer scaleId) {
         try {
-            return ResponseEntity.ok(new WifiStrengthResponse(scaleService.MeasureWifiStrengthRightNowViaMqtt(scaleId)));
+            return ResponseEntity.ok(scaleService.TareScaleViaMqtt(scaleId));
         } catch (Exception ex) {
             Map<String, String> error = Map.of("error", ex.getMessage());
             return ResponseEntity.badRequest().body(error);
@@ -135,14 +146,26 @@ public class ScaleController {
     }
 
     @PreAuthorize("isAuthenticated()")
-    @PostMapping(ScaleController_ConnectionStatus)
-    public ResponseEntity<?> getConnectionStatus(@PathVariable Integer scaleId) {
+    @PostMapping(ScaleController_WifiStrength)
+    public ResponseEntity<?> measureWifiStrength(@PathVariable Integer scaleId) {
         try {
-            ScaleModel model = scaleService.GetScaleFromId(scaleId);
-            return model != null ? ResponseEntity.ok(new ScaleResponse(model)) : ResponseEntity.notFound().build();
+            return ResponseEntity.ok(new WifiStrengthResponse(scaleService.MeasureWifiStrengthViaMqtt(scaleId)));
         } catch (Exception ex) {
             Map<String, String> error = Map.of("error", ex.getMessage());
             return ResponseEntity.badRequest().body(error);
         }
     }
+
+    @PreAuthorize("isAuthenticated()")
+    @PostMapping(ScaleController_ChangeWifi)
+    public ResponseEntity<?> changeWifi(@PathVariable Integer scaleId) {
+        try {
+            return ResponseEntity.ok(scaleService.ChangeWifiViaMqtt(scaleId));
+        } catch (Exception ex) {
+            Map<String, String> error = Map.of("error", ex.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        }
+    }
+
+
 }

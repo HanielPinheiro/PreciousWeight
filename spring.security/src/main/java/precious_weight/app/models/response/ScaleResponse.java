@@ -12,6 +12,7 @@ public class ScaleResponse {
     private boolean connectionStatus;
     private LocalDateTime lastConnectedAt;
     private LocalDateTime lastDisconnectedAt;
+    private Integer wifiStrength;
 
     public ScaleResponse(){}
 
@@ -23,12 +24,12 @@ public class ScaleResponse {
         this.connectionStatus = Boolean.TRUE.equals(model.getIsConnected()) ? true : false;
         this.lastConnectedAt = model.getLastConnectedAt();
         this.lastDisconnectedAt = model.getLastDisconnectedAt();
+        this.wifiStrength = model.getWifiStrength();
     }
 
     public Integer getScaleId() {
         return scaleId;
     }
-
     public void setScaleId(Integer scaleId) {
         this.scaleId = scaleId;
     }
@@ -36,7 +37,6 @@ public class ScaleResponse {
     public String getScaleHash() {
         return scaleHash;
     }
-
     public void setScaleHash(String scaleHash) {
         this.scaleHash = scaleHash;
     }
@@ -44,7 +44,6 @@ public class ScaleResponse {
     public Integer getScaleState() {
         return scaleState;
     }
-
     public void setScaleState(Integer scaleState) {
         this.scaleState = scaleState;
     }
@@ -52,7 +51,6 @@ public class ScaleResponse {
     public Integer getBabyId() {
         return babyId;
     }
-
     public void setBabyId(Integer babyId) {
         this.babyId = babyId;
     }
@@ -60,7 +58,6 @@ public class ScaleResponse {
     public boolean getConnectionStatus() {
         return connectionStatus;
     }
-
     public void setConnectionStatus(boolean connectionStatus) {
         this.connectionStatus = connectionStatus;
     }
@@ -68,7 +65,6 @@ public class ScaleResponse {
     public LocalDateTime getLastConnectedAt() {
         return lastConnectedAt;
     }
-
     public void setLastConnectedAt(LocalDateTime lastConnectedAt) {
         this.lastConnectedAt = lastConnectedAt;
     }
@@ -76,9 +72,13 @@ public class ScaleResponse {
     public LocalDateTime getLastDisconnectedAt() {
         return lastDisconnectedAt;
     }
+    public void setLastDisconnectedAt(LocalDateTime lastDisconnectedAt) {this.lastDisconnectedAt = lastDisconnectedAt;}
 
-    public void setLastDisconnectedAt(LocalDateTime lastDisconnectedAt) {
-        this.lastDisconnectedAt = lastDisconnectedAt;
+    public Integer getWifiStrength() {
+        return wifiStrength;
+    }
+    public void setWifiStrength(Integer wifiStrength) {
+        this.wifiStrength = wifiStrength;
     }
 
     @Override
@@ -91,6 +91,7 @@ public class ScaleResponse {
                 ", connectionStatus='" + connectionStatus + '\'' +
                 ", lastConnectedAt=" + lastConnectedAt +
                 ", lastDisconnectedAt=" + lastDisconnectedAt +
+                ", wifiStrength=" + wifiStrength +
                 '}';
     }
 }

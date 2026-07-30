@@ -18,9 +18,10 @@ public class ApiConstants {
     public static final String ScaleController_SetBaby = "/baby/set";
     public static final String ScaleController_UnsetBaby = "/baby/unset";
     public static final String ScaleController_SearchByHash = "/hash/{hashId}";
-    public static final String ScaleController_MeasureNow = "/measure_now/{scaleId}";
-    public static final String ScaleController_WifiStrengthNow = "/wifi_strength/{scaleId}";
-    public static final String ScaleController_ConnectionStatus = "/connection/{scaleId}";
+    public static final String ScaleController_Measure = "/measure_now/{scaleId}";
+    public static final String ScaleController_Tare = "/tare/{scaleId}";
+    public static final String ScaleController_WifiStrength = "/wifi_strength/{scaleId}";
+    public static final String ScaleController_ChangeWifi = "/change_wifi/{scaleId}";
 
     public static final String WeightController = "/weight";
     public static final String WeightController_Babies = "/babies/{babyId}";

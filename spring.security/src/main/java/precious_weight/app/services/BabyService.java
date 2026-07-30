@@ -84,7 +84,7 @@ public class BabyService {
         if (request.getBabyWeightTime() != null && !Objects.equals(babyModel.getBabyWeightTime(), request.getBabyWeightTime())) {
             babyModel.setBabyWeightTime(request.getBabyWeightTime());
             if (babyModel.getAssignedScale() != null)
-                scaleService.SendNewWeightTimesToScale(id, request.getBabyWeightTime());
+                scaleService.SendNewWeightTimesToScaleViaMqtt(id, request.getBabyWeightTime());
         }
 
         return iBaby.save(babyModel);

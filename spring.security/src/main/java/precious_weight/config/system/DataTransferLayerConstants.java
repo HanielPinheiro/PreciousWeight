@@ -20,6 +20,7 @@ public class DataTransferLayerConstants {
     public static final String App_ScaleTable_IsConnected = "is_connected";
     public static final String App_ScaleTable_LastConnectedAt = "scale_last_connected_at";
     public static final String App_ScaleTable_LastDisconnectedAt = "scale_last_disconnected_at";
+    public static final String App_ScaleTable_WifiStrength = "scale_last_wifi_strength";
 
     public static final String App_WeightTable_TableName = "weights";
     public static final String App_WeightTable_Id = "weight_id";

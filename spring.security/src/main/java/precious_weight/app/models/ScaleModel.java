@@ -35,6 +35,9 @@ public class ScaleModel implements Serializable {
     @JsonFormat(timezone = "America/Sao_Paulo")
     private LocalDateTime lastDisconnectedAt;
 
+    @Column(name = App_ScaleTable_WifiStrength, nullable = false)
+    private Integer wifiStrength;
+
     @OneToOne
     @JoinColumn(name = App_BabyTable_Id)  // Match your DB column
     private BabyModel assignedBaby;
@@ -72,7 +75,6 @@ public class ScaleModel implements Serializable {
     public LocalDateTime getLastConnectedAt() {
         return lastConnectedAt;
     }
-
     public void setLastConnectedAt(LocalDateTime lastConnectedAt) {
         this.lastConnectedAt = lastConnectedAt;
     }
@@ -80,9 +82,15 @@ public class ScaleModel implements Serializable {
     public LocalDateTime getLastDisconnectedAt() {
         return lastDisconnectedAt;
     }
-
     public void setLastDisconnectedAt(LocalDateTime lastDisconnectedAt) {
         this.lastDisconnectedAt = lastDisconnectedAt;
+    }
+
+    public Integer getWifiStrength() {
+        return wifiStrength;
+    }
+    public void setWifiStrength(Integer wifiStrength) {
+        this.wifiStrength = wifiStrength;
     }
 }
 
