@@ -41,29 +41,6 @@ static void mqtt_outbox_worker_task(void *pvParameters)
     }
 }
 
-static void mqtt_outbox_worker_task_old(void *pvParameters)
-{
-
-    while (1)
-    {
-        pw_outbox_entry_t entries[10] = {0};
-        size_t count = 0;
-
-        if (pw_outbox_load_pending(entries, 10, &count) == ESP_OK && count > 0)
-        {
-
-            for (size_t i = 0; i < count; i++)
-            {
-                if (mqtt_publish(entries[i].topic, entries[i].payload, entries[i].qos))
-                    pw_outbox_mark_sent(entries[i].seq);
-                else
-                    break;
-            }
-        }
-        vTaskDelay(pdMS_TO_TICKS(1000));
-    }
-}
-
 void mqtt_manager_task(void *pvParameters)
 { // Wait for restart signal or periodic check
     while (1)
