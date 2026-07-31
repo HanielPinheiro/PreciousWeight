@@ -41,6 +41,17 @@ static char *get_reset_reason_string(esp_reset_reason_t reason)
     }
 }
 
+static esp_err_t initialize_nvs_flash_storage(void)
+{
+    esp_err_t ret = nvs_flash_init();
+    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND)
+    {
+        ESP_ERROR_CHECK(nvs_flash_erase());
+        ret = nvs_flash_init();
+    }
+    return ret;
+}
+
 void PW_ERROR_CHECK(esp_err_t task)
 {
     if (task != ESP_OK)
@@ -56,39 +67,48 @@ void PW_ERROR_CHECK(esp_err_t task)
 
 void app_main()
 {
+    // Leds
     ESP_ERROR_CHECK(initialize_led_task());
     ESP_ERROR_CHECK(set_pattern_to_led_task(BLINK_LED_STARTING_TASKS));
 
+    esp_log_at_terminal(ROTULO_LOCAL, "Salvando Causa do Reset na memoria nao volatil (NVS).");
+    PW_ERROR_CHECK(initialize_nvs_flash_storage());
+    PW_ERROR_CHECK(pw_save_reset_reason_nvs(esp_reset_reason()));
+
+    // Sdcard
     esp_log_at_terminal(ROTULO_LOCAL, "Inicializando Cartao SD.");
     PW_ERROR_CHECK(initialize_sdcard());
+    esp_log_at_terminal(ROTULO_LOCAL, "Inicializando BD em memoria.");
+    PW_ERROR_CHECK(sdcard_persistence_init());
 
-    sdcard_log(LOG_INFO, "Cartao SD inicializado. Inicializando Wi-Fi", ROTULO_LOCAL);
-    sdcard_log(LOG_WARN, get_reset_reason_string(esp_reset_reason()), ROTULO_LOCAL);
+    // Reset reason
+    PW_ERROR_CHECK(sdcard_log(LOG_WARN, get_reset_reason_string(esp_reset_reason()), ROTULO_LOCAL));
+    PW_ERROR_CHECK(pw_log_event(PW_SEV_INFO, "BOOT", ROTULO_LOCAL, get_reset_reason_string(esp_reset_reason())));
+    PW_ERROR_CHECK(pw_state_save_boot(esp_reset_reason(), pw_now_epoch()));
 
+    // Inicia wifi e sincroniza relogio interno com data e hora atual pela rede
+    PW_ERROR_CHECK(sdcard_log(LOG_INFO, "Cartao SD inicializado. Inicializando Wi-Fi", ROTULO_LOCAL));
     init_wifi();
-    sdcard_log(LOG_INFO, "Wi-Fi inicializado com sucesso. Inicializando MQTT.", ROTULO_LOCAL);
-
     PW_ERROR_CHECK(start_date_time_routine());
-    sdcard_persistence_init();
-    pw_state_save_boot(esp_reset_reason(), pw_now_epoch());
-    pw_log_event(PW_SEV_INFO, "BOOT", ROTULO_LOCAL, get_reset_reason_string(esp_reset_reason()));
 
+    sdcard_log(LOG_INFO, "Wi-Fi inicializado com sucesso. Inicializando MQTT.", ROTULO_LOCAL);
     PW_ERROR_CHECK(init_mqtt_task());
-    sdcard_log(LOG_INFO, "Task MQTT inicializada com sucesso. Inicializando leitores HX711.", ROTULO_LOCAL);
 
+    PW_ERROR_CHECK(sdcard_log(LOG_INFO, "Task MQTT inicializada com sucesso. Inicializando leitores HX711.", ROTULO_LOCAL));
     PW_ERROR_CHECK(hx711_initialize_sensors());
-    sdcard_log(LOG_INFO, "Sensores inicializados. Inicializando Tasks de SD Card e Sensores.", ROTULO_LOCAL);
 
+    PW_ERROR_CHECK(sdcard_log(LOG_INFO, "Sensores inicializados. Inicializando Tasks de SD Card e Sensores.", ROTULO_LOCAL));
     PW_ERROR_CHECK(init_sdcard_task());
     PW_ERROR_CHECK(init_sensors_task());
-    sdcard_log(LOG_INFO, "Tasks de SD Card e Sensores inicializadas. Inicalizando Timers.", ROTULO_LOCAL);
 
-    PW_ERROR_CHECK(init_weight_sensors_timer());
+    PW_ERROR_CHECK(sdcard_log(LOG_INFO, "Tasks de SD Card e Sensores inicializadas. Inicalizando Timers.", ROTULO_LOCAL));
+    PW_ERROR_CHECK(init_weight_sensors_timer()); // Inicia agendamento da pesagem do bebe se houver
     update_current_time();
 
+    // Sisteam operante
     char m[90] = {0};
     snprintf(m, 90, "Sistema inicializado com sucesso em %s \r\n", current_time);
-    sdcard_log(LOG_INFO, m, ROTULO_LOCAL);
-    pw_state_save();
-    ESP_ERROR_CHECK(set_pattern_to_led_task(BLINK_LED_NORMAL_OPER));
+    PW_ERROR_CHECK(sdcard_log(LOG_INFO, m, ROTULO_LOCAL));
+    PW_ERROR_CHECK(pw_state_save());
+    PW_ERROR_CHECK(set_pattern_to_led_task(BLINK_LED_NORMAL_OPER));
 }

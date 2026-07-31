@@ -84,7 +84,8 @@
     "compare": "c",
     "text_encoding": "c",
     "thread": "c",
-    "portmacro.h": "c"
+    "portmacro.h": "c",
+    "numbers": "c"
   },
   "idf.flashType": "UART",
   "idf.portWin": "COM4",

@@ -27,10 +27,31 @@ static void mqtt_outbox_worker_task(void *pvParameters)
 {
     while (1)
     {
+        pw_outbox_entry_t entry; // single entry (328 B) – safe
+        size_t count = 0;
+
+        if (pw_outbox_load_pending(&entry, 1, &count) == ESP_OK && count > 0)
+        {
+            if (mqtt_publish(entry.topic, entry.payload, entry.qos))
+            {
+                pw_outbox_mark_sent(entry.seq);
+            }
+        }
+        vTaskDelay(pdMS_TO_TICKS(1000));
+    }
+}
+
+static void mqtt_outbox_worker_task_old(void *pvParameters)
+{
+
+    while (1)
+    {
         pw_outbox_entry_t entries[10] = {0};
         size_t count = 0;
+
         if (pw_outbox_load_pending(entries, 10, &count) == ESP_OK && count > 0)
         {
+
             for (size_t i = 0; i < count; i++)
             {
                 if (mqtt_publish(entries[i].topic, entries[i].payload, entries[i].qos))
@@ -39,7 +60,7 @@ static void mqtt_outbox_worker_task(void *pvParameters)
                     break;
             }
         }
-        vTaskDelay(pdMS_TO_TICKS(5000));
+        vTaskDelay(pdMS_TO_TICKS(1000));
     }
 }
 
@@ -119,7 +140,6 @@ esp_err_t init_mqtt_task()
         ESP_LOGE(ROTULO_LOCAL, "Falha ao criar recursos da task MQTT");
         return ESP_FAIL;
     }
-
     if (xTaskCreate(mqtt_manager_task, ROTULO_LOCAL, 4096, NULL, 5, &mqtt_manager_task_handle) != pdPASS)
     {
         ESP_LOGE(ROTULO_LOCAL, "Falha ao criar 'mqtt_manager_task'");
@@ -130,11 +150,13 @@ esp_err_t init_mqtt_task()
         ESP_LOGE(ROTULO_LOCAL, "Falha ao criar 'mqtt_command_worker_task'");
         return ESP_FAIL;
     }
+
     if (xTaskCreate(mqtt_outbox_worker_task, "mqtt_outbox_worker", 4096, NULL, TASK_PRIORITY_MEDIUM, &mqtt_outbox_task_handle) != pdPASS)
     {
         ESP_LOGE(ROTULO_LOCAL, "Falha ao criar 'mqtt_outbox_worker_task'");
         return ESP_FAIL;
     }
+
     mqtt_init(mqtt_connection_status_callback);
     return ESP_OK;
 }

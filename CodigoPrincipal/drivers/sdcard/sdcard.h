@@ -13,15 +13,17 @@
 #define SDCARD_CS GPIO_NUM_5
 
 #define MOUNT_POINT "/sdcard"
-#define LOG_FILE MOUNT_POINT "/logs.txt"
-#define WEIGHT_FILE MOUNT_POINT "/weights.txt"
-#define BABY_HOURS_FILE MOUNT_POINT "/baby.txt"
-#define STATE_FILE MOUNT_POINT "/state.txt"
-#define AUDIT_FILE MOUNT_POINT "/audit.log"
-#define COMMANDS_FILE MOUNT_POINT "/commands.log"
-#define MEASUREMENTS_FILE MOUNT_POINT "/measurements.log"
-#define CRITICAL_FILE MOUNT_POINT "/critical.log"
-#define OUTBOX_FILE MOUNT_POINT "/outbox.log"
+#define SCALES_ROOT_DIR MOUNT_POINT "/scales"
+#define LOG_FILE SCALES_ROOT_DIR "/logs.txt"
+#define WEIGHT_FILE SCALES_ROOT_DIR "/weights.txt"
+#define BABY_HOURS_FILE SCALES_ROOT_DIR "/baby.txt"
+#define STATE_FILE SCALES_ROOT_DIR "/state.txt"
+#define SEQUENCE_FILE SCALES_ROOT_DIR "/sequence.txt"
+#define AUDIT_FILE SCALES_ROOT_DIR "/audit.log"
+#define COMMANDS_FILE SCALES_ROOT_DIR "/commands.log"
+#define MEASUREMENTS_FILE SCALES_ROOT_DIR "/measurements.log"
+#define CRITICAL_FILE SCALES_ROOT_DIR "/critical.log"
+#define OUTBOX_FILE SCALES_ROOT_DIR "/outbox.log"
 
 typedef struct
 {
@@ -37,7 +39,7 @@ typedef enum
 } log_type_t;
 
 extern sdmmc_card_t *sdcard;
-
+esp_err_t sdcard_format(void);
 esp_err_t initialize_sdcard(void);
 esp_err_t sdcard_write_file(char *path, char *data);
 esp_err_t sdcard_overwrite_file(const char *path, const char *data);

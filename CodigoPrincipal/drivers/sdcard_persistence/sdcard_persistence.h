@@ -25,6 +25,7 @@ esp_err_t sdcard_persistence_init(void);
 uint32_t pw_next_sequence_id(void);
 uint32_t pw_current_sequence_id(void);
 int64_t pw_now_epoch(void);
+esp_err_t pw_save_reset_reason_nvs(esp_reset_reason_t reason);
 
 esp_err_t pw_log_event(pw_severity_t sev, const char *event_type, const char *origin, const char *msg);
 esp_err_t pw_log_command(uint32_t cmd_seq, const char *command_payload);

@@ -14,20 +14,59 @@ static int last_sd_errno = 0;
 
 sdmmc_card_t *sdcard = NULL;
 
-// static esp_err_t sdcard_format()
-// {
-//     esp_err_t ret = esp_vfs_fat_sdcard_format(MOUNT_POINT, sdcard);
-//     if (ret != ESP_OK)
-//     {
-//         ESP_LOGE(ROTULO_LOCAL, "Falha ao formatar no sistema de arquivo FAT (%s)", esp_err_to_name(ret));
-//         return ESP_FAIL;
-//     }
-//     ESP_LOGI(ROTULO_LOCAL, "Nenhum arquivo existente, formatação concluída");
-//     sdcard_create_file(LOG_FILE);
-//     sdcard_create_file(WEIGHT_FILE);
-//     sdcard_create_file(BABY_HOURS_FILE);
-//     return ESP_OK;
-// }
+static esp_err_t sdcard_ensure_directory_exists(const char *dir_path)
+{
+    struct stat dir_stat = {0};
+    if (stat(dir_path, &dir_stat) == 0)
+        return S_ISDIR(dir_stat.st_mode) ? ESP_OK : ESP_FAIL;
+
+    if (mkdir(dir_path, 0775) == 0 || errno == EEXIST)
+        return ESP_OK;
+
+    last_sd_errno = errno;
+    ESP_LOGE(ROTULO_LOCAL, "Falha ao criar diretorio {%s}: %s", dir_path, strerror(errno));
+    return ESP_FAIL;
+}
+
+static esp_err_t sdcard_ensure_parent_directories(const char *path)
+{
+    char dir_path[96] = {0};
+    size_t len = strlen(path);
+
+    if (len >= sizeof(dir_path))
+        return ESP_ERR_INVALID_SIZE;
+
+    strncpy(dir_path, path, sizeof(dir_path) - 1);
+
+    for (size_t i = 1; i < len; i++)
+    {
+        if (dir_path[i] != '/')
+            continue;
+
+        char saved = dir_path[i];
+        dir_path[i] = '\0';
+        if (strlen(dir_path) > 0 && sdcard_ensure_directory_exists(dir_path) != ESP_OK)
+            return ESP_FAIL;
+        dir_path[i] = saved;
+    }
+
+    return ESP_OK;
+}
+
+esp_err_t sdcard_format(void)
+{
+    esp_err_t ret = esp_vfs_fat_sdcard_format(MOUNT_POINT, sdcard);
+    if (ret != ESP_OK)
+    {
+        ESP_LOGE(ROTULO_LOCAL, "Falha ao formatar no sistema de arquivo FAT (%s)", esp_err_to_name(ret));
+        return ESP_FAIL;
+    }
+    ESP_LOGI(ROTULO_LOCAL, "Nenhum arquivo existente, formatação concluída");
+    sdcard_create_file(LOG_FILE);
+    sdcard_create_file(WEIGHT_FILE);
+    sdcard_create_file(BABY_HOURS_FILE);
+    return ESP_OK;
+}
 
 #pragma region Init
 
@@ -93,8 +132,16 @@ static esp_err_t run_sdcard(void)
     // host.max_freq_khz = 10000; // Aumento a velocidade do Bus - Opcional
 
     ESP_LOGI(ROTULO_LOCAL, "Sistema de arquivos montado. Driver inicializado com sucesso.");
+    if (sd_mutex == NULL)
+        sd_mutex = xSemaphoreCreateMutex();
+    if (sd_mutex == NULL)
+    {
+        ESP_LOGE(ROTULO_LOCAL, "Falha ao criar mutex do SD");
+        return ESP_FAIL;
+    }
+    if (sdcard_ensure_directory_exists(SCALES_ROOT_DIR) != ESP_OK)
+        return ESP_FAIL;
     sdcard_load_weight_times();
-    sd_mutex = xSemaphoreCreateMutex();
     return ESP_OK;
 }
 
@@ -103,6 +150,7 @@ esp_err_t initialize_sdcard()
     uint8_t retry_count = 0;
     const uint8_t max_retries = 3;
     esp_err_t ret = ESP_FAIL;
+    
     do
     {
         esp_log_at_terminal(ROTULO_LOCAL, "Loop While");
@@ -137,6 +185,9 @@ static esp_err_t sdcard_write_locked(const char *path, const char *data, const c
         ESP_LOGI(ROTULO_LOCAL, "Executando escrita no arquivo {%s}", path);
 
     last_sd_errno = 0;
+    if (sdcard_ensure_parent_directories(path) != ESP_OK)
+        return ESP_FAIL;
+
     if (stat(path, &st) < 0)
     {
         ESP_LOGI(ROTULO_LOCAL, "Arquivo nao encontrado. Criando arquivo {%s}", path);
@@ -174,6 +225,9 @@ static esp_err_t sdcard_write_locked(const char *path, const char *data, const c
 
 esp_err_t sdcard_write_file(char *path, char *data)
 {
+    if (sd_mutex == NULL)
+        return sdcard_write_locked(path, data, "a");
+
     if (xSemaphoreTake(sd_mutex, pdMS_TO_TICKS(300)) != pdTRUE)
     {
         ESP_LOGE(ROTULO_LOCAL, "Falha ao obter o semáforo para escrita no arquivo.");
@@ -187,6 +241,9 @@ esp_err_t sdcard_write_file(char *path, char *data)
 
 esp_err_t sdcard_overwrite_file(const char *path, const char *data)
 {
+    if (sd_mutex == NULL)
+        return sdcard_write_locked(path, data, "w");
+
     if (xSemaphoreTake(sd_mutex, pdMS_TO_TICKS(300)) != pdTRUE)
     {
         ESP_LOGE(ROTULO_LOCAL, "Falha ao obter o semáforo para sobrescrever arquivo.");
@@ -194,22 +251,9 @@ esp_err_t sdcard_overwrite_file(const char *path, const char *data)
     }
 
     last_sd_errno = 0;
-    char temp_path[64];
-    snprintf(temp_path, sizeof(temp_path), "%s.tmp", path);
-
-    remove(temp_path);
-    esp_err_t ret = sdcard_write_locked(temp_path, data, "w");
-    if (ret == ESP_OK)
-    {
-        remove(path);
-        if (rename(temp_path, path) != 0)
-        {
-            last_sd_errno = errno;
-            ESP_LOGE(ROTULO_LOCAL, "Falha ao promover arquivo temporario para {%s}: %s", path, strerror(errno));
-            remove(temp_path);
-            ret = ESP_FAIL;
-        }
-    }
+    // Avoid ".tmp" paths here. FAT may reject names like "state.txt.tmp"
+    // depending on short/long filename support, and this path is used very early at boot.
+    esp_err_t ret = sdcard_write_locked(path, data, "w");
 
     xSemaphoreGive(sd_mutex);
     return ret;
@@ -217,6 +261,9 @@ esp_err_t sdcard_overwrite_file(const char *path, const char *data)
 
 esp_err_t sdcard_create_file(char *path)
 {
+    if (sdcard_ensure_parent_directories(path) != ESP_OK)
+        return ESP_FAIL;
+
     FILE *file = fopen(path, "ab+");
     if (file)
     {
@@ -228,7 +275,6 @@ esp_err_t sdcard_create_file(char *path)
     last_sd_errno = errno;
     char m[80];
     snprintf(m, 80, "Erro ao criar arquivo %s: %s", path, strerror(errno));
-    sdcard_log(LOG_ERROR, m, ROTULO_LOCAL);
     ESP_LOGE(ROTULO_LOCAL, "%s", m);
     return ESP_FAIL;
 }
@@ -289,9 +335,8 @@ esp_err_t sdcard_load_weight_times()
     struct stat st;
     if (stat(BABY_HOURS_FILE, &st) < 0)
     {
-        snprintf(m, sizeof(m), "Arquivo não encontrado: %s", BABY_HOURS_FILE);
-        sdcard_log(LOG_ERROR, m, ROTULO_LOCAL);
-        return ESP_FAIL;
+        ESP_LOGI(ROTULO_LOCAL, "Arquivo de rotina ainda nao existe. Criando {%s}", BABY_HOURS_FILE);
+        return sdcard_create_file(BABY_HOURS_FILE);
     }
 
     FILE *file = fopen(BABY_HOURS_FILE, "r");

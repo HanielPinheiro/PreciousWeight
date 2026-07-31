@@ -186,23 +186,30 @@ The scheduler:
 
 The firmware now uses the SD card for both legacy logs and structured persistence.
 
+### First boot / blank card behavior
+
+- The firmware creates the required directory tree automatically (at minimum: `/sdcard/scales`).
+- Missing routine/state/log files are created lazily on first use (for example, `baby.txt` is created if it does not exist).
+
 ### Files
 
-- `/sdcard/logs.txt`
+- `/sdcard/scales/logs.txt`
   Legacy operational log queue output.
-- `/sdcard/baby.txt`
+- `/sdcard/scales/baby.txt`
   Persisted current routine snapshot for baby and schedule.
-- `/sdcard/state.txt`
+- `/sdcard/scales/state.txt`
   Current device state snapshot.
-- `/sdcard/audit.log`
+- `/sdcard/scales/sequence.txt`
+  Persistent sequence counter used to order events, commands, measurements, and outbox entries.
+- `/sdcard/scales/audit.log`
   Structured event log.
-- `/sdcard/commands.log`
+- `/sdcard/scales/commands.log`
   Structured command receipt log.
-- `/sdcard/measurements.log`
+- `/sdcard/scales/measurements.log`
   Structured measurement log.
-- `/sdcard/critical.log`
+- `/sdcard/scales/critical.log`
   Critical-only structured events.
-- `/sdcard/outbox.log`
+- `/sdcard/scales/outbox.log`
   Pending and sent MQTT messages for offline replay.
 
 ### State snapshot
@@ -213,6 +220,15 @@ The firmware now uses the SD card for both legacy logs and structured persistenc
 - `reset_reason`
 - `baby_id`
 - each persisted `weight_time`
+
+### NVS usage
+
+`NVS` is no longer used for the general persistence flow.
+
+Current usage is limited to boot-critical metadata that must survive even if the SD card does not mount, especially:
+
+- last reset reason
+- network timestamp support used by the Wi-Fi/date-time routine
 
 ### Outbox
 
