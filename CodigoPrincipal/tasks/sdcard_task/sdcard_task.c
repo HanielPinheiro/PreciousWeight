@@ -28,7 +28,7 @@ static void sdcard_writer_task(void *pv_params)
                         int err = sdcard_last_errno();
                         char evt[PW_OUTBOX_PAYLOAD_MAX];
                         snprintf(evt, sizeof(evt), "EVT|%lu|%lld|CRITICAL|%s|errno=%d", (unsigned long)seq, (long long)now, err == ENOSPC ? "SD_FULL" : "SD_FAIL", err);
-                        mqtt_publish(MQTT_TOPIC_EVENTS, evt, 1);
+                        // mqtt_publish(MQTT_TOPIC_EVENTS, evt, 1);
                         pw_log_event(PW_SEV_CRITICAL, err == ENOSPC ? "SD_FULL" : "SD_FAIL", ROTULO_LOCAL, evt);
                         sd_failure_reported = true;
                     }

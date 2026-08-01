@@ -36,6 +36,7 @@ extern char baby_id[12];
 
 void process_mqtt_data(const char *mqtt_data);
 void update_has_baby_flag(bool state);
+void publish_wifi_is_connected(void);
 bool scale_has_baby();
 
 #endif // CONFIG_SYSTEM_H

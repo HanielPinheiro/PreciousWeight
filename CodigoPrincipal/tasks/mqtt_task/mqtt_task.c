@@ -60,9 +60,7 @@ void mqtt_connection_status_callback(esp_mqtt_event_id_t connected)
     switch (connected)
     {
     case MQTT_EVENT_CONNECTED:
-        ESP_LOGI(ROTULO_LOCAL, "MQTT - Connected to MQTT broker");
-        mqtt_publish(MQTT_TOPIC_CONN_STATUS, "CONNECTED", 1);
-        pw_log_event(PW_SEV_INFO, "MQTT_CONNECTED", ROTULO_LOCAL, "connected");
+        publish_wifi_is_connected();
         break;
 
     case MQTT_EVENT_DISCONNECTED:

@@ -169,12 +169,10 @@ static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_
         case WIFI_PROV_CRED_FAIL:
         {
             wifi_prov_sta_fail_reason_t *reason = (wifi_prov_sta_fail_reason_t *)event_data;
-            ESP_LOGE(ROTULO_LOCAL, "Provisioning failed!\n\tReason : %s"
-                                   "\n\tPlease reset to factory and retry provisioning",
-                     (*reason == WIFI_PROV_STA_AUTH_ERROR) ? "Wi-Fi station authentication failed" : "Wi-Fi access-point not found");
-            /* Reset the state machine on provisioning failure. It allows the provisioning manager to retry the provisioning process
-            based on the number of attempts specified in wifi_conn_attempts.*/
-            wifi_prov_mgr_reset_sm_state_on_failure();
+            ESP_LOGE(ROTULO_LOCAL, "Provisioning failed!\n\tReason : %s", (*reason == WIFI_PROV_STA_AUTH_ERROR) ? "Wi-Fi station authentication failed" : "Wi-Fi access-point not found");
+
+            wifi_prov_mgr_stop_provisioning();
+            esp_restart();
             break;
         }
         case WIFI_PROV_CRED_SUCCESS:
