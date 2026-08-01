@@ -37,43 +37,42 @@ public class MqttSubscriberService {
     }
 
     private void SubscribeToScalesTopic() throws MqttException {
-        logger.info("Attempting to subscribe to topic: {}", MQTT_TOPIC_SUB_WIFI);
-        mqttClient.subscribe(MQTT_TOPIC_SUB_WIFI, qos, (messageTopic, message) -> {
+        String topic =  MQTT_TOPIC_SUB_WIFI + MQTT_GENERAL_TOPIC;
+        logger.info("Attempting to subscribe to topic: {}",topic);
+        mqttClient.subscribe(topic, qos, (messageTopic, message) -> {
             String normalizedPayload = new String(message.getPayload()).trim();
             try {
-                ExtractDataFromMessageAndProcess(messageTopic, normalizedPayload);
+                String valuePart = "";
+                String cleanedTopic = messageTopic.replace(MQTT_TOPIC_SUB_WIFI, "");
+
+                if (normalizedPayload.startsWith(MQTT_COMMAND_WIFI_STRENGTH)) {
+                    valuePart = normalizedPayload.substring(MQTT_COMMAND_WIFI_STRENGTH.length()).trim();
+                    if (valuePart.isEmpty()) throw new Exception(String.format("CAN'T EXTRACT VALUE PART FROM %s", normalizedPayload));
+
+                    Matcher matcher = WIFI_STRENGTH_PATTERN.matcher(valuePart);
+                    if (!matcher.find()) throw new Exception(String.format("Invalid wifi strength payload: %s", normalizedPayload));
+
+                    scaleService.SaveWifiStrengthFromBroker(cleanedTopic, Integer.parseInt(matcher.group()));
+                    logger.info("WiFi strength saved in topic: {}", messageTopic);
+                }
+                else {
+                    throw new Exception("COMMAND NOT IDENTIFIED!");
+                }
                 log(messageTopic, normalizedPayload);
             } catch (Exception e) {
                 logger.error("Error when try to save wifi strength - Topic: {} | Payload: {} - Error: {}", messageTopic, normalizedPayload, e.getMessage(), e);
             }
         });
-        logger.info("Subscription request sent for topic: {}", MQTT_TOPIC_SUB_WIFI);
+        logger.info("Subscription request sent for topic: {}", topic);
     }
 
-    private void ExtractDataFromMessageAndProcess(String messageTopic, String normalizedPayload) throws Exception {
-        String valuePart = "";
-        String cleanedTopic = messageTopic.replace("/scales/", "");
-
-        if (normalizedPayload.startsWith(MQTT_COMMAND_WIFI_STRENGTH)) {
-            valuePart = normalizedPayload.substring(MQTT_COMMAND_WIFI_STRENGTH.length()).trim();
-            if (valuePart.isEmpty()) throw new Exception(String.format("CAN'T EXTRACT VALUE PART FROM %s", normalizedPayload));
-
-            Matcher matcher = WIFI_STRENGTH_PATTERN.matcher(valuePart);
-            if (!matcher.find()) throw new Exception(String.format("Invalid wifi strength payload: %s", normalizedPayload));
-
-            scaleService.SaveWifiStrengthFromBroker(cleanedTopic, Integer.parseInt(matcher.group()));
-            logger.info("WiFi strength saved in topic: {}", messageTopic);
-        }
-        else {
-            throw new Exception("COMMAND NOT IDENTIFIED!");
-        }
-    }
 
     private void SubscribeToStatusTopic() throws MqttException {
-        logger.info("Attempting to subscribe to topic: {}", MQTT_TOPIC_SUB_STATUS);
-        mqttClient.subscribe(MQTT_TOPIC_SUB_STATUS, qos, (messageTopic, message) -> {
+        String topic =  MQTT_TOPIC_SUB_STATUS + MQTT_GENERAL_TOPIC;
+        logger.info("Attempting to subscribe to topic: {}", topic);
+        mqttClient.subscribe(topic, qos, (messageTopic, message) -> {
             String payload = new String(message.getPayload());
-            String scaleMac = messageTopic.replace("/status/", "");
+            String scaleMac = messageTopic.replace(MQTT_TOPIC_SUB_STATUS, "");
 
             if ("CONNECTED".equalsIgnoreCase(payload)) {
                 scaleService.UpdateConnectionStatusFromBroker(scaleMac, true);
@@ -89,26 +88,27 @@ public class MqttSubscriberService {
 
             logger.warn("Ignoring unsupported status payload - Topic: {} | Payload: {}", messageTopic, payload);
         });
-        logger.info("Subscription request sent for topic: {}", MQTT_TOPIC_SUB_STATUS);
+        logger.info("Subscription request sent for topic: {}", topic);
     }
 
     private void SubscribeToWeightTopic() throws MqttException {
-        logger.info("Attempting to subscribe to topic: {}", MQTT_TOPIC_SUB_WEIGHT);
-        mqttClient.subscribe(MQTT_TOPIC_SUB_WEIGHT, qos, (messageTopic, message) -> {
+        String topic =  MQTT_TOPIC_SUB_WEIGHT + MQTT_GENERAL_TOPIC;
+        logger.info("Attempting to subscribe to topic: {}", topic);
+        mqttClient.subscribe(topic, qos, (messageTopic, message) -> {
             String payload = new String(message.getPayload());
 
             try {
                 logger.info("Receive new weight in topic : {} | Weight: {}", messageTopic, payload);
                 log(messageTopic, payload);
 
-                scaleService.SaveWeightFromBroker(messageTopic.replace("/weights/", ""), payload);
+                scaleService.SaveWeightFromBroker(messageTopic.replace(MQTT_TOPIC_SUB_WEIGHT, ""), payload);
                 logger.info("Weight saved in topic: {}", messageTopic);
             } catch (Exception e) {
                 logger.error("Error when try to save weight - Topic: {} | Weight: {} - Error: {}", messageTopic, payload, e.getMessage(), e);
             }
 
         });
-        logger.info("Subscription request sent for topic: {}", MQTT_TOPIC_SUB_WEIGHT);
+        logger.info("Subscription request sent for topic: {}", topic);
     }
 
     @Scheduled(fixedRate = 300000) // Every 5 minutes

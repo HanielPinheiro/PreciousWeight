@@ -6,9 +6,10 @@ public class MqttConstants {
     public static final String MQTT_TOPIC_PUB_STATUS_API ="api/status";
     public static final String MQTT_TOPIC_PUB_SCALE ="/scales/"; // send data to scale
 
-    public static final String MQTT_TOPIC_SUB_WIFI ="/wifi/#"; // check data in wifi topic for all scales
-    public static final String MQTT_TOPIC_SUB_STATUS ="/status/#"; // check device connection state for all scales
-    public static final String MQTT_TOPIC_SUB_WEIGHT ="/weights/#"; // check data in weight topic for all babies
+    public static final String MQTT_GENERAL_TOPIC = "#";
+    public static final String MQTT_TOPIC_SUB_WIFI ="/wifi/"; // check data in wifi topic for all scales
+    public static final String MQTT_TOPIC_SUB_STATUS ="/status/"; // check device connection state for all scales
+    public static final String MQTT_TOPIC_SUB_WEIGHT ="/weights/"; // check data in weight topic for all babies
 
     public static final String DEFAULT_WEIGHT_TIME= "12:00";
     public static final String MQTT_COMMAND_RUN = "[RUN]"; // send scale to start monitoring time to weight
