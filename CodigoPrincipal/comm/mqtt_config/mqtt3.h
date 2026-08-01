@@ -6,13 +6,18 @@
 #define MQTT_RECONNECT_DELAY_MS 5000
 #define MQTT_KEEPALIVE 60
 
-#define MQTT_TOPIC_SCALES "/scales/" MQTT_SERVICE_NAME
-#define MQTT_TOPIC_WEIGHTS "/weights/" MQTT_SERVICE_NAME
+#define MQTT_LAST_WILL_MSG "DISCONNECTED"
+
+#define MQTT_TOPIC_SCALES_SUB "/scales/" MQTT_SERVICE_NAME
+
+#define MQTT_TOPIC_WIFI_PUB "/wifi/" MQTT_SERVICE_NAME
+#define MQTT_TOPIC_WEIGHTS_PUB "/weights/" MQTT_SERVICE_NAME
 #define MQTT_TOPIC_CONN_STATUS "/status/" MQTT_SERVICE_NAME
+
+// Não utilizados ainda
 #define MQTT_TOPIC_EVENTS "/events/" MQTT_SERVICE_NAME
 #define MQTT_TOPIC_MEASUREMENTS "/measurements/" MQTT_SERVICE_NAME
 #define MQTT_TOPIC_ACKS "/acks/" MQTT_SERVICE_NAME
-#define MQTT_LAST_WILL_MSG "DISCONNECTED"
 
 typedef void (*mqtt_connection_callback_t)(esp_mqtt_event_id_t connected);
 extern esp_mqtt_event_handle_t event;

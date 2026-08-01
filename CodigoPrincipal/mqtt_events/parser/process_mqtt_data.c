@@ -130,7 +130,7 @@ static esp_err_t measure_routine(const char *data)
 
     char legacy[50];
     snprintf(legacy, sizeof(legacy), "%s{%.2f}", RECEIVED_MEASURE, global_weight);
-    mqtt_publish(MQTT_TOPIC_WEIGHTS, legacy, 1);
+    mqtt_publish(MQTT_TOPIC_WEIGHTS_PUB, legacy, 1);
     return ESP_OK;
 }
 
@@ -168,7 +168,7 @@ static esp_err_t wifi_strength_routine(const char *data)
 
     char legacy[50];
     snprintf(legacy, sizeof(legacy), "%s{%d}", RECEIVED_WIFI_STRENGTH, wifi_strength);
-    mqtt_publish(MQTT_TOPIC_SCALES, legacy, 1);
+    mqtt_publish(MQTT_TOPIC_WIFI_PUB, legacy, 1);
     return ESP_OK;
 }
 
@@ -254,7 +254,7 @@ void process_mqtt_data(const char *mqtt_data)
                 char ack[PW_OUTBOX_PAYLOAD_MAX];
                 snprintf(ack, sizeof(ack), "ACK|%lu|%lld|%s|ERR|MAX_WEIGHT_TIMES", (unsigned long)cmd_seq, (long long)pw_now_epoch(), h->prefix);
                 mqtt_send_or_spool(cmd_seq, MQTT_TOPIC_ACKS, OUTBOX_QOS, ack);
-                mqtt_publish(MQTT_TOPIC_WEIGHTS, "ERROR_MAX_WEIGHT_TIMES_ACHIEVED", 1);
+                mqtt_publish(MQTT_TOPIC_WEIGHTS_PUB, "ERROR_MAX_WEIGHT_TIMES_ACHIEVED", 1);
                 return;
             }
 
@@ -267,7 +267,7 @@ void process_mqtt_data(const char *mqtt_data)
                 char ack[PW_OUTBOX_PAYLOAD_MAX];
                 snprintf(ack, sizeof(ack), "ACK|%lu|%lld|%s|OK", (unsigned long)cmd_seq, (long long)pw_now_epoch(), h->prefix);
                 mqtt_send_or_spool(cmd_seq, MQTT_TOPIC_ACKS, OUTBOX_QOS, ack);
-                mqtt_publish(MQTT_TOPIC_WEIGHTS, SUCCESS_MSG, 1);
+                mqtt_publish(MQTT_TOPIC_WEIGHTS_PUB, SUCCESS_MSG, 1);
                 ESP_LOGI(ROTULO_LOCAL, "%s", h->log_success);
             }
             else
@@ -276,7 +276,7 @@ void process_mqtt_data(const char *mqtt_data)
                 char ack[PW_OUTBOX_PAYLOAD_MAX];
                 snprintf(ack, sizeof(ack), "ACK|%lu|%lld|%s|ERR", (unsigned long)cmd_seq, (long long)pw_now_epoch(), h->prefix);
                 mqtt_send_or_spool(cmd_seq, MQTT_TOPIC_ACKS, OUTBOX_QOS, ack);
-                mqtt_publish(MQTT_TOPIC_WEIGHTS, ERROR_MSG, 1);
+                mqtt_publish(MQTT_TOPIC_WEIGHTS_PUB, ERROR_MSG, 1);
             }
             return;
         }

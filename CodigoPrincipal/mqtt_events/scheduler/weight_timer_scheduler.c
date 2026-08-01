@@ -35,7 +35,7 @@ static void task_worker(void *pvParams)
 
         char legacy[64];
         snprintf(legacy, sizeof(legacy), "%s{%.2f}", RECEIVED_MEASURE, w);
-        mqtt_publish(MQTT_TOPIC_WEIGHTS, legacy, 2);
+        mqtt_publish(MQTT_TOPIC_WEIGHTS_PUB, legacy, 2);
 
         if (scale_has_baby() && number_of_weight_times > 0)
         {

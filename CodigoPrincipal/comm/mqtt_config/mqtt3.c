@@ -66,7 +66,7 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
         connected = true;
 
         // AQUI SE INSCREVE NO CANAL DO MQTT PRA OUVIR EVENTOS!!!
-        esp_mqtt_client_subscribe(client, MQTT_TOPIC_SCALES, 1);
+        esp_mqtt_client_subscribe(client, MQTT_TOPIC_SCALES_SUB, 1);
         break;
 
     case MQTT_EVENT_DISCONNECTED:

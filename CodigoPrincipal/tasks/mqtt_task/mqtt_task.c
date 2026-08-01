@@ -82,10 +82,9 @@ void mqtt_connection_status_callback(esp_mqtt_event_id_t connected)
          *  /scales/ = balança recebe comandos
          *  /status/ = balança envia on/off mqtt3.c
          *  /weights/ = balança envia peso nos horarios
-         *  LOGO, balança publica em 3 canais, status, weights, e recebe dados em 1 scales
-         * A balança só recebe os dados dela -> /scales/MAC_ADDRESS_ESP32 (SERVICE NAME)
+         *  /wifi/ = balança envia intensidade do wifi
          */
-        if (strncmp(event->topic, MQTT_TOPIC_SCALES, event->topic_len) == 0)
+        if (strncmp(event->topic, MQTT_TOPIC_SCALES_SUB, event->topic_len) == 0)
         {
             mqtt_command_entry_t entry = {0};
             size_t copy_len = event->data_len < (MQTT_COMMAND_MAX_LENGTH - 1) ? event->data_len : (MQTT_COMMAND_MAX_LENGTH - 1);
