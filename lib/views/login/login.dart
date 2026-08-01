@@ -49,7 +49,7 @@ class _LoginPageState extends State<LoginPage> {
                   _passwordController.clear();
                 }),
                 const SizedBox(width: 8.0),
-                ElementsOfViews.ContrastButton(context,Icon(Icons.login, color: Colors.black),"ENTRAR",
+                ElementsOfViews.IconContrastButton(context,Icon(Icons.login, color: Colors.black),"ENTRAR",
                   () async {
                     await SafeApi.call(context: context,
                         apiCall: () async {await _userApi.Login(_usernameController.text, _passwordController.text);},

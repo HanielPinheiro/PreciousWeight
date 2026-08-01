@@ -230,7 +230,7 @@ class _BabiesEditState extends State<BabiesEdit> {
                 const SizedBox(height: 20.0),
                 OverflowBar(
                   alignment: MainAxisAlignment.end,
-                  children: <Widget>[ElementsOfViews.SimpleButton(context, "LIMPAR CAMPOS", () => _resetControllers()), const SizedBox(width: 8.0), ElementsOfViews.ContrastButton(context, Icon(Icons.cloud_upload, color: Colors.black), "ATUALIZAR", () async => await _update())],
+                  children: <Widget>[ElementsOfViews.SimpleButton(context, "LIMPAR CAMPOS", () => _resetControllers()), const SizedBox(width: 8.0), ElementsOfViews.IconContrastButton(context, Icon(Icons.cloud_upload, color: Colors.black), "ATUALIZAR", () async => await _update())],
                 ),
               ])
             ])));

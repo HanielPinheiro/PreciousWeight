@@ -183,7 +183,7 @@ class _BabiesRegisterState extends State<BabiesRegister> {
                       _weightTimeController.clear();
                     }),
                     const SizedBox(width: 8.0),
-                    ElementsOfViews.ContrastButton(
+                    ElementsOfViews.IconContrastButton(
                       context,
                       Icon(Icons.cloud_upload, color: Colors.black),
                       "CADASTRAR",

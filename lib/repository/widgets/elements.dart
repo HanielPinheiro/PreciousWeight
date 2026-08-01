@@ -174,9 +174,7 @@ class ElementsOfViews {
         return TextField(
           controller: _controller,
           style: TextStyle(color: colorScheme.primary),
-          decoration: MyDecorations()
-              .GetInputDecoration(context, labelText, hintText, _icon)
-              .copyWith(
+          decoration: MyDecorations().GetInputDecoration(context, labelText, hintText, _icon).copyWith(
                 suffixIcon: IconButton(
                   icon: Icon(obscureText ? Icons.visibility : Icons.visibility_off, color: colorScheme.primary),
                   onPressed: () => setState(() => obscureText = !obscureText),
@@ -295,7 +293,7 @@ class ElementsOfViews {
         });
   }
 
-  static Widget SimpleButton(BuildContext context, String _text, [VoidCallback? _onPressed = null, bool isActive = false, bool isDisable = false]) {
+  static Widget SimpleButton(BuildContext context, String _text, [VoidCallback? _onPressed = null, bool contrastColor = false, bool isDisable = false]) {
     return TextButton(
       onPressed: isDisable
           ? null
@@ -303,7 +301,7 @@ class ElementsOfViews {
               ? _onPressed
               : () {},
       style: TextButton.styleFrom(
-        backgroundColor: isActive ? Theme.of(context).colorScheme.onSecondary : Theme.of(context).colorScheme.surface,
+        backgroundColor: contrastColor ? Theme.of(context).colorScheme.onSecondary : Theme.of(context).colorScheme.surface,
         foregroundColor: Theme.of(context).colorScheme.primary,
         side: BorderSide(
           color: Theme.of(context).colorScheme.primary,
@@ -316,7 +314,7 @@ class ElementsOfViews {
     );
   }
 
-  static Widget ContrastButton(BuildContext context, Icon _icon, String _text, [VoidCallback? _onPressed = null]) {
+  static Widget IconContrastButton(BuildContext context, Icon _icon, String _text, [VoidCallback? _onPressed = null]) {
     return ElevatedButton.icon(
       icon: _icon,
       label: Text(_text, style: headlineSmall.copyWith(color: Colors.black)),
@@ -325,71 +323,36 @@ class ElementsOfViews {
         foregroundColor: Theme.of(context).colorScheme.surface,
         backgroundColor: Theme.of(context).colorScheme.onSecondary,
         elevation: 4.0,
-// side: BorderSide(color: Theme.of(context).colorScheme.onSecondary, width: 1.0, style: BorderStyle.solid,),
       ),
     );
   }
 
-// static Widget RoundedInput(String text) {
-//   return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-//     Text(text, style: amaranth_20),
-//     SizedBox(height: 5),
-//     TextFormField(
-//       decoration: InputDecoration(
-//         filled: true,
-//         fillColor: white,
-//         border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
-//       ),
-//     ),
-//   ]);
-// }
+  static Widget PwIconButton(BuildContext context, Icon _icon, String _text, bool contrastColor, [VoidCallback? _onPressed = null]) {
+    return ElevatedButton.icon(
+      icon: _icon,
+      label: Text(_text, style: headlineSmall.copyWith(color: contrastColor ? Colors.black : Theme.of(context).colorScheme.primary)),
+      onPressed: _onPressed,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: contrastColor ? Theme.of(context).colorScheme.onSecondary : Theme.of(context).colorScheme.surface,
+        foregroundColor: Theme.of(context).colorScheme.primary,
+        side: BorderSide(color: Theme.of(context).colorScheme.primary, width: 1.0, style: BorderStyle.solid),
+      ),
+    );
+  }
 
-// static Widget AlignedTextButton(String text, TextStyle style, Alignment align, VoidCallback? action) {
-//   return Align(
-//       alignment: align, //Alignment.centerRight,
-//       child: TextButton(
-//           onPressed: action, //() { },
-//           child: Text(text, style: style) //Definitions.amaranth_20_white),
-//       ));
-// }
+  static Widget ResponsiveCard(BuildContext context, List<Widget> widgets) {
+    return Padding(padding: const EdgeInsets.symmetric(horizontal: 10), child: InkWell(borderRadius: BorderRadius.circular(15), child: Container(padding: EdgeInsets.all(9), decoration: MyDecorations().GetBoxDecoration(context), child: Column(mainAxisSize: MainAxisSize.max, crossAxisAlignment: CrossAxisAlignment.center, mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: widgets))));
+  }
 
-// static Widget RoundedElevatedButton(String text, Color color, TextStyle style, VoidCallback? action) {
-//   return ElevatedButton(
-//       onPressed: action,
-//       style: ElevatedButton.styleFrom(
-//         backgroundColor: color,
-//         padding: const EdgeInsets.symmetric(vertical: 7),
-//         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-//       ),
-//       child: Text(text, style: style));
-// }
-//
-// static Widget BabyWeightChart(List<WeightModel> baby) {
-//   return LineChart(
-//     LineChartData(
-//       gridData: const FlGridData(show: false),
-//       titlesData: const FlTitlesData(show: true),
-//       borderData: FlBorderData(
-//         show: true,
-//         border: Border.all(color: Colors.black),
-//       ),
-//       lineBarsData: [
-//         LineChartBarData(
-//           spots: [
-//             const FlSpot(0, 1),
-//             const FlSpot(1, 3),
-//             const FlSpot(2, 7),
-//             const FlSpot(3, 4),
-//             const FlSpot(4, 6),
-//           ],
-//           isCurved: true,
-//           color: Colors.blue,
-//           barWidth: 3,
-//           isStrokeCapRound: true,
-//           belowBarData: BarAreaData(show: false),
-//         ),
-//       ],
-//     ),
-//   );
-// }
+  static Widget GroupChildrenInRow(List<Widget> children, [CrossAxisAlignment crossAxisAlignment = CrossAxisAlignment.center, MainAxisSize mainAxis = MainAxisSize.max, MainAxisAlignment axisAlignment = MainAxisAlignment.spaceEvenly]){
+    return Row(mainAxisSize: mainAxis, mainAxisAlignment: axisAlignment, crossAxisAlignment: crossAxisAlignment, children: children);
+  }
+
+  static Widget GroupChildrenInColumn(List<Widget> children, [CrossAxisAlignment crossAxisAlignment = CrossAxisAlignment.center, MainAxisSize mainAxis = MainAxisSize.max, MainAxisAlignment axisAlignment = MainAxisAlignment.spaceEvenly]){
+    return Column(mainAxisSize: mainAxis, mainAxisAlignment: axisAlignment, crossAxisAlignment: crossAxisAlignment, children: children);
+  }
+
+  static Widget NormalInputText(BuildContext _context, String _text, double _fontSize) {
+      return Text(_text, style: displaySmall.copyWith(color: Theme.of(_context).colorScheme.primary, fontWeight: FontWeight.normal, fontSize: _fontSize));
+  }
 }

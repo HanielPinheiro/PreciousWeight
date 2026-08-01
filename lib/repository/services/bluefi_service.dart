@@ -35,6 +35,8 @@ class BluefiService extends StatefulWidget {
   State<BluefiService> createState() => _BluefiService();
 }
 
+
+
 class _BluefiService extends State<BluefiService> {
   final _wifiLogin = TextEditingController();
   final _wifiPassword = TextEditingController();
@@ -42,6 +44,7 @@ class _BluefiService extends State<BluefiService> {
   bool _isLoading = true;
   bool _permission = false;
   bool _bleOn = false;
+  bool _wifiResult = false;
   String? _provName = null;
   String? _pop = null;
   String _statusMessage = "";
@@ -88,15 +91,15 @@ class _BluefiService extends State<BluefiService> {
 
     if (_provName == null || _pop == null) {
       ElementsOfViews.showSimpleDialog(context, "Não é possível realizar o pareamento", "Não foi possível identificar o dispositivo através do BLE.");
-      Navigator.pop(context);
+      Navigator.pop(context, _wifiResult);
     }
   }
 
   Future<void> _connectAction() async {
-    final success = await _provisionWifi();
-    if (success) {
+    _wifiResult = await _provisionWifi();
+    if (_wifiResult) {
         await ElementsOfViews.showSimpleDialog(context, "Conexão concluída!", 'Balança conectada ao Wi-Fi!');
-        Navigator.pop(context);
+        Navigator.pop(context,_wifiResult);
     }
   }
 
@@ -193,8 +196,6 @@ class _BluefiService extends State<BluefiService> {
         return false;
       }
 
-
-      await ElementsOfViews.showSimpleDialog(context, "Conexão concluída!", 'Balança conectada ao Wi-Fi!');
       return true;
     } on PlatformException catch (e) {
       print('Erro de plataforma: ${e.message}');

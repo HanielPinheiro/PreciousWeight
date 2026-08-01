@@ -110,6 +110,15 @@ class ScaleApi {
     }
   }
 
+  Future<String> requestTare(String scale_code) async {
+    try {
+      final _header = {'Content-Type': 'application/json', 'Authorization': 'Bearer ${UserApi().token!.accessToken}', 'Accept': 'application/json'};
+      return await ApiService.apiConn("${address_api}${api_scale_tare.replaceAll(api_pattern_code, scale_code)}", header: _header);
+    } catch (error) {
+      throw error;
+    }
+  }
+
   Future<String> requestChangeWifi(String scale_code) async {
     try {
       final _header = {'Content-Type': 'application/json', 'Authorization': 'Bearer ${UserApi().token!.accessToken}', 'Accept': 'application/json'};
@@ -119,10 +128,10 @@ class ScaleApi {
     }
   }
 
-  Future<String> requestTare(String scale_code) async {
+  Future<String> getWifiStrength(String scale_code) async {
     try {
       final _header = {'Content-Type': 'application/json', 'Authorization': 'Bearer ${UserApi().token!.accessToken}', 'Accept': 'application/json'};
-      return await ApiService.apiConn("${address_api}${api_scale_tare.replaceAll(api_pattern_code, scale_code)}", header: _header);
+      return await ApiService.apiConn("${address_api}${api_scale_wifi_strength.replaceAll(api_pattern_code, scale_code)}", header: _header);
     } catch (error) {
       throw error;
     }

@@ -1,3 +1,4 @@
+import 'dart:ffi';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 
@@ -193,7 +194,21 @@ class ScalesProvider with ChangeNotifier {
     }
   }
 
-  Future<String> getWeightNow(BuildContext context, int scale_id) async {
+  Future<int?> getScaleIdFromHash(BuildContext context, String hash) async {
+    try {
+      return await SafeApi.call<int?>(
+          context: context,
+          apiCall: () async {
+            return await _scaleApi.getIdByHash(hash);
+          });
+    } catch (e) {
+      throw e;
+    } finally {
+      notifyListeners();
+    }
+  }
+
+  Future<String> requestWeightNow(BuildContext context, int scale_id) async {
     try {
       return await SafeApi.call<String>(
         context: context,
@@ -238,14 +253,28 @@ class ScalesProvider with ChangeNotifier {
     }
   }
 
-
-  Future<int?> getScaleIdFromHash(BuildContext context, String hash) async {
+  Future<String> requestWifiStrength(BuildContext context, int scale_id) async {
     try {
-      return await SafeApi.call<int?>(
-          context: context,
-          apiCall: () async {
-            return await _scaleApi.getIdByHash(hash);
-          });
+      ScaleModel? scale = _scaleInCache(scale_id);
+
+      if (scale == null) {
+        await SafeApi.call(context: context,apiCall: () async {await _updateCache();});
+        scale = _scaleInCache(scale_id);
+        if (scale == null) throw new Exception("Scale not found");
+      }
+
+      else{
+        await SafeApi.call(context: context, apiCall: () async{
+          try {
+            final d = await _scaleApi.getWifiStrength(scale_id.toString());
+            scale!.wifiStrength = int.tryParse(d) ?? 0;
+          }
+          catch (e) {
+            throw e;
+          }
+        });
+      }
+      return scale.wifiStrength.toString();
     } catch (e) {
       throw e;
     } finally {

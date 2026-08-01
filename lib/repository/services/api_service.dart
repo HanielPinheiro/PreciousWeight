@@ -5,14 +5,30 @@ import 'package:http_parser/http_parser.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
+import 'dart:io';
+import 'package:http/io_client.dart';
+
 import '../../api/user_api.dart';
 import '../helper/api_error_handler.dart';
 import '../helper/constants.dart';
 
 class ApiService {
   static Future<String> apiConn(String url, {String? body, Map<String, String>? header, int? timeout}) async {
-    final client = http.Client();
-    timeout = timeout == null ? 2 : timeout;
+    late final http.Client client;
+
+    /*-- start debug code (when use pixel 6 emulator with an api address that has ssh implemented --*/
+    if (kDebugMode) {
+      final ioClient = HttpClient()..badCertificateCallback = (X509Certificate cert, String host, int port) {
+          return host == '191.252.159.22';// Trust the connection explicitly if it matches your VPS IP
+        };
+      client = IOClient(ioClient);
+    } else {
+      client = http.Client(); // Standard secure client for production
+    }
+    /*-- end debug code --*/
+
+    timeout = timeout ?? 2;
+
     try {
       final uri = Uri.parse(url);
       final response = await client.post(uri, body: body, headers: header ?? {})

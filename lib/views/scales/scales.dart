@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/scales.dart';
+import '../../repository/design/fonts.dart';
 import '../../repository/providers/scales_provider.dart';
 import '../../repository/services/bluefi_service.dart';
 import '../../repository/services/qrcode_service.dart';
@@ -36,6 +37,30 @@ class _ScalesPageState extends State<ScalesPage> {
     setState(() => isEnabled = v);
   }
 
+  Widget _empty() {
+    return Column(children:[ Expanded(child:Center(child: Text('Nenhuma balança cadastrada', style: displayLarge.copyWith(color: Theme.of(context).colorScheme.primary), textAlign: TextAlign.center,)))]);
+  }
+
+  Widget _notEmpty(List<ScaleModel> filteredScales) {
+    return ListView(
+      children: [
+        Padding(padding: EdgeInsets.all(12.0)),
+        Row(mainAxisSize: MainAxisSize.max, crossAxisAlignment: CrossAxisAlignment.center, mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+          ElementsOfViews.SimpleButton(context, "Balanças Ativas", () => _changeState(true), isEnabled == 1),
+          ElementsOfViews.SimpleButton(context, "Balanças Não Ativas", () => _changeState(false), isEnabled != 1),
+        ]),
+        Padding(padding: EdgeInsets.all(12.0)),
+        ...filteredScales.map((_scale) {
+          final operationalStatus = _scale.status == 1 ? 'Operante' : 'Inoperante';
+          final connectivityStatus = _scale.isConnected ? 'Online' : 'Offline';
+          return ElementsOfViews.CardToList(context, Icons.scale, 'Código da Balança #${_scale.id}', 'Estado: $operationalStatus | Wi-Fi: $connectivityStatus', () {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => ScaleDetails(id:_scale.id)));
+          });
+        }).toList()
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final scalesProvider = context.watch<ScalesProvider>();
@@ -45,23 +70,7 @@ class _ScalesPageState extends State<ScalesPage> {
     final filteredScales = scalesProvider.scales.where((scale) => scale.status == isEnabled).toList();
 
     return Scaffold(
-      body: ListView(
-        children: [
-          Padding(padding: EdgeInsets.all(12.0)),
-          Row(mainAxisSize: MainAxisSize.max, crossAxisAlignment: CrossAxisAlignment.center, mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-            ElementsOfViews.SimpleButton(context, "Balanças Ativas", () => _changeState(true), isEnabled == 1),
-            ElementsOfViews.SimpleButton(context, "Balanças Não Ativas", () => _changeState(false), isEnabled != 1),
-          ]),
-          Padding(padding: EdgeInsets.all(12.0)),
-          ...filteredScales.map((_scale) {
-            final operationalStatus = _scale.status == 1 ? 'Operante' : 'Inoperante';
-            final connectivityStatus = _scale.isConnected ? 'Online' : 'Offline';
-            return ElementsOfViews.CardToList(context, Icons.scale, 'Código da Balança #${_scale.id}', 'Estado: $operationalStatus | Wi-Fi: $connectivityStatus', () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => ScaleDetails(id:_scale.id)));
-            });
-          }).toList()
-        ],
-      ),
+      body: scalesProvider.scales.isEmpty ? _empty() : _notEmpty(filteredScales),
       floatingActionButton: FloatingActionButton(
           onPressed: () async {
             final result = await Navigator.push(context, MaterialPageRoute(builder: (context) => ScanQrCode()));
@@ -88,4 +97,6 @@ class _ScalesPageState extends State<ScalesPage> {
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
+
+
 }

@@ -46,7 +46,7 @@ class _CadastroPageState extends State<CadastroPage> {
             children: <Widget>[
               ElementsOfViews.SimpleButton(context, "LIMPAR", () {_usernameController.clear();_passwordController.clear();_confirmPasswordController.clear();}),
               const SizedBox(width: 8.0),
-              ElementsOfViews.ContrastButton(context, Icon(Icons.person, color: Colors.black), "CADASTRAR", () async {
+              ElementsOfViews.IconContrastButton(context, Icon(Icons.person, color: Colors.black), "CADASTRAR", () async {
                 if(_usernameController.text == "" || !_usernameController.text.contains("@")) {
                   await showDialog(context: context,builder: (context) =>AlertDialog(title: const Text("Erro"), content: Text("E-mail inválido!")));
                 }
