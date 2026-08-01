@@ -20,7 +20,7 @@ import static precious_weight.config.system.MqttConstants.MQTT_COMMAND_WIFI_STRE
 @Service
 public class MqttSubscriberService {
     private static final Logger logger = LoggerFactory.getLogger(MqttSubscriberService.class);
-    private int qos = 2;
+    private static final int qos = 2;
     private static final Pattern WIFI_STRENGTH_PATTERN = Pattern.compile("-?\\d+");
 
     @Autowired
@@ -37,8 +37,8 @@ public class MqttSubscriberService {
     }
 
     private void SubscribeToScalesTopic() throws MqttException {
-        logger.info("Attempting to subscribe to topic: {}", MQTT_TOPIC_SUB_SCALE);
-        mqttClient.subscribe(MQTT_TOPIC_SUB_SCALE, qos, (messageTopic, message) -> {
+        logger.info("Attempting to subscribe to topic: {}", MQTT_TOPIC_SUB_WIFI);
+        mqttClient.subscribe(MQTT_TOPIC_SUB_WIFI, qos, (messageTopic, message) -> {
             String normalizedPayload = new String(message.getPayload()).trim();
             try {
                 ExtractDataFromMessageAndProcess(messageTopic, normalizedPayload);
@@ -47,7 +47,7 @@ public class MqttSubscriberService {
                 logger.error("Error when try to save wifi strength - Topic: {} | Payload: {} - Error: {}", messageTopic, normalizedPayload, e.getMessage(), e);
             }
         });
-        logger.info("Subscription request sent for topic: {}", MQTT_TOPIC_SUB_SCALE);
+        logger.info("Subscription request sent for topic: {}", MQTT_TOPIC_SUB_WIFI);
     }
 
     private void ExtractDataFromMessageAndProcess(String messageTopic, String normalizedPayload) throws Exception {
@@ -64,16 +64,6 @@ public class MqttSubscriberService {
             scaleService.SaveWifiStrengthFromBroker(cleanedTopic, Integer.parseInt(matcher.group()));
             logger.info("WiFi strength saved in topic: {}", messageTopic);
         }
-//        else if(normalizedPayload.startsWith(MQTT_COMMAND_CHANGE_WIFI)){
-//            valuePart = normalizedPayload.substring(MQTT_COMMAND_CHANGE_WIFI.length()).trim();
-//            if (valuePart.isEmpty()) throw new Exception(String.format("CAN'T EXTRACT VALUE PART FROM %s", normalizedPayload));
-//            scaleService.(cleanedTopic, valuePart);
-//        }
-//        else if(normalizedPayload.startsWith(MQTT_COMMAND_TARE)){
-//            valuePart = normalizedPayload.substring(MQTT_COMMAND_TARE.length()).trim();
-//            if (valuePart.isEmpty()) throw new Exception(String.format("CAN'T EXTRACT VALUE PART FROM %s", normalizedPayload));
-//            scaleService.SaveWifiStrengthFromBroker(cleanedTopic, valuePart);
-//        }
         else {
             throw new Exception("COMMAND NOT IDENTIFIED!");
         }

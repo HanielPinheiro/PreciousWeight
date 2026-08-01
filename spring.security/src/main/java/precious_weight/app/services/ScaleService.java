@@ -1,8 +1,5 @@
 package precious_weight.app.services;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
 import precious_weight.app.interfaces.iBaby;
 import precious_weight.app.interfaces.iScale;
 import precious_weight.app.interfaces.iWeight;
@@ -16,26 +13,24 @@ import precious_weight.app.models.request.WeightRequest;
 import precious_weight.auth.services.MqttPublisherService;
 import precious_weight.auth.services.ScaleDataService;
 
-import java.io.Console;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.*;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static precious_weight.config.system.MqttConstants.*;
 
 @Service
 public class ScaleService {
-    private boolean trying = false;
     private long startTime = System.nanoTime();
     private final Map<String, Boolean> brokerConnectionStatus = new ConcurrentHashMap<>();
 
     public enum ScaleStates {
         nonOperant(0), operant(1);
         public final int value;
-
         ScaleStates(int _value) {
             value = _value;
         }
@@ -71,8 +66,8 @@ public class ScaleService {
         if (scale == null || scale.getScaleId() == null) return scale;
 
         var latestWifiStrength = iWifiStrength.findFirstByScaleIdOrderByWifiStrengthDateDesc(scale.getScaleId())
-                .map(WifiStrengthModel::getWifiStrengthValue)
-                .orElse(scale.getWifiStrength());
+                                               .map(WifiStrengthModel::getWifiStrengthValue)
+                                               .orElse(scale.getWifiStrength());
 
         if (!Objects.equals(scale.getWifiStrength(), latestWifiStrength)) {
             scale.setWifiStrength(latestWifiStrength);
@@ -190,7 +185,7 @@ public class ScaleService {
      * ******************************************************************************************
      */
 
-    /// ////////////////////////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
      ******************************************************************************************
@@ -261,7 +256,7 @@ public class ScaleService {
      * ******************************************************************************************
      */
 
-    /// ////////////////////////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
      ******************************************************************************************
