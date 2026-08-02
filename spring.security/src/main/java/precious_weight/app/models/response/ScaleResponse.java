@@ -12,7 +12,7 @@ public class ScaleResponse {
     private boolean connectionStatus;
     private LocalDateTime lastConnectedAt;
     private LocalDateTime lastDisconnectedAt;
-    private Integer wifiStrength;
+    private String wifiStrength;
 
     public ScaleResponse(){}
 
@@ -24,7 +24,7 @@ public class ScaleResponse {
         this.connectionStatus = Boolean.TRUE.equals(model.getIsConnected()) ? true : false;
         this.lastConnectedAt = model.getLastConnectedAt();
         this.lastDisconnectedAt = model.getLastDisconnectedAt();
-        this.wifiStrength = model.getWifiStrength();
+        this.wifiStrength = model.getWifiStrength().toString();
     }
 
     public Integer getScaleId() {
@@ -74,10 +74,10 @@ public class ScaleResponse {
     }
     public void setLastDisconnectedAt(LocalDateTime lastDisconnectedAt) {this.lastDisconnectedAt = lastDisconnectedAt;}
 
-    public Integer getWifiStrength() {
+    public String getWifiStrength() {
         return wifiStrength;
     }
-    public void setWifiStrength(Integer wifiStrength) {
+    public void setWifiStrength(String wifiStrength) {
         this.wifiStrength = wifiStrength;
     }
 
@@ -91,7 +91,7 @@ public class ScaleResponse {
                 ", connectionStatus='" + connectionStatus + '\'' +
                 ", lastConnectedAt=" + lastConnectedAt +
                 ", lastDisconnectedAt=" + lastDisconnectedAt +
-                ", wifiStrength=" + wifiStrength +
+                ", wifiStrength='" + wifiStrength + '\'' +
                 '}';
     }
 }
