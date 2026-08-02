@@ -25,12 +25,12 @@ import static precious_weight.config.system.MqttConstants.*;
 
 @Service
 public class ScaleService {
-    private long startTime = System.nanoTime();
     private final Map<String, Boolean> brokerConnectionStatus = new ConcurrentHashMap<>();
 
     public enum ScaleStates {
         nonOperant(0), operant(1);
         public final int value;
+
         ScaleStates(int _value) {
             value = _value;
         }
@@ -57,17 +57,28 @@ public class ScaleService {
     private int _globalFlagWeightNow = 0;
     private int _globalFlagWifiStrengthNow = 0;
 
-    public int GetFlagWeightNow(){ return _globalFlagWeightNow; }
-    public void SetFlagWeightNow(Integer v){ _globalFlagWeightNow = v; }
-    public int GetFlagWifiStrengthNow(){ return _globalFlagWifiStrengthNow; }
-    public void SetFlagWifiStrengthNow(Integer v){ _globalFlagWifiStrengthNow = v; }
+    public int GetFlagWeightNow() {
+        return _globalFlagWeightNow;
+    }
+
+    public void SetFlagWeightNow(Integer v) {
+        _globalFlagWeightNow = v;
+    }
+
+    public int GetFlagWifiStrengthNow() {
+        return _globalFlagWifiStrengthNow;
+    }
+
+    public void SetFlagWifiStrengthNow(Integer v) {
+        _globalFlagWifiStrengthNow = v;
+    }
 
     private ScaleModel SyncLatestWifiStrength(ScaleModel scale) {
         if (scale == null || scale.getScaleId() == null) return scale;
 
         var latestWifiStrength = iWifiStrength.findFirstByScaleIdOrderByWifiStrengthDateDesc(scale.getScaleId())
-                                               .map(WifiStrengthModel::getWifiStrengthValue)
-                                               .orElse(scale.getWifiStrength());
+                .map(WifiStrengthModel::getWifiStrengthValue)
+                .orElse(scale.getWifiStrength());
 
         if (!Objects.equals(scale.getWifiStrength(), latestWifiStrength)) {
             scale.setWifiStrength(latestWifiStrength);
@@ -79,7 +90,7 @@ public class ScaleService {
 
 
     /**
-     ******************************************************************************************
+     * *****************************************************************************************
      * CRUD FUNCTIONS
      * ******************************************************************************************
      */
@@ -96,7 +107,7 @@ public class ScaleService {
     }
 
     public List<ScaleModel> GetScalesWithBaby() {
-        return iScale.findAll().stream().filter(p->p.getAssignedBaby() != null).toList();
+        return iScale.findAll().stream().filter(p -> p.getAssignedBaby() != null).toList();
     }
 
     public Integer GetBabyIdByScaleId(Integer scaleId) {
@@ -128,7 +139,7 @@ public class ScaleService {
     public ScaleModel SetScaleToUser(UUID id) throws Exception {
         var scaleData = scaleDataService.GetScaleFromId(id);
         if (scaleData == null) throw new Exception("Invalid ID!");
-        if(GetScaleFromHash(id.toString()) != null) throw new Exception("Scale already inserted");
+        if (GetScaleFromHash(id.toString()) != null) throw new Exception("Scale already inserted");
 
         ScaleModel newScale = new ScaleModel();
         newScale.setScaleHash(id.toString());
@@ -175,7 +186,7 @@ public class ScaleService {
 
     private Boolean BabyHasScale(Integer babyId) {
         List<ScaleModel> scales = GetScalesWithBaby(); // Get all babies for scales that have babyId assigned
-        if(scales.isEmpty()) return null;
+        if (scales.isEmpty()) return null;
         ScaleModel find = scales.stream().filter(s -> Objects.equals(s.getAssignedBaby().getBabyId(), babyId)).toList().getFirst();
         return find != null;
     }
@@ -188,8 +199,8 @@ public class ScaleService {
     ///////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
-     ******************************************************************************************
-        * Call backs from mqtt broker
+     * *****************************************************************************************
+     * Call backs from mqtt broker
      * ******************************************************************************************
      */
     public void UpdateConnectionStatusFromBroker(String scaleMac, boolean connected) {
@@ -207,7 +218,7 @@ public class ScaleService {
         iScale.save(commercialScale);
     }
 
-    public void SaveWeightFromBroker(String scaleMac, String weight) throws Exception{
+    public void SaveWeightFromBroker(String scaleMac, String weight) throws Exception {
         var authScale = scaleDataService.GetScaleFromMac(scaleMac);
         if (authScale == null) throw new Exception(String.format("Can't find scale by mac %s", scaleMac));
 
@@ -216,16 +227,15 @@ public class ScaleService {
         Integer scaleId = commercialScale.getScaleId();
         Integer babyId = -1;
         try {
-             babyId = this.GetBabyIdByScaleId(scaleId);
-        }
-        catch(Exception e){
+            babyId = this.GetBabyIdByScaleId(scaleId);
+        } catch (Exception e) {
             //do nothing
         }
 
         var w = new WeightRequest();
         w.setBabyId(babyId);
         w.setScaleId(scaleId);
-        var extractWeight = weight.split("\\{")[1].replace("}","");
+        var extractWeight = weight.split("\\{")[1].replace("}", "");
         w.setWeightValue(Double.parseDouble(extractWeight));
 
         iWeight.save(w.ToModel());
@@ -259,7 +269,7 @@ public class ScaleService {
     ///////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
-     ******************************************************************************************
+     * *****************************************************************************************
      * Send data to MQTT
      * ******************************************************************************************
      */
@@ -267,10 +277,10 @@ public class ScaleService {
         String hash = iBaby.getReferenceById(babyId).getAssignedScale().getScaleHash();
         String mac = GetMacFromScaleByHash(hash);
         SendClearToScaleViaMqtt(mac);
-        SendBabyDataToScaleViaMqtt(mac,babyId,babyWeightTime);
+        SendBabyDataToScaleViaMqtt(mac, babyId, babyWeightTime);
     }
 
-    private void SendClearToScaleViaMqtt(String mac ){
+    private void SendClearToScaleViaMqtt(String mac) {
         mqttPublisherService.sendCriticalCommand(mac, MQTT_COMMAND_CLEAR);
     }
 
@@ -279,7 +289,7 @@ public class ScaleService {
         mqttPublisherService.sendCriticalCommand(mac, MQTT_COMMAND_BABY + babyId.toString());
 
         //Envio [WEI]time
-        if (babyWeightTime== null)  //time = 12:00
+        if (babyWeightTime == null)  //time = 12:00
             mqttPublisherService.sendCriticalCommand(mac, MQTT_COMMAND_WEIGHT_TIME + DEFAULT_WEIGHT_TIME);
 
         else { // vários 'times' =>08:00$09:00$10:00...
@@ -295,28 +305,27 @@ public class ScaleService {
     }
 
     private void WaitEsp32Answer(Integer id) throws Exception {
-        System.out.println("Waiting Esp32 Answer...");
-        startTime = System.nanoTime();
-        while (this.GetFlagWeightNow() == 0 || this.GetFlagWifiStrengthNow() == 0) {
-            long durationInSeconds = (System.nanoTime() - startTime) / 1_000_000_000;
-            if (durationInSeconds < 5) System.out.print(".");
-            else throw new Exception(String.format("Can't receive an answer of scale %d", id));
-            Thread.sleep(Duration.ofMillis(200));
+        try {
+            System.out.println("Waiting Esp32 Answer...");
+            long startTime = System.nanoTime();
+            while (this.GetFlagWeightNow() == 0 || this.GetFlagWifiStrengthNow() == 0) {
+                long durationInSeconds = (System.nanoTime() - startTime) / 1_000_000_000;
+                if (durationInSeconds < 5) System.out.print(".");
+                else throw new Exception(String.format("Can't receive an answer of scale %d", id));
+                Thread.sleep(Duration.ofMillis(200));
+            }
+        } finally {
+            _globalFlagWifiStrengthNow = 1;
+            _globalFlagWeightNow = 1;
         }
     }
 
     private void WaitTwoSeconds() throws Exception {
         System.out.println("Waiting Two Seconds");
-        startTime = System.nanoTime();
-        while (true) {
-            long durationInSeconds = (System.nanoTime() - startTime) / 1_000_000_000;
-            if (durationInSeconds < 2) System.out.print(".");
-            else break;
-            Thread.sleep(Duration.ofMillis(200));
-        }
+        Thread.sleep(Duration.ofMillis(2000));
     }
 
-    public WeightModel MeasureWeightViaMqtt(Integer id) throws Exception{
+    public WeightModel MeasureWeightViaMqtt(Integer id) throws Exception {
         var mac = GetMacFromScaleId(id);
         //Envio [MEA]
         this.SetFlagWeightNow(0);
@@ -324,19 +333,19 @@ public class ScaleService {
 
         this.WaitEsp32Answer(id);
 
-        var lastWeight =iWeight.findByScaleId(id).getLast();
+        var lastWeight = iWeight.findByScaleId(id).getLast();
         System.out.printf("Last weight received from esp32 %.2f %n", lastWeight.getWeightValue());
         return lastWeight;
     }
 
-    public boolean TareScaleViaMqtt(Integer id)throws Exception{
+    public boolean TareScaleViaMqtt(Integer id) throws Exception {
         var mac = this.GetMacFromScaleId(id);
         mqttPublisherService.sendCriticalCommand(mac, MQTT_COMMAND_TARE);
         this.WaitTwoSeconds();
         return true;
     }
 
-    public WifiStrengthModel MeasureWifiStrengthViaMqtt(Integer id) throws Exception{
+    public WifiStrengthModel MeasureWifiStrengthViaMqtt(Integer id) throws Exception {
         var mac = GetMacFromScaleId(id);
         this.SetFlagWifiStrengthNow(0);
         mqttPublisherService.sendCriticalCommand(mac, MQTT_COMMAND_WIFI_STRENGTH);
@@ -349,7 +358,7 @@ public class ScaleService {
         return lastWifiStrength;
     }
 
-    public boolean ChangeWifiViaMqtt(Integer id) throws Exception{
+    public boolean ChangeWifiViaMqtt(Integer id) throws Exception {
         var mac = this.GetMacFromScaleId(id);
         mqttPublisherService.sendCriticalCommand(mac, MQTT_COMMAND_CHANGE_WIFI);
         this.WaitTwoSeconds();

@@ -31,12 +31,12 @@ public class MqttSubscriberService {
 
     @PostConstruct
     public void startMonitoring() throws MqttException {
-        SubscribeToScalesTopic();
+        SubscribeToWifTopic();
         SubscribeToStatusTopic();
         SubscribeToWeightTopic();
     }
 
-    private void SubscribeToScalesTopic() throws MqttException {
+    private void SubscribeToWifTopic() throws MqttException {
         String topic =  MQTT_TOPIC_SUB_WIFI + MQTT_GENERAL_TOPIC;
         logger.info("Attempting to subscribe to topic: {}",topic);
         mqttClient.subscribe(topic, qos, (messageTopic, message) -> {
