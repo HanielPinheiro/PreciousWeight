@@ -73,6 +73,11 @@ public class ScaleService {
         _globalFlagWifiStrengthNow = v;
     }
 
+    private void SetScaleIsConnectedIfNot(ScaleModel commercialScale){
+        if(!commercialScale.getIsConnected()) commercialScale.setIsConnected(true);
+        iScale.save(commercialScale);
+    }
+
     private ScaleModel SyncLatestWifiStrength(ScaleModel scale) {
         if (scale == null || scale.getScaleId() == null) return scale;
 
@@ -231,13 +236,13 @@ public class ScaleService {
         } catch (Exception e) {
             //do nothing
         }
+        SetScaleIsConnectedIfNot(commercialScale);
 
         var w = new WeightRequest();
         w.setBabyId(babyId);
         w.setScaleId(scaleId);
         var extractWeight = weight.split("\\{")[1].replace("}", "");
         w.setWeightValue(Double.parseDouble(extractWeight));
-
         iWeight.save(w.ToModel());
         this.SetFlagWeightNow(1);
     }
@@ -256,7 +261,8 @@ public class ScaleService {
 
         iWifiStrength.save(wifiStrengthModel);
         commercialScale.setWifiStrength(wifiStrengthValue);
-        iScale.save(commercialScale);
+        SetScaleIsConnectedIfNot(commercialScale);
+
         this.SetFlagWifiStrengthNow(1);
     }
 
