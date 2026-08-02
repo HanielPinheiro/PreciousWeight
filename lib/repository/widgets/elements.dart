@@ -38,6 +38,24 @@ class ElementsOfViews {
     );
   }
 
+  static showApiAnswerDialog(BuildContext context, String title, String content, {double? contentFontSize, String? btnCancelLbl, String? btnConfirmLbl}) async {
+    final textTheme = Theme.of(context).textTheme;
+    await showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text(title, style: textTheme.bodyMedium?.copyWith(fontSize: 30)),
+            content: contentFontSize != null ? Text(content, style: textTheme.bodyMedium?.copyWith(fontSize: contentFontSize)) : Text(content),
+            actions: [
+              SimpleButton(context, "Ok", () {
+                Navigator.of(context).pop();
+              })
+            ],
+          );
+        });
+  }
+
   static Future<bool> showConfirmDialog(BuildContext context, String title, String content, {String? btnCancelLbl, String? btnConfirmLbl}) async {
     final ans = await showDialog(
       context: context,
@@ -130,7 +148,7 @@ class ElementsOfViews {
     return AppBar(
         title: Text(title, style: headlineMedium.copyWith(color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Theme.of(context).colorScheme.onPrimary)),
         shape: Border(bottom: BorderSide(color: Theme.of(context).colorScheme.primary, width: 1.0, style: BorderStyle.solid)),
-        // foregroundColor: Theme.of(context).brightness == Brightness.dark? Colors.white: Theme.of(context).colorScheme.onPrimary,
+// foregroundColor: Theme.of(context).brightness == Brightness.dark? Colors.white: Theme.of(context).colorScheme.onPrimary,
         backgroundColor: Theme.of(context).colorScheme.surface,
         actions: <Widget>[
           ConstrainedBox(
@@ -344,15 +362,15 @@ class ElementsOfViews {
     return Padding(padding: const EdgeInsets.symmetric(horizontal: 10), child: InkWell(borderRadius: BorderRadius.circular(15), child: Container(padding: EdgeInsets.all(9), decoration: MyDecorations().GetBoxDecoration(context), child: Column(mainAxisSize: MainAxisSize.max, crossAxisAlignment: CrossAxisAlignment.center, mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: widgets))));
   }
 
-  static Widget GroupChildrenInRow(List<Widget> children, [CrossAxisAlignment crossAxisAlignment = CrossAxisAlignment.center, MainAxisSize mainAxis = MainAxisSize.max, MainAxisAlignment axisAlignment = MainAxisAlignment.spaceEvenly]){
+  static Widget GroupChildrenInRow(List<Widget> children, [CrossAxisAlignment crossAxisAlignment = CrossAxisAlignment.center, MainAxisSize mainAxis = MainAxisSize.max, MainAxisAlignment axisAlignment = MainAxisAlignment.spaceEvenly]) {
     return Row(mainAxisSize: mainAxis, mainAxisAlignment: axisAlignment, crossAxisAlignment: crossAxisAlignment, children: children);
   }
 
-  static Widget GroupChildrenInColumn(List<Widget> children, [CrossAxisAlignment crossAxisAlignment = CrossAxisAlignment.center, MainAxisSize mainAxis = MainAxisSize.max, MainAxisAlignment axisAlignment = MainAxisAlignment.spaceEvenly]){
+  static Widget GroupChildrenInColumn(List<Widget> children, [CrossAxisAlignment crossAxisAlignment = CrossAxisAlignment.center, MainAxisSize mainAxis = MainAxisSize.max, MainAxisAlignment axisAlignment = MainAxisAlignment.spaceEvenly]) {
     return Column(mainAxisSize: mainAxis, mainAxisAlignment: axisAlignment, crossAxisAlignment: crossAxisAlignment, children: children);
   }
 
   static Widget NormalInputText(BuildContext _context, String _text, double _fontSize) {
-      return Text(_text, style: displaySmall.copyWith(color: Theme.of(_context).colorScheme.primary, fontWeight: FontWeight.normal, fontSize: _fontSize));
+    return Text(_text, style: displaySmall.copyWith(color: Theme.of(_context).colorScheme.primary, fontWeight: FontWeight.normal, fontSize: _fontSize));
   }
 }

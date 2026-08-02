@@ -36,7 +36,7 @@ class _ScaleDetailsState extends State<ScaleDetails> {
 
   bool get _isScaleOnline => _currentScale?.isConnected ?? false;
 
-  String get _wifiStrength => _currentScale?.wifiStrength.toString() ?? "Balança Desconectada";
+  String get _wifiStrength => _currentScale?.wifiStrength.toString() ?? "0";
 
   bool get _canReceiveMqttCommands => _isScaleOnline && _scaleActive;
 
@@ -49,6 +49,12 @@ class _ScaleDetailsState extends State<ScaleDetails> {
   }
 
   Future<void> _loadData() async {
+    try {
+      await context.read<ScalesProvider>().requestWifiStrength(context, widget.id);
+    } catch (Exception) {
+      /*ignore*/
+    }
+
     final scale = await context.read<ScalesProvider>().getScaleById(context, widget.id);
 
     BabyModel? baby;
@@ -63,7 +69,6 @@ class _ScaleDetailsState extends State<ScaleDetails> {
         _hasBaby = scale.babyId != null;
         _isLoading = false;
       });
-      await _refreshScaleCacheAndScreen();
     }
   }
 
@@ -87,12 +92,6 @@ class _ScaleDetailsState extends State<ScaleDetails> {
     await _loadData();
   }
 
-  Future<void> _refreshScaleCacheAndScreen() async {
-    if (!_canReceiveMqttCommands) return;
-    await context.read<ScalesProvider>().requestWifiStrength(context, _currentScale!.id); //força atualizar o cache da balança (força do wifi)
-    await _loadData();
-  }
-
   Future<void> _runScaleCommand({required String loadingTitle, required String successTitle, required Future<String> Function() command}) async {
     showDialog(
       context: context,
@@ -104,7 +103,7 @@ class _ScaleDetailsState extends State<ScaleDetails> {
       final raw = await command();
       if (!mounted) return;
       Navigator.of(context, rootNavigator: true).pop();
-      await ElementsOfViews.showSimpleDialog(context, successTitle, raw.isEmpty ? 'Solicitação enviada com sucesso.' : raw);
+      await ElementsOfViews.showApiAnswerDialog(context, successTitle, raw.isEmpty ? 'Solicitação enviada com sucesso.' : raw, contentFontSize: 25);
     } catch (_) {
       if (!mounted) return;
       Navigator.of(context, rootNavigator: true).pop();
@@ -141,6 +140,8 @@ class _ScaleDetailsState extends State<ScaleDetails> {
       successTitle: 'Trocar Wi-Fi',
       command: () => context.read<ScalesProvider>().requestChangeWifi(context, _currentScale!.id),
     );
+    _currentScale!.isConnected = false;
+
     await _connectToWifiUsingBle();
   }
 
@@ -227,10 +228,10 @@ class _ScaleDetailsState extends State<ScaleDetails> {
     return ElementsOfViews.ResponsiveCard(context, [
       _flexWifiStrength(),
       _isScaleOnline
-          ? ElementsOfViews.PwIconButton(context, Icon(Icons.bluetooth, color: Theme.of(context).colorScheme.primary, size: 36), "Trocar Rede via BLE", false, () async {
+          ? ElementsOfViews.PwIconButton(context, Icon(Icons.bluetooth, color: Theme.of(context).colorScheme.primary, size: 36), "Trocar Wi-Fi via BLE", false, () async {
               await _changeWifi();
             })
-          : ElementsOfViews.PwIconButton(context, Icon(Icons.bluetooth, color: Theme.of(context).colorScheme.primary, size: 36), "Conectar via BLE", false, () async {
+          : ElementsOfViews.PwIconButton(context, Icon(Icons.bluetooth, color: Theme.of(context).colorScheme.primary, size: 36), "Conectar ao Wi-Fi via BLE", false, () async {
               await _connectToWifiUsingBle();
             }),
       _flexMeasureWeight()

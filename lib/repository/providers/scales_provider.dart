@@ -213,7 +213,10 @@ class ScalesProvider with ChangeNotifier {
       return await SafeApi.call<String>(
         context: context,
         apiCall: () async {
-          return await _scaleApi.requestWeightNow(scale_id.toString());
+           final answer = await _scaleApi.requestWeightNow(scale_id.toString());
+           final result = answer.split(":");
+           final r = result[result.length-1];
+           return r.substring(0, r.length-1);
         },
       );
     } catch (e) {
@@ -228,7 +231,8 @@ class ScalesProvider with ChangeNotifier {
       return await SafeApi.call<String>(
         context: context,
         apiCall: () async {
-          return await _scaleApi.requestChangeWifi(scale_id.toString());
+          final result = await _scaleApi.requestChangeWifi(scale_id.toString());
+          return result == "true" ? "Wi-Fi resetado com sucesso" : "Erro ao tentar resetar Wi-Fi";
         },
       );
     } catch (e) {
@@ -243,7 +247,8 @@ class ScalesProvider with ChangeNotifier {
       return await SafeApi.call<String>(
         context: context,
         apiCall: () async {
-          return await _scaleApi.requestTare(scale_id.toString());
+          final result = await _scaleApi.requestTare(scale_id.toString());
+          return result == "true" ? "Tara realizada com sucesso" : "Erro ao realizar tara";
         },
       );
     } catch (e) {
@@ -258,21 +263,26 @@ class ScalesProvider with ChangeNotifier {
       ScaleModel? scale = _scaleInCache(scale_id);
 
       if (scale == null) {
-        await SafeApi.call(context: context,apiCall: () async {await _updateCache();});
+        await SafeApi.call(
+            context: context,
+            apiCall: () async {
+              await _updateCache();
+            });
         scale = _scaleInCache(scale_id);
         if (scale == null) throw new Exception("Scale not found");
-      }
-
-      else{
-        await SafeApi.call(context: context, apiCall: () async{
-          try {
-            final d = await _scaleApi.getWifiStrength(scale_id.toString());
-            scale!.wifiStrength = int.tryParse(d) ?? 0;
-          }
-          catch (e) {
-            throw e;
-          }
-        });
+      } else {
+        await SafeApi.call(
+            context: context,
+            apiCall: () async {
+              try {
+                final d = await _scaleApi.getWifiStrength(scale_id.toString());
+                final result = d.split(":");
+                final value = result[result.length - 1];
+                scale!.wifiStrength = int.tryParse(value.substring(0, value.length - 1)) ?? 0;
+              } catch (e) {
+                throw e;
+              }
+            });
       }
       return scale.wifiStrength.toString();
     } catch (e) {
