@@ -152,19 +152,41 @@ void hx711_set_offset(int8_t id, int32_t new_offset)
 
 esp_err_t hx711_tare_safe(int8_t id)
 {
+
+    char msg[80] = {0};
+    snprintf(msg, sizeof(msg), "Tare_Safe [%d] - Inicializando tara", id);
+    sdcard_log(LOG_ERROR, msg, ROTULO_LOCAL);
+
     gpio_num_t dout_pin;
     gpio_num_t sck_pin;
-
     xSemaphoreTake(s_mutex, portMAX_DELAY);
     dout_pin = sensors[id].dout_pin;
     sck_pin = sensors[id].sck_pin;
     xSemaphoreGive(s_mutex);
 
-    int32_t sensor_data = hx711_read_average(dout_pin, sck_pin, 2);
-    if (sensor_data == HX711_INVALID_READING)
-        return ESP_ERR_INVALID_STATE;
+    snprintf(msg, sizeof(msg), "Tare_Safe [%d] - Tentando realizar leitura", id);
+    sdcard_log(LOG_ERROR, msg, ROTULO_LOCAL);
+
+    int32_t sensor_data;
+    while (true)
+    {
+        sensor_data = hx711_read_average(dout_pin, sck_pin, 2);
+        if (sensor_data == HX711_INVALID_READING)
+        {
+            snprintf(msg, sizeof(msg), "Tare_Safe [%d] - Leitura inválida", id);
+            sdcard_log(LOG_ERROR, msg, ROTULO_LOCAL);
+        }
+        else
+            break;
+    }
+
+    snprintf(msg, sizeof(msg), "Tare_Safe [%d] - Leitura feita: %ld", id, sensor_data);
+    sdcard_log(LOG_ERROR, msg, ROTULO_LOCAL);
 
     hx711_set_offset(id, sensor_data);
+
+    snprintf(msg, sizeof(msg), "Tare_Safe [%d] - Offset definido", id);
+    sdcard_log(LOG_ERROR, msg, ROTULO_LOCAL);
     return ESP_OK;
 }
 

@@ -13,5 +13,6 @@ typedef struct
 esp_err_t init_sensors_task(void);
 void set_global_weight(double new_value);
 double get_global_weight(void);
+void sensors_set_tare_mode(bool active);
 
 #endif // SENSORS_TASK_H

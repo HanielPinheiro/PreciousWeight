@@ -143,9 +143,15 @@ static esp_err_t tare_routine(const char *data)
     snprintf(m, sizeof(m), "EVT|%lu|%lld|INFO|TARE", (unsigned long)seq, (long long)now);
     pw_log_event(PW_SEV_INFO, "TARE", ROTULO_LOCAL, "tare");
 
+    // Before starting tare sinalize sensors_task to stop measure
+    sensors_set_tare_mode(true);
+    vTaskDelay(pdMS_TO_TICKS(1200));
+
     for (int8_t i = 0; i < NUM_WEIGHT_SENSORS; i++)
         if (hx711_tare_safe(i) != ESP_OK)
             return ESP_FAIL;
+
+    sensors_set_tare_mode(false); // Come back measure weight
     return ESP_OK;
 }
 
@@ -177,7 +183,7 @@ void publish_wifi_is_connected()
     ESP_LOGI(ROTULO_LOCAL, "MQTT - Connected to MQTT broker");
     mqtt_publish(MQTT_TOPIC_CONN_STATUS, "CONNECTED", 1);
     pw_log_event(PW_SEV_INFO, "MQTT_CONNECTED", ROTULO_LOCAL, "connected");
-    wifi_strength_routine(1);
+    wifi_strength_routine("a");
 }
 
 static esp_err_t wifi_routine()
@@ -266,8 +272,6 @@ void process_mqtt_data(const char *mqtt_data)
                 return;
             }
 
-            const char *SUCCESS_MSG = "1";
-            const char *ERROR_MSG = "0";
             const char *data = mqtt_data + len;
             esp_err_t result = h->handler(data);
             if (result == ESP_OK)
@@ -275,8 +279,6 @@ void process_mqtt_data(const char *mqtt_data)
                 // char ack[PW_OUTBOX_PAYLOAD_MAX];
                 // snprintf(ack, sizeof(ack), "ACK|%lu|%lld|%s|OK", (unsigned long)cmd_seq, (long long)pw_now_epoch(), h->prefix);
                 // mqtt_send_or_spool(cmd_seq, MQTT_TOPIC_ACKS, OUTBOX_QOS, ack);
-                mqtt_publish(MQTT_TOPIC_WEIGHTS_PUB, SUCCESS_MSG, 1);
-                ESP_LOGI(ROTULO_LOCAL, "%s", h->log_success);
             }
             else
             {
@@ -284,7 +286,6 @@ void process_mqtt_data(const char *mqtt_data)
                 // char ack[PW_OUTBOX_PAYLOAD_MAX];
                 // snprintf(ack, sizeof(ack), "ACK|%lu|%lld|%s|ERR", (unsigned long)cmd_seq, (long long)pw_now_epoch(), h->prefix);
                 // mqtt_send_or_spool(cmd_seq, MQTT_TOPIC_ACKS, OUTBOX_QOS, ack);
-                mqtt_publish(MQTT_TOPIC_WEIGHTS_PUB, ERROR_MSG, 1);
             }
             return;
         }

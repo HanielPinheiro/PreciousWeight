@@ -7,6 +7,11 @@ static SemaphoreHandle_t s_data_mutex[NUM_WEIGHT_SENSORS];
 static SemaphoreHandle_t global_weight_mutex;
 static double final_weight;
 
+static volatile bool s_tare_in_progress = false;
+void sensors_set_tare_mode(bool active)
+{
+    s_tare_in_progress = active;
+}
 #pragma region tasks functions
 
 static void sensor_reader_task(void *arg)
@@ -17,14 +22,16 @@ static void sensor_reader_task(void *arg)
 
     while (1)
     {
-        double raw_avg = hx711_read_sensor_weight(id);
-        if (raw_avg != HX711_INVALID_READING)
+        if (!s_tare_in_progress)
         {
-            xSemaphoreTake(s_data_mutex[id], portMAX_DELAY);
-            s_last_readings[id] = raw_avg;
-            xSemaphoreGive(s_data_mutex[id]);
+            double raw_avg = hx711_read_sensor_weight(id);
+            if (raw_avg != HX711_INVALID_READING)
+            {
+                xSemaphoreTake(s_data_mutex[id], portMAX_DELAY);
+                s_last_readings[id] = raw_avg;
+                xSemaphoreGive(s_data_mutex[id]);
+            }
         }
-
         vTaskDelayUntil(&last_wake, pdMS_TO_TICKS(100)); // Aguarda o próximo ciclo (evita polling excessivo)
     }
 }
