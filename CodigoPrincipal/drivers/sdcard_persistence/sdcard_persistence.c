@@ -172,7 +172,7 @@ esp_err_t pw_log_measurement(uint32_t meas_seq, const char *origin, double weigh
     char line[320] = {0};
     snprintf(line, sizeof(line), "MEA|%lu|%lld|%s|%.2f",
              (unsigned long)meas_seq, (long long)now, origin ? origin : "", weight);
-    return pw_append_line(MEASUREMENTS_FILE, 128 * 1024, 3, line);
+    return pw_append_line(WEIGHT_FILE, 128 * 1024, 3, line);
 }
 
 esp_err_t pw_state_save_boot(esp_reset_reason_t reason, int64_t epoch)

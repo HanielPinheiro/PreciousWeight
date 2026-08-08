@@ -21,7 +21,6 @@
 #define SEQUENCE_FILE SCALES_ROOT_DIR "/sequence.txt"
 #define AUDIT_FILE SCALES_ROOT_DIR "/audit.log"
 #define COMMANDS_FILE SCALES_ROOT_DIR "/commands.log"
-#define MEASUREMENTS_FILE SCALES_ROOT_DIR "/measurements.log"
 #define CRITICAL_FILE SCALES_ROOT_DIR "/critical.log"
 #define OUTBOX_FILE SCALES_ROOT_DIR "/outbox.log"
 

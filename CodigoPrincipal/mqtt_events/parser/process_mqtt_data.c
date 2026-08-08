@@ -2,13 +2,12 @@
 
 static char *ROTULO_LOCAL = "PROCESS_MQTT_DATA";
 static bool has_baby = false;
-// static const uint8_t OUTBOX_QOS = 1;
 
-// static void mqtt_send_or_spool(uint32_t seq, const char *topic, int qos, const char *payload)
-// {
-//     if (!mqtt_publish(topic, payload, qos))
-//         pw_outbox_add(seq, topic, qos, payload);
-// }
+static void mqtt_send_or_spool(uint32_t seq, const char *topic, int qos, const char *payload)
+{
+    if (!mqtt_publish(topic, payload, qos))
+        pw_outbox_add(seq, topic, qos, payload);
+}
 
 char baby_id[12] = {0};
 SemaphoreHandle_t has_baby_mutex = NULL;
@@ -116,21 +115,15 @@ static esp_err_t weight_times_routine(const char *data)
 
 static esp_err_t measure_routine(const char *data)
 {
+    (void)data;
     double global_weight = get_global_weight();
-    // uint32_t seq = pw_next_sequence_id();
-    // int64_t now = pw_now_epoch();
-    // char m[PW_OUTBOX_PAYLOAD_MAX];
-    // (void)data;
-    // snprintf(m, sizeof(m), "MEA|%lu|%lld|manual|%.2f", (unsigned long)seq, (long long)now, global_weight);
-    // pw_log_measurement(seq, "manual", global_weight);
-    // if (mqtt_publish(MQTT_TOPIC_MEASUREMENTS, m, OUTBOX_QOS))
-    //     ;
-    // else if (pw_outbox_add(seq, MQTT_TOPIC_MEASUREMENTS, OUTBOX_QOS, m) != ESP_OK)
-    //     return ESP_FAIL;
+    uint32_t seq = pw_next_sequence_id();
+
+    pw_log_measurement(seq, "manual", global_weight);
 
     char legacy[50];
     snprintf(legacy, sizeof(legacy), "%s{%.2f}", RECEIVED_MEASURE, global_weight);
-    mqtt_publish(MQTT_TOPIC_WEIGHTS_PUB, legacy, 1);
+    mqtt_send_or_spool(seq, MQTT_TOPIC_WEIGHTS_PUB, 1, legacy);
     return ESP_OK;
 }
 
@@ -265,27 +258,15 @@ void process_mqtt_data(const char *mqtt_data)
             pw_log_command(cmd_seq, mqtt_data);
             if (number_of_weight_times >= MAX_WEIGHT_TIMES && strcmp(h->prefix, RECEIVED_TIMES) == 0)
             {
-                // char ack[PW_OUTBOX_PAYLOAD_MAX];
-                // snprintf(ack, sizeof(ack), "ACK|%lu|%lld|%s|ERR|MAX_WEIGHT_TIMES", (unsigned long)cmd_seq, (long long)pw_now_epoch(), h->prefix);
-                // mqtt_send_or_spool(cmd_seq, MQTT_TOPIC_ACKS, OUTBOX_QOS, ack);
                 mqtt_publish(MQTT_TOPIC_WEIGHTS_PUB, "ERROR_MAX_WEIGHT_TIMES_ACHIEVED", 1);
                 return;
             }
 
             const char *data = mqtt_data + len;
             esp_err_t result = h->handler(data);
-            if (result == ESP_OK)
-            {
-                // char ack[PW_OUTBOX_PAYLOAD_MAX];
-                // snprintf(ack, sizeof(ack), "ACK|%lu|%lld|%s|OK", (unsigned long)cmd_seq, (long long)pw_now_epoch(), h->prefix);
-                // mqtt_send_or_spool(cmd_seq, MQTT_TOPIC_ACKS, OUTBOX_QOS, ack);
-            }
-            else
+            if (result != ESP_OK)
             {
                 sdcard_log(LOG_ERROR, h->log_error, ROTULO_LOCAL);
-                // char ack[PW_OUTBOX_PAYLOAD_MAX];
-                // snprintf(ack, sizeof(ack), "ACK|%lu|%lld|%s|ERR", (unsigned long)cmd_seq, (long long)pw_now_epoch(), h->prefix);
-                // mqtt_send_or_spool(cmd_seq, MQTT_TOPIC_ACKS, OUTBOX_QOS, ack);
             }
             return;
         }

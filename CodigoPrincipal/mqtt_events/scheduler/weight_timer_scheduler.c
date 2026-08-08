@@ -4,7 +4,6 @@ static const char *ROTULO_LOCAL = "TIME_SCHEDULER";
 static TimerHandle_t schedule_weight_measure_timer = NULL;
 static TaskHandle_t task_worker_handle = NULL;
 static bool control = false;
-// static char log_msg[150] = {0};
 
 #pragma region Static
 
@@ -20,22 +19,20 @@ static void scheduled_weight_measurement(TimerHandle_t xTimer)
 // Tarefa dedicada para trabalho pesado
 static void task_worker(void *pvParams)
 {
+    (void)pvParams;
     while (1)
     {
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 
         double w = get_global_weight();
-        // uint32_t seq = pw_next_sequence_id();
-        // int64_t now = pw_now_epoch();
+        uint32_t seq = pw_next_sequence_id();
 
-        // pw_log_measurement(seq, "scheduled", w);
-        // snprintf(log_msg, sizeof(log_msg), "MEA|%lu|%lld|scheduled|%.2f", (unsigned long)seq, (long long)now, w);
-        // if (!mqtt_publish(MQTT_TOPIC_MEASUREMENTS, log_msg, 2))
-        //     pw_outbox_add(seq, MQTT_TOPIC_MEASUREMENTS, 2, log_msg);
+        pw_log_measurement(seq, "scheduled", w);
 
         char legacy[64];
         snprintf(legacy, sizeof(legacy), "%s{%.2f}", RECEIVED_MEASURE, w);
-        mqtt_publish(MQTT_TOPIC_WEIGHTS_PUB, legacy, 2);
+        if (!mqtt_publish(MQTT_TOPIC_WEIGHTS_PUB, legacy, 2))
+            pw_outbox_add(seq, MQTT_TOPIC_WEIGHTS_PUB, 2, legacy);
 
         if (scale_has_baby() && number_of_weight_times > 0)
         {
