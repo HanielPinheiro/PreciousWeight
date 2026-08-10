@@ -14,6 +14,8 @@ hx711_t sensors[NUM_WEIGHT_SENSORS] = {
     {.id = 2, .dout_pin = SCALE3_DOUT, .sck_pin = SCALE3_SCK, .offset = DEFAULT_OFFSET, .calib_factor = 0.002503721628},
     {.id = 3, .dout_pin = SCALE4_DOUT, .sck_pin = SCALE4_SCK, .offset = DEFAULT_OFFSET, .calib_factor = 0.002512369584}};
 
+static char *ROTULO_SAFETY = "SAFETY";
+
 static char *get_reset_reason_string(esp_reset_reason_t reason)
 {
     switch (reason)
@@ -52,6 +54,39 @@ static esp_err_t initialize_nvs_flash_storage(void)
     return ret;
 }
 
+static void pw_safety_critical_loop(const char *motivo)
+{
+    set_pattern_to_led_task(BLINK_LED_CRITICAL_ERROR);
+    while (1)
+    {
+        ESP_LOGE(ROTULO_SAFETY, "SISTEMA BLOQUEADO POR SEGURANCA — %s", motivo);
+        vTaskDelay(pdMS_TO_TICKS(2000));
+    }
+}
+
+static void pw_sanity_check_1shot(TimerHandle_t xTimer)
+{
+    (void)xTimer;
+    ESP_LOGW(ROTULO_SAFETY, "Sanity check (120s) — SD=[%s] MQTT=[%s]",
+             g_sys.sd_ok ? "OK" : "FAIL", g_sys.mqtt_up ? "OK" : "FAIL");
+
+    if (!g_sys.sd_ok && !g_sys.mqtt_up)
+    {
+        pw_safety_critical_loop("SD + MQTT INDISPONIVEIS. NENHUM MEIO DE PERSISTENCIA VALIDO APOS 120S.");
+    }
+
+    if (!g_sys.sd_ok && g_sys.mqtt_up)
+    {
+        uint32_t seq = pw_next_sequence_id();
+        int64_t now = pw_safe_epoch();
+        char msg[PW_OUTBOX_PAYLOAD_MAX];
+        snprintf(msg, sizeof(msg), "EVT|%lu|%lld|CRITICAL|SD_FAIL|OPERATING_ONLINE_ONLY_NO_OFFLINE_FALLBACK",
+                 (unsigned long)seq, (long long)now);
+        ESP_LOGW(ROTULO_SAFETY, "%s", msg);
+        (void)mqtt_publish(MQTT_TOPIC_CONN_STATUS, msg, 1);
+    }
+}
+
 void PW_ERROR_CHECK(esp_err_t task)
 {
     if (task != ESP_OK)
@@ -60,54 +95,79 @@ void PW_ERROR_CHECK(esp_err_t task)
         set_pattern_to_led_task(BLINK_LED_CRITICAL_ERROR);
         while (1)
         {
-            vTaskDelay(pdMS_TO_TICKS(1000)); // yields CPU, feeds watchdog automatically
+            vTaskDelay(pdMS_TO_TICKS(1000));
         }
     }
 }
 
 void app_main()
 {
-    // Leds
-    ESP_ERROR_CHECK(initialize_led_task());
+    g_sys.boot_tick = xTaskGetTickCount();
+
+    PW_ERROR_CHECK(initialize_led_task());
     ESP_ERROR_CHECK(set_pattern_to_led_task(BLINK_LED_STARTING_TASKS));
 
+    // FASE 0 — Infraestrutura essencial (falha trava)
     esp_log_at_terminal(ROTULO_LOCAL, "Salvando Causa do Reset na memoria nao volatil (NVS).");
     PW_ERROR_CHECK(initialize_nvs_flash_storage());
     PW_ERROR_CHECK(pw_save_reset_reason_nvs(esp_reset_reason()));
 
-    // Sdcard
+    // FASE 1 — SD Card (falha NAO trava — degrada)
     esp_log_at_terminal(ROTULO_LOCAL, "Inicializando Cartao SD.");
-    PW_ERROR_CHECK(initialize_sdcard());
+    esp_err_t sd_ret = initialize_sdcard();
+    if (sd_ret == ESP_OK)
+    {
+        g_sys.sd_ok = true;
+        sdcard_log(LOG_INFO, "Cartao SD inicializado OK", ROTULO_LOCAL);
+    }
+    else
+    {
+        g_sys.sd_ok = false;
+        ESP_LOGE(ROTULO_LOCAL, "Falha no SD (errno=%d). Prosseguindo SEM persistencia local.", sdcard_last_errno());
+        set_pattern_to_led_task(BLINK_LED_STARTING_TASKS);
+    }
+
     esp_log_at_terminal(ROTULO_LOCAL, "Inicializando BD em memoria.");
     PW_ERROR_CHECK(sdcard_persistence_init());
 
-    // Reset reason
     PW_ERROR_CHECK(sdcard_log(LOG_WARN, get_reset_reason_string(esp_reset_reason()), ROTULO_LOCAL));
     PW_ERROR_CHECK(pw_log_event(PW_SEV_INFO, "BOOT", ROTULO_LOCAL, get_reset_reason_string(esp_reset_reason())));
-    PW_ERROR_CHECK(pw_state_save_boot(esp_reset_reason(), pw_now_epoch()));
+    PW_ERROR_CHECK(pw_state_save_boot(esp_reset_reason(), pw_safe_epoch()));
 
-    // Inicia wifi e sincroniza relogio interno com data e hora atual pela rede
-    PW_ERROR_CHECK(sdcard_log(LOG_INFO, "Cartao SD inicializado. Inicializando Wi-Fi", ROTULO_LOCAL));
-    init_wifi();
-    PW_ERROR_CHECK(start_date_time_routine());
-
-    sdcard_log(LOG_INFO, "Wi-Fi inicializado com sucesso. Inicializando MQTT.", ROTULO_LOCAL);
-    PW_ERROR_CHECK(init_mqtt_task());
-
-    PW_ERROR_CHECK(sdcard_log(LOG_INFO, "Task MQTT inicializada com sucesso. Inicializando leitores HX711.", ROTULO_LOCAL));
+    // FASE 2 — SubSistema de Pesagem (falha trava) — ANTES do WiFi
+    sdcard_log(LOG_INFO, "Inicializando leitores HX711.", ROTULO_LOCAL);
     PW_ERROR_CHECK(hx711_initialize_sensors());
 
-    PW_ERROR_CHECK(sdcard_log(LOG_INFO, "Sensores inicializados. Inicializando Tasks de SD Card e Sensores.", ROTULO_LOCAL));
-    PW_ERROR_CHECK(init_sdcard_task());
+    sdcard_log(LOG_INFO, "Sensores inicializados. Inicializando Tasks de SD Card e Sensores.", ROTULO_LOCAL);
+    if (g_sys.sd_ok)
+    {
+        PW_ERROR_CHECK(init_sdcard_task());
+    }
     PW_ERROR_CHECK(init_sensors_task());
 
-    PW_ERROR_CHECK(sdcard_log(LOG_INFO, "Tasks de SD Card e Sensores inicializadas. Inicalizando Timers.", ROTULO_LOCAL));
-    PW_ERROR_CHECK(init_weight_sensors_timer()); // Inicia agendamento da pesagem do bebe se houver
+    sdcard_log(LOG_INFO, "Tasks de SD/Sensores ok. Inicializando Timers de pesagem.", ROTULO_LOCAL);
+    PW_ERROR_CHECK(init_weight_sensors_timer());
     update_current_time();
 
-    // Sisteam operante
+    // FASE 3 — WiFi / SNTP / MQTT — ASSINCRONO (não trava app_main)
+    sdcard_log(LOG_INFO, "Iniciando stack WiFi em task dedicada...", ROTULO_LOCAL);
+    PW_ERROR_CHECK(start_wifi_manager_async());
+
+    // FASE 4 — Sanity check 1-shot (120s após boot)
+    static TimerHandle_t sanity_timer = NULL;
+    if (sanity_timer == NULL)
+    {
+        sanity_timer = xTimerCreate("sanity_chk", pdMS_TO_TICKS(120 * 1000), pdFALSE, NULL, pw_sanity_check_1shot);
+        if (sanity_timer == NULL || xTimerStart(sanity_timer, 0) != pdPASS)
+        {
+            ESP_LOGE(ROTULO_LOCAL, "Falha ao criar timer sanity_check");
+        }
+    }
+
+    // Sistema operante
     char m[90] = {0};
-    snprintf(m, 90, "Sistema inicializado com sucesso em %s \r\n", current_time);
+    snprintf(m, 90, "Sistema inicializado com sucesso (SD=%s). WiFi inicializando em background. \r\n",
+             g_sys.sd_ok ? "OK" : "FAIL");
     PW_ERROR_CHECK(sdcard_log(LOG_INFO, m, ROTULO_LOCAL));
     PW_ERROR_CHECK(pw_state_save());
     PW_ERROR_CHECK(set_pattern_to_led_task(BLINK_LED_NORMAL_OPER));

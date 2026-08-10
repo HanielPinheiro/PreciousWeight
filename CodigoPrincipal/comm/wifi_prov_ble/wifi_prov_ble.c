@@ -16,6 +16,10 @@ static bool prov_mgr_inited = false;
 static uint8_t wifi_disconnect_count = 0;
 static const uint8_t WIFI_DISCONNECT_MAX = 15;
 
+#define WIFI_STA_CONNECT_TIMEOUT_MS 15000
+#define WIFI_STA_RETRY_MAX 3
+#define PROV_POLL_MS 500
+
 static void initialize_sntp(void)
 {
     esp_sntp_config_t config = ESP_NETIF_SNTP_DEFAULT_CONFIG_MULTIPLE(2, ESP_SNTP_SERVER_LIST("a.st1.ntp.br", "b.st1.ntp.br"));
@@ -38,6 +42,7 @@ static esp_err_t obtain_time(void)
 
 static esp_err_t fetch_and_store_time_in_nvs(void *args)
 {
+    (void)args;
     ESP_LOGI("DATE_TIME", "Iniciando fetch_and_store_time_in_nvs");
     nvs_handle_t my_handle = 0;
     esp_err_t err;
@@ -55,9 +60,8 @@ static esp_err_t fetch_and_store_time_in_nvs(void *args)
 
     time_t now;
     time(&now);
-    ESP_LOGI("DATE_TIME", "Tempo obtido: %lld", now);
+    ESP_LOGI("DATE_TIME", "Tempo obtido: %lld", (long long)now);
 
-    // Open
     err = nvs_open(STORAGE_NAMESPACE, NVS_READWRITE, &my_handle);
     if (err != ESP_OK)
     {
@@ -65,7 +69,6 @@ static esp_err_t fetch_and_store_time_in_nvs(void *args)
         goto exit;
     }
 
-    // Write
     ESP_LOGI("DATE_TIME", "Armazenando timestamp no NVS");
     err = nvs_set_i64(my_handle, "timestamp", now);
     if (err != ESP_OK)
@@ -88,9 +91,8 @@ exit:
     return err;
 }
 
-static esp_err_t start_date_time()
+static esp_err_t start_date_time_internal(void)
 {
-    // always update timestamp in NVS when wifi conn drops and restart
     if (fetch_and_store_time_in_nvs(NULL) != ESP_OK)
         return ESP_FAIL;
 
@@ -107,52 +109,37 @@ static esp_err_t start_date_time()
     return ESP_OK;
 }
 
-static void set_timezone_gmt3()
+static void set_timezone_gmt3(void)
 {
     setenv("TZ", "EST+3", 1);
     tzset();
 }
 
-esp_err_t start_date_time_routine()
+esp_err_t start_date_time_routine(void)
 {
     ESP_LOGI(ROTULO_LOCAL, "Getting Date Time from SNTP");
-    vTaskDelay(pdMS_TO_TICKS(5000));
-    if (start_date_time() != ESP_OK)
-        return ESP_FAIL;
+    vTaskDelay(pdMS_TO_TICKS(1000));
+    if (start_date_time_internal() != ESP_OK)
+    {
+        g_sys.datetime_synced = false;
+        ESP_LOGW(ROTULO_LOCAL, "Falha ao sincronizar SNTP — seguindo com tempo desde boot.");
+        return ESP_OK;
+    }
     set_timezone_gmt3();
+    g_sys.datetime_synced = true;
     return ESP_OK;
 }
 
 #pragma endregion
 
-/* This step is only useful when scheme is wifi_prov_scheme_ble.
- * This will set a custom 128 bit UUID which will be included in the BLE advertisement and will correspond to the primary GATT service that provides provisioning endpoints as GATT characteristics.
- * Each GATT characteristic will be formed using the primary service UUID as base, with different auto assigned 12th and 13th bytes (assume counting starts from 0th byte).
- * The client side applications must identify the endpoints by reading the User Characteristic Description descriptor (0x2901) for each characteristic, which contains the endpoint name of the characteristic.
- * LSB <------------------------------------------------------------------------------> MSB
- * Ex: 550e8400-e29b-41d4-a716-446655440000 -> 550e8400e29b41d4a716446655440000 -> Split into byte pairs (in reverse order for little-endian systems)*/
 static uint8_t my_bluetooth_uuid[] = {
-    0xb4,
-    0xdf,
-    0x5a,
-    0x1c,
-    0x3f,
-    0x6b,
-    0xf4,
-    0xbf,
-    0xea,
-    0x4a,
-    0x82,
-    0x03,
-    0x04,
-    0x90,
-    0x1a,
-    0x02,
+    0xb4, 0xdf, 0x5a, 0x1c, 0x3f, 0x6b, 0xf4, 0xbf,
+    0xea, 0x4a, 0x82, 0x03, 0x04, 0x90, 0x1a, 0x02,
 };
 
-/* Event handler for catching system events */
 static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
 {
+    (void)arg;
     if (event_base == WIFI_PROV_EVENT)
     {
         switch (event_id)
@@ -170,15 +157,13 @@ static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_
         {
             wifi_prov_sta_fail_reason_t *reason = (wifi_prov_sta_fail_reason_t *)event_data;
             ESP_LOGE(ROTULO_LOCAL, "Provisioning failed!\n\tReason : %s", (*reason == WIFI_PROV_STA_AUTH_ERROR) ? "Wi-Fi station authentication failed" : "Wi-Fi access-point not found");
-
-            wifi_prov_mgr_stop_provisioning();
-            esp_restart();
             break;
         }
         case WIFI_PROV_CRED_SUCCESS:
             ESP_LOGI(ROTULO_LOCAL, "Provisioning successful");
+            g_sys.wifi_provisioned = true;
             break;
-        case WIFI_PROV_END: /* De-initialize manager once provisioning is finished */
+        case WIFI_PROV_END:
             wifi_prov_mgr_deinit();
             prov_mgr_inited = false;
             break;
@@ -195,21 +180,27 @@ static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_
             break;
         case WIFI_EVENT_STA_CONNECTED:
             ESP_LOGI(ROTULO_LOCAL, "Connected!");
-
             int rssi_strength;
-            esp_err_t ret = esp_wifi_sta_get_rssi(&rssi_strength);
-            if (ret == ESP_OK)
+            if (esp_wifi_sta_get_rssi(&rssi_strength) == ESP_OK)
                 ESP_LOGI(ROTULO_LOCAL, "Wi-Fi Strength {%d}", rssi_strength);
             break;
 
         case WIFI_EVENT_STA_DISCONNECTED:
             ESP_LOGI(ROTULO_LOCAL, "Disconnected. Connecting to the AP again...");
+            g_sys.wifi_up = false;
+            g_sys.mqtt_up = false;
+            g_sys.datetime_synced = false;
             esp_netif_sntp_deinit();
             wifi_disconnect_count++;
             if (wifi_disconnect_count >= WIFI_DISCONNECT_MAX)
+            {
+                wifi_disconnect_count = 0;
                 reset_wifi();
+            }
             else
+            {
                 esp_wifi_connect();
+            }
             break;
         default:
             break;
@@ -217,9 +208,12 @@ static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_
     }
     else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP)
     {
-        ip_event_got_ip_t *event = (ip_event_got_ip_t *)event_data;
-        ESP_LOGI(ROTULO_LOCAL, "Connected with IP Address:" IPSTR, IP2STR(&event->ip_info.ip));
-        xEventGroupSetBits(wifi_event_group, BIT0); /* Signal config application to continue execution */
+        ip_event_got_ip_t *ev = (ip_event_got_ip_t *)event_data;
+        (void)ev;
+        ESP_LOGI(ROTULO_LOCAL, "Connected with IP Address:" IPSTR, IP2STR(&ev->ip_info.ip));
+        g_sys.wifi_up = true;
+        wifi_disconnect_count = 0;
+        xEventGroupSetBits(wifi_event_group, BIT0);
     }
     else if (event_base == PROTOCOMM_TRANSPORT_BLE_EVENT)
     {
@@ -254,14 +248,13 @@ static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_
     }
 }
 
-/* Handler for the optional provisioning endpoint registered by the application. The data format can be chosen by applications. Here, we are using plain ascii text.
- * Applications can choose to use other formats like protobuf, JSON, XML, etc.
- * Note that memory for the response buffer must be allocated using heap as this buffer gets freed by the protocomm layer once it has been sent by the transport layer. */
 static esp_err_t custom_prov_data_handler(uint32_t session_id, const uint8_t *inbuf, ssize_t inlen, uint8_t **outbuf, ssize_t *outlen, void *priv_data)
 {
+    (void)session_id;
+    (void)priv_data;
     if (inbuf)
     {
-        ESP_LOGI(ROTULO_LOCAL, "Received data: %.*s", inlen, (char *)inbuf);
+        ESP_LOGI(ROTULO_LOCAL, "Received data: %.*s", (int)inlen, (char *)inbuf);
     }
     char response[] = "SUCCESS";
     *outbuf = (uint8_t *)strdup(response);
@@ -270,81 +263,38 @@ static esp_err_t custom_prov_data_handler(uint32_t session_id, const uint8_t *in
         ESP_LOGE(ROTULO_LOCAL, "System out of memory");
         return ESP_ERR_NO_MEM;
     }
-    *outlen = strlen(response) + 1; /* +1 for NULL terminating byte */
+    *outlen = strlen(response) + 1;
 
     return ESP_OK;
 }
 
-static void wifi_init_all()
+static void wifi_init_all_internal(void)
 {
     ESP_LOGI(ROTULO_LOCAL, "Inicializando sistema de rede e eventos...");
 
-    ESP_ERROR_CHECK(esp_netif_init());                /* Initialize TCP/IP */
-    ESP_ERROR_CHECK(esp_event_loop_create_default()); /* Initialize the event loop */
+    ESP_ERROR_CHECK(esp_netif_init());
+    ESP_ERROR_CHECK(esp_event_loop_create_default());
 
     wifi_event_group = xEventGroupCreate();
 
-    /* Register our event handler for Wi-Fi, IP and Provisioning related events */
     ESP_ERROR_CHECK(esp_event_handler_register(WIFI_PROV_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL));
     ESP_ERROR_CHECK(esp_event_handler_register(PROTOCOMM_TRANSPORT_BLE_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL));
     ESP_ERROR_CHECK(esp_event_handler_register(PROTOCOMM_SECURITY_SESSION_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL));
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &event_handler, NULL));
 
-    /* Initialize Wi-Fi including netif with default config */
     esp_netif_create_default_wifi_sta();
 
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
 }
 
-static void start_wifi_sta() // Conectar usando dados salvos(modo STA)
-{
-    ESP_LOGI(ROTULO_LOCAL, "Iniciando Wi-Fi STA com credenciais salvas...");
-    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL));
-    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
-    ESP_ERROR_CHECK(esp_wifi_start());
-    EventBits_t bits = xEventGroupWaitBits(wifi_event_group, BIT0, pdTRUE, pdTRUE, pdMS_TO_TICKS(50000));
-    if ((bits & BIT0) == 0)
-    {
-        ESP_LOGW(ROTULO_LOCAL, "Timeout sem obter IP. Entrando em reprovisionamento via BLE...");
-        reset_wifi();
-    }
-    wifi_disconnect_count = 0;
-}
-
-void reset_wifi()
-{
-    ESP_LOGI(ROTULO_LOCAL, "Performing full WiFi reset...");
-
-    // After stop mqtt client Deinit provisioning manager
-    if (prov_mgr_inited)
-    {
-        wifi_prov_mgr_deinit();
-        prov_mgr_inited = false;
-    }
-
-    // Stop WiFi
-    ESP_ERROR_CHECK(esp_wifi_stop());
-    // reset wifi
-    ESP_ERROR_CHECK(esp_wifi_restore());
-    // turn off wifi tasks
-    ESP_ERROR_CHECK(esp_wifi_deinit());
-
-    // Restart the ESP32
-    ESP_LOGI(ROTULO_LOCAL, "Wi-Fi reseted. Restarting ESP32...");
-    vTaskDelay(pdMS_TO_TICKS(1000));
-    esp_restart();
-}
-
-static void init_prov_manager()
+static void init_prov_manager_internal(void)
 {
     if (prov_mgr_inited)
         return;
 
     wifi_prov_mgr_config_t config = {
-        .wifi_prov_conn_cfg = {
-            .wifi_conn_attempts = 3,
-        },
+        .wifi_prov_conn_cfg = {.wifi_conn_attempts = 3},
         .scheme = wifi_prov_scheme_ble,
         .scheme_event_handler = WIFI_PROV_SCHEME_BLE_EVENT_HANDLER_FREE_BTDM};
 
@@ -352,44 +302,150 @@ static void init_prov_manager()
     prov_mgr_inited = true;
 }
 
-void start_ble_provisioning()
-{ // Provisionamento via BLE pela primeira vez
+static void start_ble_provisioning_internal(void)
+{
     ESP_LOGI(ROTULO_LOCAL, "Iniciando provisioning BLE...");
-    init_prov_manager();
+    init_prov_manager_internal();
     ESP_ERROR_CHECK(wifi_prov_scheme_ble_set_service_uuid(my_bluetooth_uuid));
     ESP_ERROR_CHECK(wifi_prov_mgr_endpoint_create("PW_PROVISION_DATA"));
     ESP_ERROR_CHECK(wifi_prov_mgr_start_provisioning(WIFI_PROV_SECURITY_1, MQTT_POP, WIFI_DEVICE_NAME, NULL));
     ESP_ERROR_CHECK(wifi_prov_mgr_endpoint_register("custom-data", custom_prov_data_handler, NULL));
-
-    xEventGroupWaitBits(wifi_event_group, BIT0, true, true, portMAX_DELAY);
 }
 
-void init_wifi()
+static bool start_wifi_sta_internal(TickType_t timeout_ticks)
 {
-    wifi_init_all();
+    ESP_LOGI(ROTULO_LOCAL, "Iniciando Wi-Fi STA com credenciais salvas...");
+    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL));
+    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
+    ESP_ERROR_CHECK(esp_wifi_start());
+    EventBits_t bits = xEventGroupWaitBits(wifi_event_group, BIT0, pdTRUE, pdTRUE, timeout_ticks);
+    if ((bits & BIT0) == 0)
+    {
+        ESP_LOGW(ROTULO_LOCAL, "Timeout sem obter IP (tempo=%u ms).", (unsigned)pdTICKS_TO_MS(timeout_ticks));
+        return false;
+    }
+    wifi_disconnect_count = 0;
+    return true;
+}
 
-    init_prov_manager();
+static void wifi_manager_task(void *pvParameters)
+{
+    (void)pvParameters;
+
+    wifi_init_all_internal();
+    init_prov_manager_internal();
+
     bool provisioned = false;
     ESP_ERROR_CHECK(wifi_prov_mgr_is_provisioned(&provisioned));
+    g_sys.wifi_provisioned = provisioned;
 
     if (provisioned)
     {
         wifi_prov_mgr_deinit();
         prov_mgr_inited = false;
-        ESP_LOGI(ROTULO_LOCAL, "Dispositivo já provisionado. Conectando...");
-        start_wifi_sta();
-        ESP_LOGI(ROTULO_LOCAL, "Conectado");
+        ESP_LOGI(ROTULO_LOCAL, "Dispositivo ja provisionado. Tentando conectar STA...");
+
+        uint8_t tentativas = 0;
+        bool conectou = false;
+        while (tentativas < WIFI_STA_RETRY_MAX && !conectou)
+        {
+            g_sys.wifi_connecting = true;
+            conectou = start_wifi_sta_internal(pdMS_TO_TICKS(WIFI_STA_CONNECT_TIMEOUT_MS));
+            tentativas++;
+            if (!conectou)
+            {
+                vTaskDelay(pdMS_TO_TICKS(1000));
+            }
+        }
+        g_sys.wifi_connecting = false;
+
+        if (!conectou)
+        {
+            ESP_LOGW(ROTULO_LOCAL, "Nao conseguiu IP apos %d tentativas STA. Iniciando reprovisionamento BLE...", WIFI_STA_RETRY_MAX);
+            start_ble_provisioning_internal();
+            while (!g_sys.wifi_up)
+            {
+                EventBits_t bits = xEventGroupWaitBits(wifi_event_group, BIT0, pdTRUE, pdTRUE, pdMS_TO_TICKS(PROV_POLL_MS));
+                if ((bits & BIT0) != 0)
+                    break;
+                vTaskDelay(pdMS_TO_TICKS(10));
+            }
+            ESP_LOGI(ROTULO_LOCAL, "Provisionamento concluido, WiFi UP.");
+        }
     }
     else
     {
-        ESP_LOGW(ROTULO_LOCAL, "Dispositivo novo. Iniciando provisioning...");
-        start_ble_provisioning();
-        ESP_LOGI(ROTULO_LOCAL, "Provisionado");
+        ESP_LOGW(ROTULO_LOCAL, "Dispositivo novo. Iniciando provisioning BLE...");
+        start_ble_provisioning_internal();
+        while (!g_sys.wifi_up)
+        {
+            EventBits_t bits = xEventGroupWaitBits(wifi_event_group, BIT0, pdTRUE, pdTRUE, pdMS_TO_TICKS(PROV_POLL_MS));
+            if ((bits & BIT0) != 0)
+                break;
+            vTaskDelay(pdMS_TO_TICKS(10));
+        }
+        ESP_LOGI(ROTULO_LOCAL, "Provisionado e conectado.");
     }
+
+    if (g_sys.wifi_up)
+    {
+        if (start_date_time_routine() == ESP_OK)
+        {
+            ESP_LOGI(ROTULO_LOCAL, "SNTP sincronizado. Iniciando MQTT.");
+        }
+        else
+        {
+            ESP_LOGW(ROTULO_LOCAL, "SNTP falhou, seguindo sem data sincronizada. Iniciando MQTT.");
+        }
+        init_mqtt_task();
+    }
+
+    vTaskDelete(NULL);
+}
+
+esp_err_t start_wifi_manager_async(void)
+{
+    TaskHandle_t h = NULL;
+    BaseType_t r = xTaskCreate(wifi_manager_task, "wifi_manager", 8192, NULL, TASK_PRIORITY_MEDIUM, &h);
+    if (r != pdPASS || h == NULL)
+    {
+        ESP_LOGE(ROTULO_LOCAL, "Falha ao criar wifi_manager_task");
+        return ESP_FAIL;
+    }
+    return ESP_OK;
+}
+
+void reset_wifi(void)
+{
+    ESP_LOGI(ROTULO_LOCAL, "Performing full WiFi reset...");
+
+    if (prov_mgr_inited)
+    {
+        wifi_prov_mgr_deinit();
+        prov_mgr_inited = false;
+    }
+
+    ESP_ERROR_CHECK(esp_wifi_stop());
+    ESP_ERROR_CHECK(esp_wifi_restore());
+    ESP_ERROR_CHECK(esp_wifi_deinit());
+
+    g_sys.wifi_up = false;
+    g_sys.mqtt_up = false;
+    g_sys.datetime_synced = false;
+
+    ESP_LOGI(ROTULO_LOCAL, "Wi-Fi reseted. Restarting ESP32...");
+    vTaskDelay(pdMS_TO_TICKS(1000));
+    esp_restart();
+}
+
+void init_wifi(void)
+{
+    ESP_LOGW(ROTULO_LOCAL, "init_wifi() e OBSOLETO. Use start_wifi_manager_async() — modo assincrono.");
+    start_wifi_manager_async();
 }
 
 void print_efuse_mac()
-{ // também é encontrado nessa linha ao ligar a máquina no wifi -> wifi:mode : sta (d0:ef:76:59:0b:7c)
+{
     uint8_t base_mac[6] = {0};
     ESP_ERROR_CHECK(esp_efuse_mac_get_default(base_mac));
     printf("Factory eFuse MAC: %02X:%02X:%02X:%02X:%02X:%02X\n", base_mac[0], base_mac[1], base_mac[2], base_mac[3], base_mac[4], base_mac[5]);
@@ -397,31 +453,13 @@ void print_efuse_mac()
 
 bool is_wifi_connected()
 {
-    wifi_ap_record_t ap_info;
-    esp_err_t err = esp_wifi_sta_get_ap_info(&ap_info);
-
-    if (err == ESP_OK)
-    {
-        ESP_LOGI(ROTULO_LOCAL, "WiFi is connected to SSID: %s", ap_info.ssid);
-        return true;
-    }
-    else if (err == ESP_ERR_WIFI_NOT_CONNECT)
-    {
-        ESP_LOGI(ROTULO_LOCAL, "WiFi is not connected");
-        return false;
-    }
-    else
-    {
-        ESP_LOGE(ROTULO_LOCAL, "Failed to get WiFi connection status: %s", esp_err_to_name(err));
-        return false;
-    }
+    return g_sys.wifi_up;
 }
 
 esp_err_t get_wifi_strength(int *wifi_strength)
 {
     if (wifi_strength == NULL)
         return ESP_ERR_INVALID_ARG;
-
     return esp_wifi_sta_get_rssi(wifi_strength);
 }
 
@@ -430,7 +468,7 @@ void update_current_time()
 {
     time_t now;
     struct tm timeinfo;
-    time(&now);                                                        // Obtém o tempo atual
-    localtime_r(&now, &timeinfo);                                      // Converte para GMT-3
-    strftime(current_time, SIZE_TIME, "%d/%m/%Y %H:%M:%S", &timeinfo); // Formata a string (ex: "04/08/2025 14:30:45")
+    time(&now);
+    localtime_r(&now, &timeinfo);
+    strftime(current_time, SIZE_TIME, "%d/%m/%Y %H:%M:%S", &timeinfo);
 }

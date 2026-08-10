@@ -73,7 +73,27 @@ typedef enum
 #define MQTT_POP "KwS2@y6G"
 #define MODO_DEBUG true
 
+#define PW_RAM_BUFFER_SLOTS 10
+
+typedef struct
+{
+    bool sd_ok;
+    bool wifi_provisioned;
+    bool wifi_connecting;
+    bool wifi_up;
+    bool mqtt_up;
+    bool datetime_synced;
+    uint8_t wifi_fail_count;
+    TickType_t boot_tick;
+} system_state_t;
+
+extern system_state_t g_sys;
+
 extern hx711_t sensors[NUM_WEIGHT_SENSORS];
+
+esp_err_t pw_ram_buffer_enqueue(uint32_t seq, const char *topic, int qos, const char *payload);
+size_t pw_ram_buffer_dequeue(pw_outbox_entry_t *out_entry);
+bool pw_ram_buffer_has_data(void);
 
 /*Esse arquivo é necessário pra evitar referencia circular nas dependencias*/
 

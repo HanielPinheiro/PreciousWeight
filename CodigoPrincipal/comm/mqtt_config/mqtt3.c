@@ -64,6 +64,7 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
     {
     case MQTT_EVENT_CONNECTED:
         connected = true;
+        g_sys.mqtt_up = true;
 
         // AQUI SE INSCREVE NO CANAL DO MQTT PRA OUVIR EVENTOS!!!
         esp_mqtt_client_subscribe(client, MQTT_TOPIC_SCALES_SUB, 1);
@@ -71,10 +72,12 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
 
     case MQTT_EVENT_DISCONNECTED:
         connected = false;
+        g_sys.mqtt_up = false;
         break;
 
     case MQTT_EVENT_ERROR:
         connected = false;
+        g_sys.mqtt_up = false;
         break;
 
     case MQTT_EVENT_DATA:
