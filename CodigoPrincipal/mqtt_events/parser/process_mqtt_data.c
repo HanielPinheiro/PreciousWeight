@@ -5,8 +5,6 @@ static bool has_baby = false;
 
 static void mqtt_send_or_spool(uint32_t seq, const char *topic, int qos, const char *payload)
 {
-    if (!mqtt_publish(topic, payload, qos))
-        pw_outbox_add(seq, topic, qos, payload);
 }
 
 char baby_id[12] = {0};
@@ -123,7 +121,8 @@ static esp_err_t measure_routine(const char *data)
 
     char legacy[50];
     snprintf(legacy, sizeof(legacy), "%s{%.2f}", RECEIVED_MEASURE, global_weight);
-    mqtt_send_or_spool(seq, MQTT_TOPIC_WEIGHTS_PUB, 1, legacy);
+    if (!mqtt_publish(MQTT_TOPIC_WEIGHTS_PUB, legacy, 1))
+        pw_outbox_add(seq, MQTT_TOPIC_WEIGHTS_PUB, 1, legacy);
     return ESP_OK;
 }
 
