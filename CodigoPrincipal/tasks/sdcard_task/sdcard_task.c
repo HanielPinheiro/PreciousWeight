@@ -24,7 +24,7 @@ static void sdcard_writer_task(void *pv_params)
                     if (!sd_failure_reported)
                     {
                         uint32_t seq = pw_next_sequence_id();
-                        int64_t now = pw_now_epoch();
+                        int64_t now = pw_safe_epoch();
                         int err = sdcard_last_errno();
                         char evt[PW_OUTBOX_PAYLOAD_MAX];
                         snprintf(evt, sizeof(evt), "EVT|%lu|%lld|CRITICAL|%s|errno=%d", (unsigned long)seq, (long long)now, err == ENOSPC ? "SD_FULL" : "SD_FAIL", err);

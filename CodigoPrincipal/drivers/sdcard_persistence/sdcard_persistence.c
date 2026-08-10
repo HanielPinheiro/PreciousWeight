@@ -109,11 +109,6 @@ esp_err_t pw_save_reset_reason_nvs(esp_reset_reason_t reason)
     return err;
 }
 
-int64_t pw_now_epoch(void)
-{
-    return pw_safe_epoch();
-}
-
 static const char *pw_sev_to_str(pw_severity_t sev)
 {
     switch (sev)

@@ -3,10 +3,6 @@
 static char *ROTULO_LOCAL = "PROCESS_MQTT_DATA";
 static bool has_baby = false;
 
-static void mqtt_send_or_spool(uint32_t seq, const char *topic, int qos, const char *payload)
-{
-}
-
 char baby_id[12] = {0};
 SemaphoreHandle_t has_baby_mutex = NULL;
 weight_time_t weight_times[MAX_WEIGHT_TIMES];
@@ -129,7 +125,7 @@ static esp_err_t measure_routine(const char *data)
 static esp_err_t tare_routine(const char *data)
 {
     uint32_t seq = pw_next_sequence_id();
-    int64_t now = pw_now_epoch();
+    int64_t now = pw_safe_epoch();
     char m[PW_OUTBOX_PAYLOAD_MAX];
     (void)data;
     snprintf(m, sizeof(m), "EVT|%lu|%lld|INFO|TARE", (unsigned long)seq, (long long)now);
@@ -151,7 +147,7 @@ static esp_err_t wifi_strength_routine(const char *data)
 {
     int wifi_strength = 0;
     uint32_t seq = pw_next_sequence_id();
-    int64_t now = pw_now_epoch();
+    int64_t now = pw_safe_epoch();
     char m[PW_OUTBOX_PAYLOAD_MAX];
     (void)data;
 
