@@ -78,6 +78,51 @@ class ElementsOfViews {
     return ans;
   }
 
+  static Future<bool> showWeightResultDialog(
+    BuildContext context,
+    String weightDisplay, {
+    bool showSaveButton = false,
+    Future<bool> Function()? onSave,
+  }) async {
+    bool saving = false;
+    final result = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) {
+            return AlertDialog(
+              title: Text("Peso Medido", style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(fontSize: 30)),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SizedBox(height: 20),
+                  Text(weightDisplay, style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Theme.of(ctx).colorScheme.primary)),
+                  const SizedBox(height: 20),
+                  if (saving) const CircularProgressIndicator(),
+                ],
+              ),
+              actions: [
+                SimpleButton(ctx, "Fechar", saving ? null : () => Navigator.of(ctx).pop(false)),
+                if (showSaveButton)
+                  SimpleButton(ctx, "Salvar peso no BD", saving ? null : () async {
+                    setDialogState(() => saving = true);
+                    try {
+                      final ok = await onSave?.call() ?? false;
+                      if (ok && ctx.mounted) Navigator.of(ctx).pop(true);
+                    } finally {
+                      if (ctx.mounted) setDialogState(() => saving = false);
+                    }
+                  }),
+              ],
+            );
+          },
+        );
+      },
+    );
+    return result ?? false;
+  }
+
   static Widget ScanButtonNoImage(BuildContext context, String label, VoidCallback onTap) {
     final theme = Theme.of(context);
     return Padding(

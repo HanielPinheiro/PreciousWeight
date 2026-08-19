@@ -67,3 +67,4 @@ const api_user_list = "/users/list";
 const api_weight_list = "/weight/list";
 const api_weight_babies = "/weight/babies/{code}";
 const api_weight_scales = "/weight/scales/{code}";
+const api_weight_save = "/weight/save";

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../api/weight_api.dart';
 import '../../repository/design/button_styles.dart';
 import '../../repository/providers/scales_provider.dart';
 import '../../models/scales.dart';
@@ -8,6 +9,7 @@ import '../../models/baby.dart';
 import '../../repository/design/fonts.dart';
 import '../../repository/helper/conversions.dart';
 import '../../repository/services/bluefi_service.dart';
+import '../../repository/services/api_service.dart';
 import '../../repository/widgets/elements.dart';
 import '../../repository/providers/baby_provider.dart';
 import 'scales_babies.dart';
@@ -121,11 +123,54 @@ class _ScaleDetailsState extends State<ScaleDetails> {
 
   Future<void> _measureWeightNow() async {
     if (!_canReceiveMqttCommands) return;
-    await _runScaleCommand(
-      loadingTitle: "Lendo peso...",
-      successTitle: "Peso",
-      command: () => context.read<ScalesProvider>().requestWeightNow(context, _currentScale!.id),
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const AlertDialog(
+        title: Text("Lendo peso..."),
+        content: SizedBox(height: 72, child: Center(child: CircularProgressIndicator())),
+      ),
     );
+
+    String rawWeight;
+    try {
+      rawWeight = await context.read<ScalesProvider>().requestWeightNow(context, _currentScale!.id);
+    } catch (_) {
+      if (mounted) Navigator.of(context, rootNavigator: true).pop();
+      return;
+    }
+
+    if (!mounted) return;
+    Navigator.of(context, rootNavigator: true).pop();
+
+    final weightValue = double.tryParse(rawWeight.trim());
+    if (weightValue == null) {
+      await ElementsOfViews.showSimpleDialog(context, "Erro", "Valor de peso inválido retornado: $rawWeight");
+      return;
+    }
+
+    final weightDisplay = "${weightValue.toStringAsFixed(1)} g";
+
+    final saved = await ElementsOfViews.showWeightResultDialog(
+      context,
+      weightDisplay,
+      showSaveButton: _hasBaby,
+      onSave: () async {
+        return await SafeApi.call<bool>(
+          context: context,
+          apiCall: () => WeightApi().saveWeight(
+            babyId: _currentScale!.babyId!,
+            scaleId: _currentScale!.id,
+            weightValue: weightValue,
+          ),
+        );
+      },
+    );
+
+    if (saved && mounted) {
+      await ElementsOfViews.showSimpleDialog(context, "Sucesso", "Peso salvo no banco de dados!");
+    }
   }
 
   Future<void> _tareScale() async {
