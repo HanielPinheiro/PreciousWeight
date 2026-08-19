@@ -107,11 +107,12 @@ class _BabiesDetailsState extends State<BabiesDetails> {
     return value.toStringAsFixed(1);
   }
 
-  _wrapText(BuildContext context, String text) {
-    return Expanded(
-      child: FittedBox(
-        fit: BoxFit.scaleDown,
-        alignment: Alignment.center,
+  Widget _wrapText(BuildContext context, String text) {
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      alignment: Alignment.center,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 3),
         child: Text(
           text,
           style: TextStyle(fontSize: 20, color: Theme.of(context).colorScheme.primary),
@@ -136,13 +137,13 @@ class _BabiesDetailsState extends State<BabiesDetails> {
       const SizedBox(width: 10),
       Expanded(
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const SizedBox(height: 20),
             Text(
               'Dados do Bebê',
+              textAlign: TextAlign.center,
               style: displaySmall.copyWith(
                 color: Theme.of(context).colorScheme.primary,
                 fontWeight: FontWeight.bold,
@@ -219,6 +220,7 @@ class _BabiesDetailsState extends State<BabiesDetails> {
       const SizedBox(height: 10),
       Text(
         'Resumo Clínico',
+        textAlign: TextAlign.center,
         style: displaySmall.copyWith(
           color: Theme.of(context).colorScheme.primary,
           fontWeight: FontWeight.bold,
@@ -245,7 +247,7 @@ class _BabiesDetailsState extends State<BabiesDetails> {
           decoration: MyDecorations().GetBoxDecoration(context),
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: children,
           ),
         ),
@@ -492,24 +494,47 @@ class _BabiesDetailsState extends State<BabiesDetails> {
 
   @override
   Widget build(BuildContext context) {
+    final backgroundColor = Theme.of(context).colorScheme.surface;
+
     if (_isLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return Scaffold(
+        backgroundColor: backgroundColor,
+        body: const Center(child: CircularProgressIndicator()),
+      );
     }
 
     if (_currentBaby == null) {
       return Scaffold(
+        backgroundColor: backgroundColor,
         appBar: ElementsOfViews.SimpleAppBar(context, 'Dados do Bebê'),
-        body: const AlertDialog(content: Text('No babies found')),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Card(
+              color: backgroundColor,
+              shape: RoundedRectangleBorder(
+                side: BorderSide(color: Theme.of(context).colorScheme.primary, width: 1.0),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Padding(
+                padding: EdgeInsets.all(16),
+                child: Text('Nenhum bebê encontrado'),
+              ),
+            ),
+          ),
+        ),
       );
     }
 
-    return SafeArea(
-      child: Scaffold(
-        appBar: ElementsOfViews.SimpleAppBar(context, 'Dados do Bebê'),
-        body: SingleChildScrollView(
+    return Scaffold(
+      backgroundColor: backgroundColor,
+      appBar: ElementsOfViews.SimpleAppBar(context, 'Dados do Bebê'),
+      body: SafeArea(
+        child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.symmetric(vertical: 16),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
               _buildBabyHeader(),
               const SizedBox(height: 20),
