@@ -71,7 +71,6 @@ typedef enum
 #define WIFI_DEVICE_NAME "PW_D0EF76590B7C"
 #define MQTT_SERVICE_NAME "D0EF76590B7C"
 #define MQTT_POP "KwS2@y6G"
-#define MODO_DEBUG true
 
 #define PW_RAM_BUFFER_SLOTS 10
 

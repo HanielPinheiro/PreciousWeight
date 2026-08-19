@@ -315,8 +315,6 @@ esp_err_t sdcard_log(log_type_t log_type, char *message, const char *trace)
 
 void esp_log_at_terminal(const char *stack_trace, char *message)
 {
-    if (!MODO_DEBUG)
-        return;
     ESP_LOGI(stack_trace, "%s", message);
 }
 

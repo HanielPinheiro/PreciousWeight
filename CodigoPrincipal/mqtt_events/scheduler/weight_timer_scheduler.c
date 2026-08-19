@@ -30,7 +30,7 @@ static void task_worker(void *pvParams)
         pw_log_measurement(seq, "scheduled", w);
 
         char legacy[64];
-        snprintf(legacy, sizeof(legacy), "%s{%.2f}", RECEIVED_MEASURE, w);
+        snprintf(legacy, sizeof(legacy), "%s{%.2f}", SCHEDULED_MEASURE, w);
         if (!mqtt_publish(MQTT_TOPIC_WEIGHTS_PUB, legacy, 2))
             pw_outbox_add(seq, MQTT_TOPIC_WEIGHTS_PUB, 2, legacy);
 

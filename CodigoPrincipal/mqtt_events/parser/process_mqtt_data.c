@@ -116,7 +116,7 @@ static esp_err_t measure_routine(const char *data)
     pw_log_measurement(seq, "manual", global_weight);
 
     char legacy[50];
-    snprintf(legacy, sizeof(legacy), "%s{%.2f}", RECEIVED_MEASURE, global_weight);
+    snprintf(legacy, sizeof(legacy), "%s{%.2f}", MANUAL_MEASURE, global_weight);
     if (!mqtt_publish(MQTT_TOPIC_WEIGHTS_PUB, legacy, 1))
         pw_outbox_add(seq, MQTT_TOPIC_WEIGHTS_PUB, 1, legacy);
     return ESP_OK;
@@ -188,7 +188,7 @@ static const CommandHandler handlers[] = {
     {RECEIVED_TIMES, weight_times_routine, "Horario recebido", "ERRO AO LER WEIGHTS"},
     {RECEIVED_CLEAR, clear_routine, "Bebe e horarios apagados", "ERRO AO LER CLEAR"},
     {RECEIVED_RUN, run_routine, "Bebe e horarios salvos", "ERRO AO LER RUN"},
-    {RECEIVED_MEASURE, measure_routine, "Medida realizada", "ERRO AO LER MEASURE"},
+    {MANUAL_MEASURE, measure_routine, "Medida realizada", "ERRO AO LER MEASURE"},
     {RECEIVED_TARE, tare_routine, "Tara Realizada", "ERRO AO REALIZAR TARA"},
     {RECEIVED_WIFI_STRENGTH, wifi_strength_routine, "Intensidade do WiFi enviada", "ERRO AO LER INTENSIDADE WIFI"},
     {RECEIVED_WIFI, wifi_routine, "Reset de WiFi realizado", "ERRO AO LER WIFI"},

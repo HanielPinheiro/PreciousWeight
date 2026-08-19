@@ -10,7 +10,8 @@
 #define RECEIVED_TIMES "[TIM]"
 #define RECEIVED_RUN "[RUN]"
 
-#define RECEIVED_MEASURE "[MEA]"
+#define MANUAL_MEASURE "[MEA]"
+#define SCHEDULED_MEASURE "[WEI]"
 #define RECEIVED_TARE "[TAR]"
 
 #define RECEIVED_WIFI "[WIF]"
