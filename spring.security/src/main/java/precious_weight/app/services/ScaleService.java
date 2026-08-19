@@ -1,13 +1,7 @@
 package precious_weight.app.services;
 
-import precious_weight.app.interfaces.iBaby;
-import precious_weight.app.interfaces.iScale;
-import precious_weight.app.interfaces.iWeight;
-import precious_weight.app.interfaces.iWifiStrength;
-import precious_weight.app.models.ScaleModel;
-import precious_weight.app.models.BabyModel;
-import precious_weight.app.models.WifiStrengthModel;
-import precious_weight.app.models.WeightModel;
+import precious_weight.app.interfaces.*;
+import precious_weight.app.models.*;
 import precious_weight.app.models.request.ScaleRequest;
 import precious_weight.app.models.request.WeightRequest;
 import precious_weight.auth.services.MqttPublisherService;
@@ -47,6 +41,9 @@ public class ScaleService {
 
     @Autowired
     private iWifiStrength iWifiStrength;
+
+    @Autowired
+    private iWifiConnectivity iWifiConnectivity;
 
     @Autowired
     private MqttPublisherService mqttPublisherService;
@@ -217,6 +214,9 @@ public class ScaleService {
         var commercialScale = GetScaleFromHash(authScale.getScaleId().toString());
         if (commercialScale == null) return;
 
+        var wifiConnectivity = new WifiConnectivityModel(commercialScale.getScaleId(), connected);
+        iWifiConnectivity.save(wifiConnectivity);
+
         commercialScale.setIsConnected(connected);
         if (connected) commercialScale.setLastConnectedAt(LocalDateTime.now());
         else commercialScale.setLastDisconnectedAt(LocalDateTime.now());
@@ -238,12 +238,16 @@ public class ScaleService {
         }
         SetScaleIsConnectedIfNot(commercialScale);
 
-        var w = new WeightRequest();
-        w.setBabyId(babyId);
-        w.setScaleId(scaleId);
-        var extractWeight = weight.split("\\{")[1].replace("}", "");
-        w.setWeightValue(Double.parseDouble(extractWeight));
-        iWeight.save(w.ToModel());
+        var message = weight.split("\\{");//[MEA]{0.0} ou [WEI]0.0 => WEI salva no BD, MEA não
+        var prefix = message[0];
+        if(prefix.startsWith(MQTT_COMMAND_SCHEDULED_MEASURE)) {
+            var w = new WeightRequest();
+            w.setBabyId(babyId);
+            w.setScaleId(scaleId);
+            w.setWeightValue(Double.parseDouble(message[1].replace("}", "")));
+            iWeight.save(w.ToModel());
+        }
+
         this.SetFlagWeightNow(1);
     }
 
@@ -294,7 +298,7 @@ public class ScaleService {
         //Envio [BAB]ID
         mqttPublisherService.sendCriticalCommand(mac, MQTT_COMMAND_BABY + babyId.toString());
 
-        //Envio [WEI]time
+        //Envio [TIM]time
         if (babyWeightTime == null)  //time = 12:00
             mqttPublisherService.sendCriticalCommand(mac, MQTT_COMMAND_WEIGHT_TIME + DEFAULT_WEIGHT_TIME);
 
@@ -335,7 +339,7 @@ public class ScaleService {
         var mac = GetMacFromScaleId(id);
         //Envio [MEA]
         this.SetFlagWeightNow(0);
-        mqttPublisherService.sendCriticalCommand(mac, MQTT_COMMAND_MEASURE);
+        mqttPublisherService.sendCriticalCommand(mac, MQTT_COMMAND_MANUAL_MEASURE);
 
         this.WaitEsp32Answer(id);
 

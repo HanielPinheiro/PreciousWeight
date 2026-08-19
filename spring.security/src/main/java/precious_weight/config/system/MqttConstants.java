@@ -18,6 +18,7 @@ public class MqttConstants {
     public static final String MQTT_COMMAND_WEIGHT_TIME = "[TIM]"; //send a weight time to scale
     public static final String MQTT_COMMAND_CHANGE_WIFI = "[WIF]"; // Send scale reset wifi AP
     public static final String MQTT_COMMAND_WIFI_STRENGTH = "[WFS]"; // get wifi strength from scale
-    public static final String MQTT_COMMAND_MEASURE = "[MEA]"; // get a weight measure from scale
+    public static final String MQTT_COMMAND_MANUAL_MEASURE = "[MEA]"; // get a weight measure from scale
+    public static final String MQTT_COMMAND_SCHEDULED_MEASURE = "[WEI]"; // get a scheduled weight measure from scale
     public static final String MQTT_COMMAND_TARE = "[TAR]"; // Tare scale
 }

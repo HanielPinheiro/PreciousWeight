@@ -27,6 +27,11 @@ public class DataTransferLayerConstants {
     public static final String App_WeightTable_Date = "weight_date";
     public static final String App_WeightTable_Value = "weight_value";
 
+    public static final String App_WifiConnectivity_TableName = "wifi_connectivity";
+    public static final String App_WifiConnectivity_Id = "wifi_connectivity_id";
+    public static final String App_WifiConnectivity_Date = "wifi_connectivity_date";
+    public static final String App_WifiConnectivity_Value = "wifi_connectivity_value";
+
     public static final String App_WifiStrengthTable_TableName = "wifi_strengths";
     public static final String App_WifiStrengthTable_Id = "wifi_strength_id";
     public static final String App_WifiStrengthTable_Date = "wifi_strength_date";
