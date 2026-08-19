@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 final dateFormatter_dbToObj = DateFormat('yyyy-MM-dd');
 final dateFormatter_objToDb = DateFormat('dd/MM/yyyy');
 final dateFormatter_log= DateFormat('dd/MM/yyyy - HH:mm:ss');
+final dateFormatter_HHMM = DateFormat('HH:mm');
 
 DateTime parseUtcTime(String dateString) {
   return DateTime.parse("${dateString}Z").toLocal(); // "Z" forces UTC

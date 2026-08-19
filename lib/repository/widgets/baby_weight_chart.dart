@@ -9,7 +9,7 @@ import '../helper/conversions.dart';
 
 enum _ChartMode { chart, list }
 
-class _DailyWeightSummary {
+class DailyWeightSummary {
   final DateTime day;
   final List<WeightModel> measurements;
   final double medianWeight;
@@ -19,7 +19,7 @@ class _DailyWeightSummary {
   final int positiveMeasurementsCount;
   final int zeroMeasurementsCount;
 
-  const _DailyWeightSummary({
+  const DailyWeightSummary({
     required this.day,
     required this.measurements,
     required this.medianWeight,
@@ -33,8 +33,15 @@ class _DailyWeightSummary {
 
 class BabyWeightChart extends StatefulWidget {
   final List<WeightModel>? historicWeight;
+  final ValueChanged<DailyWeightSummary?>? onDaySelected;
+  final ValueChanged<WeightModel?>? onWeightSelected;
 
-  const BabyWeightChart({super.key, this.historicWeight});
+  const BabyWeightChart({
+    super.key,
+    this.historicWeight,
+    this.onDaySelected,
+    this.onWeightSelected,
+  });
 
   static const List<String> _monthNames = <String>[
     'janeiro',
@@ -89,7 +96,6 @@ class BabyWeightChart extends StatefulWidget {
 
 class _BabyWeightChartState extends State<BabyWeightChart> {
   static final DateFormat _dayFormatter = DateFormat('dd/MM');
-  static final DateFormat _hourFormatter = DateFormat('HH:mm');
   static const double _fallbackChartHeight = 280;
   static const double _summaryEdgePadding = 0.6;
 
@@ -98,7 +104,7 @@ class _BabyWeightChartState extends State<BabyWeightChart> {
   int _selectedMonthIndex = 0;
   _ChartMode _chartMode = _ChartMode.chart;
 
-  _DailyWeightSummary? _selectedChartDay;
+  DailyWeightSummary? _selectedChartDay;
   WeightModel? _selectedListItem;
   bool _sortAscending = true;
 
@@ -149,11 +155,13 @@ class _BabyWeightChartState extends State<BabyWeightChart> {
     _selectedListItem = null;
   }
 
-  void _selectChartDay(_DailyWeightSummary day) {
+  void _selectChartDay(DailyWeightSummary day) {
     setState(() {
       _selectedChartDay = day;
       _selectedListItem = null;
     });
+    widget.onDaySelected?.call(day);
+    widget.onWeightSelected?.call(null);
   }
 
   void _selectListItem(WeightModel weight) {
@@ -161,12 +169,8 @@ class _BabyWeightChartState extends State<BabyWeightChart> {
       _selectedListItem = weight;
       _selectedChartDay = null;
     });
-  }
-
-  void _deselectAll() {
-    setState(() {
-      _clearSelection();
-    });
+    widget.onDaySelected?.call(null);
+    widget.onWeightSelected?.call(weight);
   }
 
   void _toggleSortOrder() {
@@ -236,7 +240,7 @@ class _BabyWeightChartState extends State<BabyWeightChart> {
     return (sortedValues[middle - 1] + sortedValues[middle]) / 2;
   }
 
-  List<_DailyWeightSummary> _buildDailySummaries(List<WeightModel> weights) {
+  List<DailyWeightSummary> _buildDailySummaries(List<WeightModel> weights) {
     final grouped = <DateTime, List<WeightModel>>{};
     for (final weight in weights) {
       final day = DateTime(weight.date.year, weight.date.month, weight.date.day);
@@ -249,7 +253,7 @@ class _BabyWeightChartState extends State<BabyWeightChart> {
       final positiveValues = values.where((value) => value > 0).toList();
       final valuesForMedian = positiveValues.isNotEmpty ? positiveValues : values;
 
-      return _DailyWeightSummary(
+      return DailyWeightSummary(
         day: entry.key,
         measurements: measurements,
         medianWeight: _median(valuesForMedian),
@@ -265,7 +269,7 @@ class _BabyWeightChartState extends State<BabyWeightChart> {
     return summaries;
   }
 
-  void _selectMode(_ChartMode mode, List<_DailyWeightSummary> summaries) {
+  void _selectMode(_ChartMode mode, List<DailyWeightSummary> summaries) {
     setState(() {
       _chartMode = mode;
       _clearSelection();
@@ -280,7 +284,7 @@ class _BabyWeightChartState extends State<BabyWeightChart> {
         );
   }
 
-  Widget _buildModeSelector(List<_DailyWeightSummary> summaries) {
+  Widget _buildModeSelector(List<DailyWeightSummary> summaries) {
     final labelStyle = _selectorLabelStyle(context);
 
     return Padding(
@@ -310,7 +314,7 @@ class _BabyWeightChartState extends State<BabyWeightChart> {
   }
 
   Widget _buildSummaryChart(
-    List<_DailyWeightSummary> summaries,
+    List<DailyWeightSummary> summaries,
     ColorScheme colorScheme,
     BoxConstraints constraints,
   ) {
@@ -444,6 +448,8 @@ class _BabyWeightChartState extends State<BabyWeightChart> {
       ),
     );
 
+    final chartTotalHeight = constraints.maxHeight > 0 ? constraints.maxHeight : _fallbackChartHeight;
+
     return InteractiveViewer(
       minScale: 1.0,
       maxScale: 10.0,
@@ -452,175 +458,11 @@ class _BabyWeightChartState extends State<BabyWeightChart> {
       alignment: Alignment.centerLeft,
       child: SizedBox(
         width: chartBaseWidth,
+        height: chartTotalHeight,
         child: Padding(
           padding: const EdgeInsets.only(left: 10, right: 20, top: 12, bottom: 16),
           child: lineChart,
         ),
-      ),
-    );
-  }
-
-  Widget _buildDetailChip(IconData icon, String label, String value, ColorScheme colorScheme) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 14, color: colorScheme.primary),
-        const SizedBox(width: 4),
-        Flexible(
-          child: Text.rich(
-            TextSpan(
-              children: [
-                TextSpan(
-                  text: '$label: ',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                TextSpan(
-                  text: value,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: colorScheme.onSurface,
-                  ),
-                ),
-              ],
-            ),
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSelectionDetails(ColorScheme colorScheme) {
-    if (_selectedChartDay == null && _selectedListItem == null) {
-      return const SizedBox.shrink();
-    }
-
-    if (_selectedChartDay != null) {
-      final s = _selectedChartDay!;
-      final totalMeasurements = s.measurements.length;
-
-      return Container(
-        width: double.infinity,
-        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        padding: const EdgeInsets.fromLTRB(12, 8, 4, 12),
-        decoration: BoxDecoration(
-          color: colorScheme.primary.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: colorScheme.primary.withValues(alpha: 0.2)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.date_range, size: 16, color: colorScheme.primary),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    'Dia ${_dayFormatter.format(s.day)}',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: colorScheme.primary,
-                      fontSize: 14,
-                    ),
-                  ),
-                ),
-                IconButton(
-                  onPressed: _deselectAll,
-                  icon: const Icon(Icons.close),
-                  iconSize: 18,
-                  splashRadius: 16,
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                  tooltip: 'Fechar',
-                ),
-              ],
-            ),
-            Padding(
-              padding: const EdgeInsets.only(right: 12),
-              child: Wrap(
-                spacing: 16,
-                runSpacing: 8,
-                children: [
-                  _buildDetailChip(Icons.bar_chart, 'Mediana', '${_formatWeight(s.medianWeight)} g', colorScheme),
-                  _buildDetailChip(Icons.countertops, 'Total', '$totalMeasurements med.', colorScheme),
-                  _buildDetailChip(Icons.arrow_downward, 'Mín', '${_formatWeight(s.minWeight)} g', colorScheme),
-                  _buildDetailChip(Icons.arrow_upward, 'Máx', '${_formatWeight(s.maxWeight)} g', colorScheme),
-                  _buildDetailChip(
-                    Icons.schedule,
-                    'Última',
-                    '${_hourFormatter.format(s.measurements.last.date)} - ${_formatWeight(s.lastWeight)} g',
-                    colorScheme,
-                  ),
-                  if (s.zeroMeasurementsCount > 0)
-                    _buildDetailChip(Icons.block, 'Tara(s)', '${s.zeroMeasurementsCount}', colorScheme),
-                ],
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    final w = _selectedListItem!;
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      padding: const EdgeInsets.fromLTRB(12, 8, 4, 12),
-      decoration: BoxDecoration(
-        color: colorScheme.primary.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: colorScheme.primary.withValues(alpha: 0.2)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.receipt_long, size: 16, color: colorScheme.primary),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  'Peso Individual',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: colorScheme.primary,
-                    fontSize: 14,
-                  ),
-                ),
-              ),
-              IconButton(
-                onPressed: _deselectAll,
-                icon: const Icon(Icons.close),
-                iconSize: 18,
-                splashRadius: 16,
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-                tooltip: 'Fechar',
-              ),
-            ],
-          ),
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: Wrap(
-              spacing: 16,
-              runSpacing: 8,
-              children: [
-                _buildDetailChip(Icons.monitor_weight, 'Peso', '${_formatWeight(w.weight)} g', colorScheme),
-                _buildDetailChip(Icons.event, 'Data', _dayFormatter.format(w.date), colorScheme),
-                _buildDetailChip(Icons.schedule, 'Hora', _hourFormatter.format(w.date), colorScheme),
-                _buildDetailChip(Icons.scale, 'Balança', '#${w.scaleId}', colorScheme),
-                if (w.weight == 0)
-                  _buildDetailChip(Icons.block, 'Tipo', 'Tara', colorScheme),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -768,10 +610,7 @@ class _BabyWeightChartState extends State<BabyWeightChart> {
           return _buildWeightList(monthWeights, colorScheme);
         }
 
-        return AspectRatio(
-          aspectRatio: constraints.maxWidth > 600 ? 2.0 : 1.65,
-          child: _buildSummaryChart(summaries, colorScheme, constraints),
-        );
+        return _buildSummaryChart(summaries, colorScheme, constraints);
       },
     );
 
@@ -783,13 +622,11 @@ class _BabyWeightChartState extends State<BabyWeightChart> {
         ];
 
         if (constraints.hasBoundedHeight) {
-          children..add(Expanded(child: chartArea))
-                  ..add(_buildSelectionDetails(colorScheme));
+          children.add(Expanded(child: chartArea));
           return Column(children: children);
         }
 
-        children..add(SizedBox(height: _fallbackChartHeight, child: chartArea))
-                ..add(_buildSelectionDetails(colorScheme));
+        children.add(SizedBox(height: _fallbackChartHeight, child: chartArea));
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: children,
