@@ -101,13 +101,13 @@ class ApiService {
 }
 
 class SafeApi {
-  static Future<T> call<T>({required BuildContext context, required Future<T> Function() apiCall, Future<void> Function()? onSuccess}) async {
+  static Future<T> call<T>({required BuildContext context, required Future<T> Function() apiCall, Future<void> Function()? onSuccess, bool abortErrorMessage = false}) async {
     try {
       final T result = await apiCall();
       if (onSuccess != null) await onSuccess();
       return result;
     } catch (error) {
-      await ApiErrorHandler.handleError(context, error);
+      if(!abortErrorMessage) await ApiErrorHandler.handleError(context, error);
       throw error;
     }
   }

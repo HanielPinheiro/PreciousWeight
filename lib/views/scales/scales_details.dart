@@ -34,9 +34,9 @@ class _ScaleDetailsState extends State<ScaleDetails> {
   bool _scaleActive = false;
   bool _hasBaby = false;
 
-  bool get _isScaleOnline => _currentScale?.isConnected ?? false;
+  bool get _isScaleOnline => _scaleActive ? _currentScale?.isConnected ?? false : false;
 
-  String get _wifiStrength => _currentScale?.wifiStrength.toString() ?? "0";
+  String get _wifiStrength => _scaleActive ? _currentScale?.wifiStrength.toString() ?? "0" : "0";
 
   bool get _canReceiveMqttCommands => _isScaleOnline && _scaleActive;
 
@@ -49,27 +49,36 @@ class _ScaleDetailsState extends State<ScaleDetails> {
   }
 
   Future<void> _loadData() async {
-    try {
-      await context.read<ScalesProvider>().requestWifiStrength(context, widget.id);
-    } catch (Exception) {
-      /*ignore*/
-    }
+    //Capture provider references safely BEFORE any async gaps
+    final scalesProvider = context.read<ScalesProvider>();
+    final babiesProvider = context.read<BabyProvider>();
 
-    final scale = await context.read<ScalesProvider>().getScaleById(context, widget.id);
+    ScaleModel? scale = await scalesProvider.getScaleById(context, widget.id);
+    bool result = false;
+
+    if(scale.isConnected) {
+      try {
+        await scalesProvider.requestWifiStrength(context, widget.id);
+        result = true;
+      } catch (e) {
+        scalesProvider.updateScaleConnectivity (widget.id, false);
+        scale = scale.copyWith(isConnected: false);
+      }
+    }
 
     BabyModel? baby;
     if (scale.babyId != null) {
-      baby = await context.read<BabyProvider>().getBabyById(context, scale.babyId!);
+      baby = await babiesProvider.getBabyById(context, scale.babyId!);
     }
 
-    if (mounted) {
-      setState(() {
-        _currentScale = scale.copyWith(assignedBaby: baby);
-        _scaleActive = scale.status == 1;
-        _hasBaby = scale.babyId != null;
-        _isLoading = false;
-      });
-    }
+    //Always check mounted BEFORE accessing setState or variables tied to it
+    if (!mounted) return;
+    setState(() {
+      _currentScale = scale!.copyWith(assignedBaby: baby);
+      _scaleActive = scale.status == 1 && result;
+      _hasBaby = scale.babyId != null;
+      _isLoading = false;
+    });
   }
 
   Future<void> _linkBabyToScale(BabyModel baby) async {
@@ -163,7 +172,7 @@ class _ScaleDetailsState extends State<ScaleDetails> {
   }
 
   Widget _showBabyDetails() {
-    return Padding(
+    /* return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 25),
       child: InkWell(
         borderRadius: BorderRadius.circular(15),
@@ -171,27 +180,28 @@ class _ScaleDetailsState extends State<ScaleDetails> {
           padding: EdgeInsets.all(9),
           decoration: MyDecorations().GetBoxDecoration(context),
           child: Row(
-            children: [
-              if (_currentScale!.assignedBaby!.qrCodeImage != null) Container(child: _currentScale!.assignedBaby!.qrCodeImage, constraints: BoxConstraints(maxWidth: 120)),
-              SizedBox(width: 10),
-              Expanded(
-                  child: Column(mainAxisAlignment: MainAxisAlignment.spaceEvenly, crossAxisAlignment: CrossAxisAlignment.center, children: [
-                SizedBox(height: 20),
-                Text("Bebê na Balança", style: displaySmall.copyWith(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 24)),
-                SizedBox(height: 20),
-                _wrapText(context, "Nome: ${_currentScale!.assignedBaby!.name!}"),
-                _wrapText(context, "Nome da mãe: ${_currentScale!.assignedBaby!.motherName!}"),
-                _wrapText(context, "Data de Nascimento: ${dateFormatter_objToDb.format(_currentScale!.assignedBaby!.birthDate!)}"),
-                SizedBox(height: 20),
-                ElementsOfViews.SimpleButton(context, "Trocar Bebê de Balança", () async {
-                  await _unlinkBabyFromScale();
-                }, false, !_scaleActive),
-                SizedBox(height: 20),
-              ])),
-            ],
-          ),
+            children: */
+    return ElementsOfViews.ResponsiveCard(context,[
+      if (_currentScale!.assignedBaby!.qrCodeImage != null) Container(child: _currentScale!.assignedBaby!.qrCodeImage, constraints: BoxConstraints(maxWidth: 120)),
+      SizedBox(width: 10),
+      Expanded(
+          child: Column(mainAxisAlignment: MainAxisAlignment.spaceEvenly, crossAxisAlignment: CrossAxisAlignment.center, children: [
+            SizedBox(height: 20),
+            Text("Bebê na Balança", style: displaySmall.copyWith(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 24)),
+            SizedBox(height: 20),
+            _wrapText(context, "Nome: ${_currentScale!.assignedBaby!.name!}"),
+            _wrapText(context, "Nome da mãe: ${_currentScale!.assignedBaby!.motherName!}"),
+            _wrapText(context, "Data de Nascimento: ${dateFormatter_objToDb.format(_currentScale!.assignedBaby!.birthDate!)}"),
+            SizedBox(height: 20),
+            ElementsOfViews.SimpleButton(context, "Trocar Bebê de Balança", () async {
+              await _unlinkBabyFromScale();
+            }, false, !_scaleActive),
+            SizedBox(height: 20),
+          ])),
+    ],
+      /*  ),
         ),
-      ),
+      ),*/
     );
   }
 
@@ -229,11 +239,11 @@ class _ScaleDetailsState extends State<ScaleDetails> {
       _flexWifiStrength(),
       _isScaleOnline
           ? ElementsOfViews.PwIconButton(context, Icon(Icons.bluetooth, color: Theme.of(context).colorScheme.primary, size: 36), "Trocar Wi-Fi via BLE", false, () async {
-              await _changeWifi();
-            })
+        await _changeWifi();
+      })
           : ElementsOfViews.PwIconButton(context, Icon(Icons.bluetooth, color: Theme.of(context).colorScheme.primary, size: 36), "Conectar ao Wi-Fi via BLE", false, () async {
-              await _connectToWifiUsingBle();
-            }),
+        await _connectToWifiUsingBle();
+      }),
       _flexMeasureWeight()
     ]);
   }
@@ -259,7 +269,7 @@ class _ScaleDetailsState extends State<ScaleDetails> {
         children: [
           !_hasBaby ? Expanded(flex: 1, child: _withoutBaby()) : Row(),
           SizedBox(height: 20),
-          Expanded(flex: 3, child: _showScaleDetails()),
+          Expanded(flex: 2, child: _showScaleDetails()),
           SizedBox(height: 20),
           Expanded(flex: 3, child: _showScaleCommands()),
           SizedBox(height: 20),

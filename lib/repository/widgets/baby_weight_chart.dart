@@ -7,7 +7,7 @@ import 'package:intl/intl.dart';
 import '../../models/weight.dart';
 import '../helper/conversions.dart';
 
-enum _ChartMode { summary, detail }
+enum _ChartMode { chart, list }
 
 class _DailyWeightSummary {
   final DateTime day;
@@ -92,14 +92,15 @@ class _BabyWeightChartState extends State<BabyWeightChart> {
   static final DateFormat _hourFormatter = DateFormat('HH:mm');
   static const double _fallbackChartHeight = 280;
   static const double _summaryEdgePadding = 0.6;
-  static const double _dayEdgePaddingHours = 0.4;
-  static const double _duplicateTimeOffsetHours = 0.03;
 
   late List<WeightModel> _sortedWeights;
   late List<DateTime> _availableMonths;
   int _selectedMonthIndex = 0;
-  DateTime? _selectedDay;
-  _ChartMode _chartMode = _ChartMode.summary;
+  _ChartMode _chartMode = _ChartMode.chart;
+
+  _DailyWeightSummary? _selectedChartDay;
+  WeightModel? _selectedListItem;
+  bool _sortAscending = true;
 
   @override
   void initState() {
@@ -117,15 +118,14 @@ class _BabyWeightChartState extends State<BabyWeightChart> {
 
   void _rebuildChartState({bool preserveCurrentMonth = false}) {
     final previousMonth = preserveCurrentMonth && _availableMonths.isNotEmpty ? _availableMonths[_selectedMonthIndex.clamp(0, _availableMonths.length - 1)] : null;
-    final previousSelectedDay = preserveCurrentMonth ? _selectedDay : null;
 
     _sortedWeights = _sanitizeWeights(widget.historicWeight ?? const <WeightModel>[]);
     _availableMonths = BabyWeightChart.availableMonths(_sortedWeights);
 
     if (_availableMonths.isEmpty) {
       _selectedMonthIndex = 0;
-      _selectedDay = null;
-      _chartMode = _ChartMode.summary;
+      _chartMode = _ChartMode.chart;
+      _clearSelection();
       return;
     }
 
@@ -133,20 +133,47 @@ class _BabyWeightChartState extends State<BabyWeightChart> {
       final preservedIndex = _availableMonths.indexWhere((month) => _isSameMonth(month, previousMonth));
       if (preservedIndex >= 0) {
         _selectedMonthIndex = preservedIndex;
-        if (previousSelectedDay != null && _isSameMonth(previousSelectedDay, _availableMonths[_selectedMonthIndex])) {
-          _selectedDay = previousSelectedDay;
-        }
         return;
       }
     }
 
     _selectedMonthIndex = _availableMonths.length - 1;
-    _selectedDay = null;
-    _chartMode = _ChartMode.summary;
+    _chartMode = _ChartMode.chart;
+    _clearSelection();
   }
 
   bool _isSameMonth(DateTime left, DateTime right) => left.year == right.year && left.month == right.month;
-  bool _isSameDay(DateTime left, DateTime right) => left.year == right.year && left.month == right.month && left.day == right.day;
+
+  void _clearSelection() {
+    _selectedChartDay = null;
+    _selectedListItem = null;
+  }
+
+  void _selectChartDay(_DailyWeightSummary day) {
+    setState(() {
+      _selectedChartDay = day;
+      _selectedListItem = null;
+    });
+  }
+
+  void _selectListItem(WeightModel weight) {
+    setState(() {
+      _selectedListItem = weight;
+      _selectedChartDay = null;
+    });
+  }
+
+  void _deselectAll() {
+    setState(() {
+      _clearSelection();
+    });
+  }
+
+  void _toggleSortOrder() {
+    setState(() {
+      _sortAscending = !_sortAscending;
+    });
+  }
 
   void _changeMonth(int offset) {
     final nextIndex = _selectedMonthIndex + offset;
@@ -156,8 +183,8 @@ class _BabyWeightChartState extends State<BabyWeightChart> {
 
     setState(() {
       _selectedMonthIndex = nextIndex;
-      _selectedDay = null;
-      _chartMode = _ChartMode.summary;
+      _chartMode = _ChartMode.chart;
+      _clearSelection();
     });
   }
 
@@ -200,10 +227,6 @@ class _BabyWeightChartState extends State<BabyWeightChart> {
 
   int _daysInMonth(DateTime month) => DateTime(month.year, month.month + 1, 0).day;
 
-  double _timeOfDayAsHour(DateTime value) {
-    return value.hour + (value.minute / 60) + (value.second / 3600);
-  }
-
   double _median(List<double> values) {
     final sortedValues = List<double>.from(values)..sort();
     final middle = sortedValues.length ~/ 2;
@@ -242,29 +265,10 @@ class _BabyWeightChartState extends State<BabyWeightChart> {
     return summaries;
   }
 
-  DateTime? _resolveDetailDay(List<_DailyWeightSummary> summaries) {
-    if (summaries.isEmpty) {
-      return null;
-    }
-    if (_selectedDay == null) {
-      return summaries.last.day;
-    }
-
-    for (final summary in summaries) {
-      if (_isSameDay(summary.day, _selectedDay!)) {
-        return summary.day;
-      }
-    }
-
-    return summaries.last.day;
-  }
-
   void _selectMode(_ChartMode mode, List<_DailyWeightSummary> summaries) {
     setState(() {
       _chartMode = mode;
-      if (mode == _ChartMode.detail) {
-        _selectedDay = _resolveDetailDay(summaries);
-      }
+      _clearSelection();
     });
   }
 
@@ -277,8 +281,6 @@ class _BabyWeightChartState extends State<BabyWeightChart> {
   }
 
   Widget _buildModeSelector(List<_DailyWeightSummary> summaries) {
-    final selectedDetailDay = _resolveDetailDay(summaries);
-    final detailLabel = selectedDetailDay == null ? 'Dia' : 'Dia ${_dayFormatter.format(selectedDetailDay)}';
     final labelStyle = _selectorLabelStyle(context);
 
     return Padding(
@@ -291,16 +293,16 @@ class _BabyWeightChartState extends State<BabyWeightChart> {
           ChoiceChip(
             selectedColor: Theme.of(context).colorScheme.onSecondary,
             checkmarkColor: Theme.of(context).colorScheme.primary,
-            label: Text('Resumo', style: labelStyle),
-            selected: _chartMode == _ChartMode.summary,
-            onSelected: (_) => _selectMode(_ChartMode.summary, summaries),
+            label: Text('Gráfico', style: labelStyle),
+            selected: _chartMode == _ChartMode.chart,
+            onSelected: summaries.isEmpty ? null : (_) => _selectMode(_ChartMode.chart, summaries),
           ),
           ChoiceChip(
             selectedColor: Theme.of(context).colorScheme.onSecondary,
             checkmarkColor: Theme.of(context).colorScheme.primary,
-            label: Text(detailLabel, style: labelStyle),
-            selected: _chartMode == _ChartMode.detail,
-            onSelected: summaries.isEmpty ? null : (_) => _selectMode(_ChartMode.detail, summaries),
+            label: Text('Lista', style: labelStyle),
+            selected: _chartMode == _ChartMode.list,
+            onSelected: summaries.isEmpty ? null : (_) => _selectMode(_ChartMode.list, summaries),
           ),
         ],
       ),
@@ -323,6 +325,7 @@ class _BabyWeightChartState extends State<BabyWeightChart> {
     final daysInMonth = _daysInMonth(selectedMonth);
     final maxVisibleLabels = math.max(1, (constraints.maxWidth / 56).floor());
     final labelStep = math.max(1, (daysInMonth / maxVisibleLabels).ceil());
+    final chartBaseWidth = constraints.maxWidth * 1.5;
 
     Widget buildBottomTitle(double value, TitleMeta meta) {
       final roundedValue = value.round();
@@ -357,21 +360,21 @@ class _BabyWeightChartState extends State<BabyWeightChart> {
       );
     }
 
-    return LineChart(
+    final lineChart = LineChart(
       LineChartData(
         minX: 1 - _summaryEdgePadding,
         maxX: daysInMonth + _summaryEdgePadding,
         minY: minY,
         maxY: maxY,
         lineTouchData: LineTouchData(
+          enabled: true,
           handleBuiltInTouches: false,
           touchCallback: (event, response) {
             if (event is FlTapUpEvent && response?.lineBarSpots?.isNotEmpty == true) {
               final touchedIndex = response!.lineBarSpots!.first.spotIndex;
-              final touchedDay = summaries[touchedIndex].day;
-              setState(() {
-                _selectedDay = touchedDay;
-              });
+              if (touchedIndex >= 0 && touchedIndex < summaries.length) {
+                _selectChartDay(summaries[touchedIndex]);
+              }
             }
           },
         ),
@@ -425,12 +428,196 @@ class _BabyWeightChartState extends State<BabyWeightChart> {
             ),
             dotData: FlDotData(
               show: true,
-              getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(
-                radius: 4,
-                color: colorScheme.primary,
-                strokeWidth: 1.5,
-                strokeColor: colorScheme.surface,
+              getDotPainter: (spot, percent, barData, index) {
+                final isSelected = _selectedChartDay != null &&
+                    summaries[index].day.day == _selectedChartDay!.day.day;
+                return FlDotCirclePainter(
+                  radius: isSelected ? 10 : 7,
+                  color: isSelected ? colorScheme.secondary : colorScheme.primary,
+                  strokeWidth: 2,
+                  strokeColor: colorScheme.surface,
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+
+    return InteractiveViewer(
+      minScale: 1.0,
+      maxScale: 10.0,
+      constrained: false,
+      scaleFactor: 250,
+      alignment: Alignment.centerLeft,
+      child: SizedBox(
+        width: chartBaseWidth,
+        child: Padding(
+          padding: const EdgeInsets.only(left: 10, right: 20, top: 12, bottom: 16),
+          child: lineChart,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDetailChip(IconData icon, String label, String value, ColorScheme colorScheme) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 14, color: colorScheme.primary),
+        const SizedBox(width: 4),
+        Flexible(
+          child: Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(
+                  text: '$label: ',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                TextSpan(
+                  text: value,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: colorScheme.onSurface,
+                  ),
+                ),
+              ],
+            ),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSelectionDetails(ColorScheme colorScheme) {
+    if (_selectedChartDay == null && _selectedListItem == null) {
+      return const SizedBox.shrink();
+    }
+
+    if (_selectedChartDay != null) {
+      final s = _selectedChartDay!;
+      final totalMeasurements = s.measurements.length;
+
+      return Container(
+        width: double.infinity,
+        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.fromLTRB(12, 8, 4, 12),
+        decoration: BoxDecoration(
+          color: colorScheme.primary.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: colorScheme.primary.withValues(alpha: 0.2)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.date_range, size: 16, color: colorScheme.primary),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    'Dia ${_dayFormatter.format(s.day)}',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.primary,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  onPressed: _deselectAll,
+                  icon: const Icon(Icons.close),
+                  iconSize: 18,
+                  splashRadius: 16,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  tooltip: 'Fechar',
+                ),
+              ],
+            ),
+            Padding(
+              padding: const EdgeInsets.only(right: 12),
+              child: Wrap(
+                spacing: 16,
+                runSpacing: 8,
+                children: [
+                  _buildDetailChip(Icons.bar_chart, 'Mediana', '${_formatWeight(s.medianWeight)} g', colorScheme),
+                  _buildDetailChip(Icons.countertops, 'Total', '$totalMeasurements med.', colorScheme),
+                  _buildDetailChip(Icons.arrow_downward, 'Mín', '${_formatWeight(s.minWeight)} g', colorScheme),
+                  _buildDetailChip(Icons.arrow_upward, 'Máx', '${_formatWeight(s.maxWeight)} g', colorScheme),
+                  _buildDetailChip(
+                    Icons.schedule,
+                    'Última',
+                    '${_hourFormatter.format(s.measurements.last.date)} - ${_formatWeight(s.lastWeight)} g',
+                    colorScheme,
+                  ),
+                  if (s.zeroMeasurementsCount > 0)
+                    _buildDetailChip(Icons.block, 'Tara(s)', '${s.zeroMeasurementsCount}', colorScheme),
+                ],
               ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final w = _selectedListItem!;
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.fromLTRB(12, 8, 4, 12),
+      decoration: BoxDecoration(
+        color: colorScheme.primary.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: colorScheme.primary.withValues(alpha: 0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.receipt_long, size: 16, color: colorScheme.primary),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  'Peso Individual',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: colorScheme.primary,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+              IconButton(
+                onPressed: _deselectAll,
+                icon: const Icon(Icons.close),
+                iconSize: 18,
+                splashRadius: 16,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+                tooltip: 'Fechar',
+              ),
+            ],
+          ),
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: Wrap(
+              spacing: 16,
+              runSpacing: 8,
+              children: [
+                _buildDetailChip(Icons.monitor_weight, 'Peso', '${_formatWeight(w.weight)} g', colorScheme),
+                _buildDetailChip(Icons.event, 'Data', _dayFormatter.format(w.date), colorScheme),
+                _buildDetailChip(Icons.schedule, 'Hora', _hourFormatter.format(w.date), colorScheme),
+                _buildDetailChip(Icons.scale, 'Balança', '#${w.scaleId}', colorScheme),
+                if (w.weight == 0)
+                  _buildDetailChip(Icons.block, 'Tipo', 'Tara', colorScheme),
+              ],
             ),
           ),
         ],
@@ -438,144 +625,100 @@ class _BabyWeightChartState extends State<BabyWeightChart> {
     );
   }
 
-  Widget _buildDetailChart(
-    List<WeightModel> dayWeights,
-    DateTime selectedDay,
-    ColorScheme colorScheme,
-  ) {
-    final plottedWeights = <WeightModel>[];
-    final spots = <FlSpot>[];
-    double? lastX;
+  Widget _buildWeightList(List<WeightModel> monthWeights, ColorScheme colorScheme) {
+    final sortedWeights = List<WeightModel>.from(monthWeights);
+    sortedWeights.sort((a, b) {
+      final cmp = a.date.compareTo(b.date);
+      return _sortAscending ? cmp : -cmp;
+    });
 
-    for (final weight in dayWeights) {
-      var x = _timeOfDayAsHour(weight.date);
-      if (lastX != null && (x - lastX).abs() < 0.0001) {
-        x += _duplicateTimeOffsetHours;
-      }
-      plottedWeights.add(weight);
-      spots.add(FlSpot(x, weight.weight));
-      lastX = x;
-    }
-
-    final minYValue = dayWeights.map((weight) => weight.weight).reduce(math.min);
-    final maxYValue = dayWeights.map((weight) => weight.weight).reduce(math.max);
-    final verticalPadding = math.max((maxYValue - minYValue).abs() * 0.15, 30.0).toDouble();
-    final minY = math.max(0.0, minYValue - verticalPadding).toDouble();
-    final maxY = (maxYValue + verticalPadding).toDouble();
-    final minX = math.max(0.0, spots.map((spot) => spot.x).reduce(math.min) - _dayEdgePaddingHours).toDouble();
-    final maxX = math.min(24.0, spots.map((spot) => spot.x).reduce(math.max) + _dayEdgePaddingHours).toDouble();
-
-    Widget buildBottomTitle(double value, TitleMeta meta) {
-      final roundedHour = value.round();
-      final hasHourAlignment = (value - roundedHour).abs() <= 0.08;
-      if (!hasHourAlignment || roundedHour < 0 || roundedHour > 24 || roundedHour % 3 != 0) {
-        return const SizedBox.shrink();
-      }
-
-      final labelDate = DateTime(selectedDay.year, selectedDay.month, selectedDay.day, roundedHour % 24);
-      return SideTitleWidget(
-        meta: meta,
-        space: 8,
-        child: Text(
-          _hourFormatter.format(labelDate),
-          style: TextStyle(color: colorScheme.primary, fontSize: 10),
-        ),
-      );
-    }
-
-    Widget buildLeftTitle(double value, TitleMeta meta) {
-      return Text(
-        _formatWeight(value),
-        style: TextStyle(color: colorScheme.primary, fontSize: 11),
-      );
-    }
-
-    return LineChart(
-      LineChartData(
-        minX: minX,
-        maxX: maxX,
-        minY: minY,
-        maxY: maxY,
-        lineTouchData: LineTouchData(
-          handleBuiltInTouches: true,
-          touchTooltipData: LineTouchTooltipData(
-            tooltipBorderRadius: BorderRadius.circular(8),
-            getTooltipColor: (_) => colorScheme.surface,
-            getTooltipItems: (touchedSpots) {
-              return touchedSpots.map((spot) {
-                final weight = plottedWeights[spot.spotIndex];
-                return LineTooltipItem(
-                  '${dateFormatter_log.format(weight.date)}\n${_formatWeight(weight.weight)} g',
-                  TextStyle(
-                    color: colorScheme.primary,
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton.icon(
+                onPressed: _toggleSortOrder,
+                icon: Icon(
+                  _sortAscending ? Icons.arrow_upward : Icons.arrow_downward,
+                  size: 16,
+                ),
+                label: Text(
+                  _sortAscending ? 'Mais antigo primeiro' : 'Mais recente primeiro',
+                  style: TextStyle(
                     fontSize: 12,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w600,
+                    color: colorScheme.primary,
                   ),
-                );
-              }).toList();
+                ),
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: ListView.separated(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            itemCount: sortedWeights.length,
+            separatorBuilder: (_, __) => Divider(
+              height: 1,
+              color: colorScheme.outlineVariant.withValues(alpha: 0.5),
+            ),
+            itemBuilder: (context, index) {
+              final w = sortedWeights[index];
+              final isSelected = _selectedListItem?.id == w.id;
+              final isTara = w.weight == 0;
+
+              return ListTile(
+                selected: isSelected,
+                selectedTileColor: colorScheme.primary.withValues(alpha: 0.08),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  side: isSelected
+                      ? BorderSide(color: colorScheme.primary.withValues(alpha: 0.5), width: 1)
+                      : BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                visualDensity: VisualDensity.compact,
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? colorScheme.primary.withValues(alpha: 0.15)
+                        : colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    isTara ? Icons.filter_none : Icons.monitor_weight_outlined,
+                    color: isSelected ? colorScheme.primary : colorScheme.onSurfaceVariant,
+                    size: 20,
+                  ),
+                ),
+                title: Text(
+                  isTara ? 'Tara' : '${_formatWeight(w.weight)} g',
+                  style: TextStyle(
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                    color: isTara ? colorScheme.onSurfaceVariant : colorScheme.onSurface,
+                  ),
+                ),
+                subtitle: Text(
+                  dateFormatter_log.format(w.date),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isSelected ? colorScheme.primary : colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                trailing: Icon(
+                  Icons.chevron_right,
+                  color: isSelected ? colorScheme.primary : colorScheme.outline,
+                ),
+                onTap: () => _selectListItem(w),
+              );
             },
           ),
         ),
-        gridData: FlGridData(
-          show: true,
-          verticalInterval: 3,
-          horizontalInterval: _weightAxisInterval(minY, maxY),
-          getDrawingVerticalLine: (_) => FlLine(
-            color: colorScheme.outlineVariant.withValues(alpha: 0.35),
-            strokeWidth: 1,
-          ),
-          getDrawingHorizontalLine: (_) => FlLine(
-            color: colorScheme.outlineVariant.withValues(alpha: 0.35),
-            strokeWidth: 1,
-          ),
-        ),
-        titlesData: FlTitlesData(
-          show: true,
-          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          bottomTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              reservedSize: 30,
-              interval: 3,
-              getTitlesWidget: buildBottomTitle,
-            ),
-          ),
-          leftTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              reservedSize: 48,
-              interval: _weightAxisInterval(minY, maxY),
-              getTitlesWidget: buildLeftTitle,
-            ),
-          ),
-        ),
-        borderData: FlBorderData(
-          show: true,
-          border: Border.all(color: colorScheme.primary),
-        ),
-        lineBarsData: [
-          LineChartBarData(
-            spots: spots,
-            isCurved: false,
-            color: colorScheme.primary,
-            barWidth: 2,
-            belowBarData: BarAreaData(
-              show: true,
-              color: colorScheme.primary.withValues(alpha: 0.08),
-            ),
-            dotData: FlDotData(
-              show: true,
-              getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(
-                radius: 4,
-                color: colorScheme.primary,
-                strokeWidth: 1.5,
-                strokeColor: colorScheme.surface,
-              ),
-            ),
-          ),
-        ],
-      ),
+      ],
     );
   }
 
@@ -588,8 +731,6 @@ class _BabyWeightChartState extends State<BabyWeightChart> {
     final selectedMonth = _availableMonths[_selectedMonthIndex];
     final monthWeights = BabyWeightChart.filterWeightsForMonth(_sortedWeights, selectedMonth);
     final summaries = _buildDailySummaries(monthWeights);
-    final effectiveSelectedDay = _resolveDetailDay(summaries);
-    final detailWeights = effectiveSelectedDay == null ? const <WeightModel>[] : monthWeights.where((weight) => _isSameDay(weight.date, effectiveSelectedDay)).toList();
     final colorScheme = Theme.of(context).colorScheme;
     final selectorLabelStyle = _selectorLabelStyle(context);
     final monthSelector = Padding(
@@ -623,16 +764,13 @@ class _BabyWeightChartState extends State<BabyWeightChart> {
           return const Center(child: Text('Sem dados suficientes'));
         }
 
+        if (_chartMode == _ChartMode.list) {
+          return _buildWeightList(monthWeights, colorScheme);
+        }
+
         return AspectRatio(
           aspectRatio: constraints.maxWidth > 600 ? 2.0 : 1.65,
-          child: Padding(
-            padding: const EdgeInsets.only(left: 10, right: 20, top: 12, bottom: 16),
-            child: _chartMode == _ChartMode.summary
-                ? _buildSummaryChart(summaries, colorScheme, constraints)
-                : (effectiveSelectedDay == null || detailWeights.isEmpty
-                    ? const Center(child: Text('Sem dados suficientes'))
-                    : _buildDetailChart(detailWeights, effectiveSelectedDay, colorScheme)),
-          ),
+          child: _buildSummaryChart(summaries, colorScheme, constraints),
         );
       },
     );
@@ -642,37 +780,19 @@ class _BabyWeightChartState extends State<BabyWeightChart> {
         final children = <Widget>[
           monthSelector,
           _buildModeSelector(summaries),
-          if (_chartMode == _ChartMode.detail && effectiveSelectedDay != null)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 4),
-              child: Text(
-                'Detalhe do dia ${_dayFormatter.format(effectiveSelectedDay)}',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.primary,
-                      fontWeight: FontWeight.bold,
-                    ),
-              ),
-            ),
         ];
 
         if (constraints.hasBoundedHeight) {
-          return Column(
-            children: [
-              ...children,
-              Expanded(child: chartArea),
-            ],
-          );
+          children..add(Expanded(child: chartArea))
+                  ..add(_buildSelectionDetails(colorScheme));
+          return Column(children: children);
         }
 
+        children..add(SizedBox(height: _fallbackChartHeight, child: chartArea))
+                ..add(_buildSelectionDetails(colorScheme));
         return Column(
           mainAxisSize: MainAxisSize.min,
-          children: [
-            ...children,
-            SizedBox(
-              height: _fallbackChartHeight,
-              child: chartArea,
-            ),
-          ],
+          children: children,
         );
       },
     );

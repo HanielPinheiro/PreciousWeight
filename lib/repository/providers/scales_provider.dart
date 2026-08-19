@@ -213,10 +213,10 @@ class ScalesProvider with ChangeNotifier {
       return await SafeApi.call<String>(
         context: context,
         apiCall: () async {
-           final answer = await _scaleApi.requestWeightNow(scale_id.toString());
-           final result = answer.split(":");
-           final r = result[result.length-1];
-           return r.substring(0, r.length-1);
+          final answer = await _scaleApi.requestWeightNow(scale_id.toString());
+          final result = answer.split(":");
+          final r = result[result.length-1];
+          return r.substring(0, r.length-1);
         },
       );
     } catch (e) {
@@ -273,6 +273,7 @@ class ScalesProvider with ChangeNotifier {
       } else {
         await SafeApi.call(
             context: context,
+            abortErrorMessage: true,
             apiCall: () async {
               try {
                 final d = await _scaleApi.getWifiStrength(scale_id.toString());
@@ -291,4 +292,18 @@ class ScalesProvider with ChangeNotifier {
       notifyListeners();
     }
   }
+
+  void updateScaleConnectivity(int scale_id, bool state) {
+    try {
+      int idx = _getIndexFromList(scale_id);
+      if (idx != -1)
+        _scales[idx] = _scales[idx].copyWith(isConnected: state);
+    }
+    catch(e){
+      throw e;
+    } finally {
+      notifyListeners();
+    }
+  }
+
 }
