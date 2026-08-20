@@ -250,9 +250,6 @@ double hx711_read_sensor_weight(int8_t id)
 
     double diff = raw - offset_local;
 
-    if (AT_CALIBRATION)
-        ESP_LOGI(ROTULO_LOCAL, "Sensor[%d]:Raw{%ld}|Offset{%ld}|Diff{%f}", id, raw, offset_local, diff);
-
     return diff * calib_local;
 }
 
