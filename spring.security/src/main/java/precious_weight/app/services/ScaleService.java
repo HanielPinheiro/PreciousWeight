@@ -53,6 +53,8 @@ public class ScaleService {
 
     private int _globalFlagWeightNow = 0;
     private int _globalFlagWifiStrengthNow = 0;
+    private double _lastManualMeasuredWeigth = 0.0;
+
 
     public int GetFlagWeightNow() {
         return _globalFlagWeightNow;
@@ -240,13 +242,15 @@ public class ScaleService {
 
         var message = weight.split("\\{");//[MEA]{0.0} ou [WEI]0.0 => WEI salva no BD, MEA não
         var prefix = message[0];
+        var weigth = Double.parseDouble(message[1].replace("}", ""));
         if(prefix.startsWith(MQTT_COMMAND_SCHEDULED_MEASURE)) {
             var w = new WeightRequest();
             w.setBabyId(babyId);
             w.setScaleId(scaleId);
-            w.setWeightValue(Double.parseDouble(message[1].replace("}", "")));
+            w.setWeightValue(weigth);
             iWeight.save(w.ToModel());
         }
+        else _lastManualMeasuredWeigth = weigth;
 
         this.SetFlagWeightNow(1);
     }
@@ -343,8 +347,9 @@ public class ScaleService {
 
         this.WaitEsp32Answer(id);
 
+        System.out.printf("Last weight received from esp32 %.2f %n", _lastManualMeasuredWeigth);
         var lastWeight = iWeight.findByScaleId(id).getLast();
-        System.out.printf("Last weight received from esp32 %.2f %n", lastWeight.getWeightValue());
+        lastWeight.setWeightValue(_lastManualMeasuredWeigth);
         return lastWeight;
     }
 
