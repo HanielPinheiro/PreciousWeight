@@ -122,15 +122,17 @@ static esp_err_t measure_routine(const char *data)
     return ESP_OK;
 }
 
-static esp_err_t tare_routine(const char *data)
+esp_err_t tare_routine(const char *data)
 {
     uint32_t seq = pw_next_sequence_id();
     int64_t now = pw_safe_epoch();
     char m[PW_OUTBOX_PAYLOAD_MAX];
-    (void)data;
-    snprintf(m, sizeof(m), "EVT|%lu|%lld|INFO|TARE", (unsigned long)seq, (long long)now);
-    pw_log_event(PW_SEV_INFO, "TARE", ROTULO_LOCAL, "tare");
 
+    if (strcmp(data, TARE_AUTOMATICALLY) != 0)
+    {
+        snprintf(m, sizeof(m), "EVT|%lu|%lld|INFO|TARE", (unsigned long)seq, (long long)now);
+        pw_log_event(PW_SEV_INFO, "TARE", ROTULO_LOCAL, "tare");
+    }
     // Before starting tare sinalize sensors_task to stop measure
     sensors_set_tare_mode(true);
     vTaskDelay(pdMS_TO_TICKS(1200));

@@ -18,6 +18,12 @@ HX711 scale2;
 HX711 scale3;
 HX711 scale4;
 
+bool calibrate = false;
+float calibration_factor_1 = 45.0; 
+float calibration_factor_2 = 92.0;
+float calibration_factor_3 = 80.0; 
+float calibration_factor_4 = 107.0;
+
 void setup() {
   Serial.begin(115200);
   Serial.println("Waking up");
@@ -31,72 +37,71 @@ void setup() {
   
   delay(5000); // Delay de estabilização dos sensores
 
-  bool s1_ok = prepare_scale(scale1, "S1");
-  bool s2_ok = prepare_scale(scale2, "S2");
-  bool s3_ok = prepare_scale(scale3, "S3");
-  bool s4_ok = prepare_scale(scale4, "S4");
-
-  if (!s1_ok || !s2_ok || !s3_ok || !s4_ok) {
-    Serial.println("Falha na inicialização de uma ou mais balanças.");
-    while (true) {
-      Serial.print(".");
-      delay(500);
-    }
-  }
+  prepare_scale(scale1, "S1", calibration_factor_1);
+  prepare_scale(scale2, "S2", calibration_factor_2);
+  prepare_scale(scale3, "S3", calibration_factor_3);
+  prepare_scale(scale4, "S4", calibration_factor_4);
 }
-// unsigned long previousMillis; 
-  // extraido de => https://randomnerdtutorials.com/arduino-load-cell-hx711/#comment-780712
+
 void loop() {
-  // unsigned long currentMillis = millis();
+  float w1 = scale1.get_units(5);
+  float w2 = scale2.get_units(5);
+  float w3 = scale3.get_units(5);
+  float w4 = scale4.get_units(5);  
+  float avg = (w1 + w2 + w3 + w4) / 4.0;
 
-  // // Check if 1 second has passed
-  // if (currentMillis - previousMillis >= 100) {
-    
-    // Only proceed if all four scales have new data ready
-    if (scale1.is_ready() && scale2.is_ready() && scale3.is_ready() && scale4.is_ready()) {
-      
-      long reading;
+  Serial.print("Scale 1 Weight: ");
+  Serial.print(w1, 1);
+  Serial.print(" g \t Scale 2 Weight: ");
+  Serial.print(w2, 1);
+  Serial.print(" g \t Scale 3 Weight: ");
+  Serial.print(w3, 1);
+  Serial.print(" g \t Scale 4 Weight: ");
+  Serial.print(w4, 1);
+  Serial.print(" g \t Average: ");
+  Serial.println(avg, 1);
 
-      reading = scale1.read(); // get_units() without arguments defaults to 1 reading (fastest)
-      Serial.print("S1: "); Serial.print(reading); Serial.print(" - ");
+  delay(1000);
+}
 
-      reading = scale2.read();
-      Serial.print("S2: "); Serial.print(reading); Serial.print(" - ");
+// Interactive calibration helper function
+void prepare_scale(HX711 &scale, String scaleName, float &cal_factor) {
+  if(calibrate){
+  Serial.println("Calibrating " + scaleName);  
+  Serial.println("Remove all weight from the platform and press Enter");
+   while (!Serial.available()) {
+    // Wait for user input
+  }
+  // Clear serial buffer
+  while (Serial.available()) Serial.read();
 
-      reading = scale3.read();
-      Serial.print("S3: "); Serial.print(reading); Serial.print(" - ");
+  scale.set_scale();
+  scale.tare(); // Reset the scale to 0
 
-      reading = scale4.read();
-      Serial.print("S4: "); Serial.println(reading);
+  Serial.println("Place a known weight on " + scaleName + ", then type the weight in grams (e.g. 100) and press Enter:");
+  
+  while (!Serial.available()) {
+    // Wait for user input
+  }
 
-    //   previousMillis = currentMillis; 
-    // }
+  float known_weight = Serial.parseFloat();
+  // Clear serial buffer
+  while (Serial.available()) Serial.read();
+
+  // Get reading average and compute factor
+  long reading = scale.get_units(10);
+  cal_factor = reading / known_weight;
+
+  scale.set_scale(cal_factor);
+
+  Serial.print(scaleName);
+  Serial.print(" Calibration Factor found: ");
+  Serial.println(cal_factor);
+  Serial.println("------------------------------------");
+  }
+  else {
+    scale.set_scale(cal_factor);
+    scale.tare(); // Reset the scale to 0
   }
 }
 
-bool prepare_scale(HX711 &scale, const char* scaleName) {
-  bool ret = false;
-  unsigned long startTime = millis(); // Registra o tempo de início
-
-  while (true) {    
-    if (millis() - startTime >= 5000) { // Timeout de 5 segundos
-      Serial.print(scaleName);  Serial.println(" Timeout: Scale not ready.");
-      break; 
-    }
-
-    if (scale.is_ready()) {
-      scale.set_scale();
-      Serial.print("Initializing Tare "); Serial.print(scaleName); Serial.println("...");      
-
-      scale.tare();
-      
-      Serial.print("Tare ");Serial.print(scaleName);Serial.println(" done...");
-      ret = true;
-      break;
-    } else {
-      Serial.print(scaleName); Serial.println(" Fail.");
-      delay(200); // Pausa para não sobrecarregar o monitor serial
-    }
-  }
-  return ret;
-}

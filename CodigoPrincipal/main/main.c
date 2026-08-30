@@ -9,10 +9,10 @@
 char *ROTULO_LOCAL = "MAIN";
 
 hx711_t sensors[NUM_WEIGHT_SENSORS] = {
-    {.id = 0, .dout_pin = SCALE1_DOUT, .sck_pin = SCALE1_SCK, .offset = DEFAULT_OFFSET, .calib_factor = 0.002464073379},
-    {.id = 1, .dout_pin = SCALE2_DOUT, .sck_pin = SCALE2_SCK, .offset = DEFAULT_OFFSET, .calib_factor = 0.002606863625},
-    {.id = 2, .dout_pin = SCALE3_DOUT, .sck_pin = SCALE3_SCK, .offset = DEFAULT_OFFSET, .calib_factor = 0.002503721628},
-    {.id = 3, .dout_pin = SCALE4_DOUT, .sck_pin = SCALE4_SCK, .offset = DEFAULT_OFFSET, .calib_factor = 0.002512369584}};
+    {.id = 0, .dout_pin = SCALE1_DOUT, .sck_pin = SCALE1_SCK, .offset = DEFAULT_OFFSET, .calib_factor = 404.538487835669},
+    {.id = 1, .dout_pin = SCALE2_DOUT, .sck_pin = SCALE2_SCK, .offset = DEFAULT_OFFSET, .calib_factor = 375.179056785299},
+    {.id = 2, .dout_pin = SCALE3_DOUT, .sck_pin = SCALE3_SCK, .offset = DEFAULT_OFFSET, .calib_factor = 400.787227539379},
+    {.id = 3, .dout_pin = SCALE4_DOUT, .sck_pin = SCALE4_SCK, .offset = DEFAULT_OFFSET, .calib_factor = 396.430558256900}};
 
 static char *ROTULO_SAFETY = "SAFETY";
 
@@ -149,21 +149,23 @@ void app_main()
     PW_ERROR_CHECK(init_weight_sensors_timer());
     update_current_time();
 
-    // FASE 3 — WiFi / SNTP / MQTT — ASSINCRONO (não trava app_main)
-    sdcard_log(LOG_INFO, "Iniciando stack WiFi em task dedicada...", ROTULO_LOCAL);
-    PW_ERROR_CHECK(start_wifi_manager_async());
-
-    // FASE 4 — Sanity check 1-shot (120s após boot)
-    static TimerHandle_t sanity_timer = NULL;
-    if (sanity_timer == NULL)
+    if (!AT_CALIBRATION)
     {
-        sanity_timer = xTimerCreate("sanity_chk", pdMS_TO_TICKS(120 * 1000), pdFALSE, NULL, pw_sanity_check_1shot);
-        if (sanity_timer == NULL || xTimerStart(sanity_timer, 0) != pdPASS)
+        // FASE 3 — WiFi / SNTP / MQTT — ASSINCRONO (não trava app_main)
+        sdcard_log(LOG_INFO, "Iniciando stack WiFi em task dedicada...", ROTULO_LOCAL);
+        PW_ERROR_CHECK(start_wifi_manager_async());
+
+        // FASE 4 — Sanity check 1-shot (120s após boot)
+        static TimerHandle_t sanity_timer = NULL;
+        if (sanity_timer == NULL)
         {
-            ESP_LOGE(ROTULO_LOCAL, "Falha ao criar timer sanity_check");
+            sanity_timer = xTimerCreate("sanity_chk", pdMS_TO_TICKS(120 * 1000), pdFALSE, NULL, pw_sanity_check_1shot);
+            if (sanity_timer == NULL || xTimerStart(sanity_timer, 0) != pdPASS)
+            {
+                ESP_LOGE(ROTULO_LOCAL, "Falha ao criar timer sanity_check");
+            }
         }
     }
-
     // Sistema operante
     char m[90] = {0};
     snprintf(m, 90, "Sistema inicializado com sucesso (SD=%s). WiFi inicializando em background. \r\n",

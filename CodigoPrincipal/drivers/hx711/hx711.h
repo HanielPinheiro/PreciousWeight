@@ -3,6 +3,7 @@
 #define HX711_H
 
 #define NUM_WEIGHT_SENSORS 4
+#define TARE_AUTOMATICALLY "c"
 
 #define DEFAULT_OFFSET 0
 #define DEFAULT_OFFSET 0

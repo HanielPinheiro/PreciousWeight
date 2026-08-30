@@ -225,6 +225,9 @@ esp_err_t hx711_initialize_sensors()
     }
     // Aguarda dois segundos para estabilização térmica dos sensores
     vTaskDelay(pdMS_TO_TICKS(2000));
+
+    tare_routine(TARE_AUTOMATICALLY);
+
     return ESP_OK;
 }
 
@@ -250,7 +253,10 @@ double hx711_read_sensor_weight(int8_t id)
 
     double diff = raw - offset_local;
 
-    return diff * calib_local;
+    if (AT_CALIBRATION)
+        ESP_LOGI(ROTULO_LOCAL, "Sensor[%d]:Raw{%ld}|Offset{%ld}|Diff{%f}", id, raw, offset_local, diff);
+
+    return diff / calib_local;
 }
 
 #pragma endregion
