@@ -226,8 +226,6 @@ esp_err_t hx711_initialize_sensors()
     // Aguarda dois segundos para estabilização térmica dos sensores
     vTaskDelay(pdMS_TO_TICKS(2000));
 
-    tare_routine(TARE_AUTOMATICALLY);
-
     return ESP_OK;
 }
 

@@ -46,8 +46,6 @@ static void sensor_processor_task(void *pvParams)
         double readings = 0;
         int8_t valid_count = 0;
         double sum = 0;
-        double last_sum = 0;
-        double diff = 0;
         for (int i = 0; i < NUM_WEIGHT_SENSORS; i++)
         {
             if (s_data_mutex[i] != NULL)
@@ -66,19 +64,8 @@ static void sensor_processor_task(void *pvParams)
             if (sum <= 0)
                 sum = 0;
 
-            // diff = sum - last_sum;
-
-            // ESP_LOGI(ROTULO_LOCAL, "Diff [%2f]", diff);
-            // if (diff < -1000000)
-            // {
-            //     tare_routine(TARE_AUTOMATICALLY);
-            // }
-            // else
-            // {
             set_global_weight(sum);
             ESP_LOGI(ROTULO_LOCAL, "Peso: %2f g ", sum);
-            //     last_sum = sum;
-            // }
         }
         else
         {
