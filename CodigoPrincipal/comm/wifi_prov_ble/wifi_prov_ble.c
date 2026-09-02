@@ -133,8 +133,22 @@ esp_err_t start_date_time_routine(void)
 #pragma endregion
 
 static uint8_t my_bluetooth_uuid[] = {
-    0xb4, 0xdf, 0x5a, 0x1c, 0x3f, 0x6b, 0xf4, 0xbf,
-    0xea, 0x4a, 0x82, 0x03, 0x04, 0x90, 0x1a, 0x02,
+    0xb4,
+    0xdf,
+    0x5a,
+    0x1c,
+    0x3f,
+    0x6b,
+    0xf4,
+    0xbf,
+    0xea,
+    0x4a,
+    0x82,
+    0x03,
+    0x04,
+    0x90,
+    0x1a,
+    0x02,
 };
 
 static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
@@ -392,6 +406,9 @@ static void wifi_manager_task(void *pvParameters)
         if (start_date_time_routine() == ESP_OK)
         {
             ESP_LOGI(ROTULO_LOCAL, "SNTP sincronizado. Iniciando MQTT.");
+            sdcard_log(LOG_INFO, "Tasks de SD/Sensores ok. Inicializando Timers de pesagem.", ROTULO_LOCAL);
+            init_weight_sensors_timer();
+            update_current_time();
         }
         else
         {

@@ -228,7 +228,7 @@ esp_err_t sdcard_write_file(char *path, char *data)
     if (sd_mutex == NULL)
         return sdcard_write_locked(path, data, "a");
 
-    if (xSemaphoreTake(sd_mutex, pdMS_TO_TICKS(300)) != pdTRUE)
+    if (xSemaphoreTake(sd_mutex, pdMS_TO_TICKS(2000)) != pdTRUE)
     {
         ESP_LOGE(ROTULO_LOCAL, "Falha ao obter o semáforo para escrita no arquivo.");
         return ESP_FAIL;
@@ -244,7 +244,7 @@ esp_err_t sdcard_overwrite_file(const char *path, const char *data)
     if (sd_mutex == NULL)
         return sdcard_write_locked(path, data, "w");
 
-    if (xSemaphoreTake(sd_mutex, pdMS_TO_TICKS(300)) != pdTRUE)
+    if (xSemaphoreTake(sd_mutex, pdMS_TO_TICKS(2000)) != pdTRUE)
     {
         ESP_LOGE(ROTULO_LOCAL, "Falha ao obter o semáforo para sobrescrever arquivo.");
         return ESP_FAIL;

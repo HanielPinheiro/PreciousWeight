@@ -9,8 +9,8 @@
 char *ROTULO_LOCAL = "MAIN";
 
 hx711_t sensors[NUM_WEIGHT_SENSORS] = {
-    {.id = 0, .dout_pin = SCALE1_DOUT, .sck_pin = SCALE1_SCK, .offset = DEFAULT_OFFSET, .calib_factor = 405.31},
-    {.id = 1, .dout_pin = SCALE2_DOUT, .sck_pin = SCALE2_SCK, .offset = DEFAULT_OFFSET, .calib_factor = 374.61},
+    {.id = 0, .dout_pin = SCALE1_DOUT, .sck_pin = SCALE1_SCK, .offset = DEFAULT_OFFSET, .calib_factor = 412.308192070140},
+    {.id = 1, .dout_pin = SCALE2_DOUT, .sck_pin = SCALE2_SCK, .offset = DEFAULT_OFFSET, .calib_factor = 356.029077241339},
     {.id = 2, .dout_pin = SCALE3_DOUT, .sck_pin = SCALE3_SCK, .offset = DEFAULT_OFFSET, .calib_factor = 401.78},
     {.id = 3, .dout_pin = SCALE4_DOUT, .sck_pin = SCALE4_SCK, .offset = DEFAULT_OFFSET, .calib_factor = 397.43}};
 
@@ -145,10 +145,6 @@ void app_main()
     }
     PW_ERROR_CHECK(init_sensors_task());
 
-    sdcard_log(LOG_INFO, "Tasks de SD/Sensores ok. Inicializando Timers de pesagem.", ROTULO_LOCAL);
-    PW_ERROR_CHECK(init_weight_sensors_timer());
-    update_current_time();
-
     if (!AT_CALIBRATION)
     {
         // FASE 3 — WiFi / SNTP / MQTT — ASSINCRONO (não trava app_main)
@@ -171,8 +167,7 @@ void app_main()
 
     // Sistema operante
     char m[90] = {0};
-    snprintf(m, 90, "Sistema inicializado com sucesso (SD=%s). WiFi inicializando em background. \r\n",
-             g_sys.sd_ok ? "OK" : "FAIL");
+    snprintf(m, 90, "Sistema inicializado com sucesso (SD=%s). WiFi inicializando em background. \r\n", g_sys.sd_ok ? "OK" : "FAIL");
     PW_ERROR_CHECK(sdcard_log(LOG_INFO, m, ROTULO_LOCAL));
     PW_ERROR_CHECK(pw_state_save());
     PW_ERROR_CHECK(set_pattern_to_led_task(BLINK_LED_NORMAL_OPER));
