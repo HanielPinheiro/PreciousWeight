@@ -150,7 +150,7 @@ class _ScaleDetailsState extends State<ScaleDetails> {
       return;
     }
 
-    final weightDisplay = "${weightValue.toStringAsFixed(1)} g";
+    final weightDisplay = "${weightValue.toStringAsFixed(2)} g";
 
     final saved = await ElementsOfViews.showWeightResultDialog(
       context,
@@ -217,15 +217,6 @@ class _ScaleDetailsState extends State<ScaleDetails> {
   }
 
   Widget _showBabyDetails() {
-    /* return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 25),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(15),
-        child: Container(
-          padding: EdgeInsets.all(9),
-          decoration: MyDecorations().GetBoxDecoration(context),
-          child: Row(
-            children: */
     return ElementsOfViews.ResponsiveCard(context,[
       if (_currentScale!.assignedBaby!.qrCodeImage != null) Container(child: _currentScale!.assignedBaby!.qrCodeImage, constraints: BoxConstraints(maxWidth: 120)),
       SizedBox(width: 10),
@@ -243,10 +234,7 @@ class _ScaleDetailsState extends State<ScaleDetails> {
             }, false, !_scaleActive),
             SizedBox(height: 20),
           ])),
-    ],
-      /*  ),
-        ),
-      ),*/
+    ]
     );
   }
 

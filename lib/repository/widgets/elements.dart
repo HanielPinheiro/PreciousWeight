@@ -78,12 +78,7 @@ class ElementsOfViews {
     return ans;
   }
 
-  static Future<bool> showWeightResultDialog(
-    BuildContext context,
-    String weightDisplay, {
-    bool showSaveButton = false,
-    Future<bool> Function()? onSave,
-  }) async {
+  static Future<bool> showWeightResultDialog(BuildContext context,String weightDisplay, {bool showSaveButton = false,Future<bool> Function()? onSave}) async {
     bool saving = false;
     final result = await showDialog<bool>(
       context: context,
@@ -97,7 +92,7 @@ class ElementsOfViews {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const SizedBox(height: 20),
-                  Text(weightDisplay, style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Theme.of(ctx).colorScheme.primary)),
+                  Text(weightDisplay, style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(fontSize: 32)),
                   const SizedBox(height: 20),
                   if (saving) const CircularProgressIndicator(),
                 ],
@@ -113,12 +108,12 @@ class ElementsOfViews {
                     } finally {
                       if (ctx.mounted) setDialogState(() => saving = false);
                     }
-                  }),
-              ],
+                  })
+              ]
             );
           },
         );
-      },
+      }
     );
     return result ?? false;
   }
