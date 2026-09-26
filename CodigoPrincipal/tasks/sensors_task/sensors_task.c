@@ -65,7 +65,7 @@ static void sensor_processor_task(void *pvParams)
                 sum = 0;
 
             set_global_weight(sum);
-            ESP_LOGI(ROTULO_LOCAL, "Peso: %.2f g ", sum);
+            // ESP_LOGI(ROTULO_LOCAL, "Peso: %.2f g ", sum);
         }
         else
         {

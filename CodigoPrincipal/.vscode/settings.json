@@ -88,7 +88,6 @@
     "numbers": "c"
   },
   "idf.flashType": "UART",
-  "idf.portWin": "COM4",
   "idf.openOcdConfigs": ["board/esp32-wrover-kit-3.3v.cfg"],
   "idf.espIdfPathWin": "c:\\Users\\Biruleibe\\EspressifVsCode\\v5.4.2\\esp-idf",
   "idf.toolsPathWin": "c:\\Users\\Biruleibe\\EspressifVsCode\\Tools",
@@ -107,5 +106,6 @@
   "esp-idf.enableAdvancedHighlighting": true,
   "C_Cpp.errorSquiggles": "Enabled",
   "C_Cpp.intelliSenseEngine": "Default",
-  "idf.currentSetup": "c:\\Users\\Biruleibe\\EspressifVsCode\\v5.4.2\\esp-idf"
+  "idf.currentSetup": "C:\\Users\\Biruleibe\\EspressifVsCode\\v5.4.4\\.espressif\\v5.4.4\\esp-idf",
+  "idf.port": "COM4"
 }
