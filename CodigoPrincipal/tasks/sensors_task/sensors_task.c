@@ -61,11 +61,11 @@ static void sensor_processor_task(void *pvParams)
 
         if (valid_count > 0)
         {
-            if (sum <= 0)
+            if (sum <= 10.0)
                 sum = 0;
 
             set_global_weight(sum);
-            // ESP_LOGI(ROTULO_LOCAL, "Peso: %.2f g ", sum);
+            ESP_LOGI(ROTULO_LOCAL, "Peso: %.2f g ", sum);
         }
         else
         {

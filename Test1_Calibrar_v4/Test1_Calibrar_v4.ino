@@ -33,17 +33,12 @@ HX711 *scales[4] = { &scale1, &scale2, &scale3, &scale4 };
 // ============================================================
 // Ajustados após correção do peso real de 2093g (antigo 2005g)
 // float calibration_factor[4] = { 399.65f, 404.81f, 390.79f, 398.76f }; // V3 +-1g de erro
-float calibration_factor[4] = { 399.92f, 405.06f, 390.86f, 398.96f };
+float calibration_factor[4] = { 399.65f, 404.1f, 390.1f, 398.1f };
 
 // ============================================================
 // OFFSETS (TARA INICIAL DOS SENSORES)
 // ============================================================
 float offset[4] = { 405827.2f, 217586.3f, 316564.5f, 310181.5f };
-
-// ============================================================
-// MULTIPLICADOR DE GANHO GLOBAL
-// ============================================================
-const float GLOBAL_GAIN_MULTIPLIER = 1.0000f;
 
 // ============================================================
 // INSERTION SORT (FILTRO DE MEDIANA)
@@ -162,7 +157,7 @@ void setup() {
 
   Serial.println();
   Serial.println("============================================================");
-  Serial.println(" CALIBRACAO ESPACIAL V6 - MODELO LINEAR PERFEITO");
+  Serial.println(" CALIBRACAO ESPACIAL V4 - MODELO LINEAR PERFEITO");
   Serial.println("============================================================");
 
   Serial.println(" Realizando tara...");
@@ -193,7 +188,7 @@ void loop() {
   calculateSensorWeights(raw, sensorWeights, deltas);
 
   float baseWeight = calculateBaseWeight(sensorWeights);
-  float finalWeight = baseWeight * GLOBAL_GAIN_MULTIPLIER;
+  float finalWeight = baseWeight;
 
   updateAutoZero(raw, finalWeight);
 

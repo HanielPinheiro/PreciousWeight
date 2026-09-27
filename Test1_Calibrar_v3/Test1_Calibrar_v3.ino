@@ -169,7 +169,7 @@ void setup() {
 
   Serial.println();
   Serial.println("============================================================");
-  Serial.println(" CALIBRACAO ESPACIAL V4 - ALTA PRECISÃO (< +-5g)");
+  Serial.println(" CALIBRACAO ESPACIAL V3 - ALTA PRECISÃO (< +-5g)");
   Serial.println("============================================================");
 
   Serial.println(" Realizando tara...");

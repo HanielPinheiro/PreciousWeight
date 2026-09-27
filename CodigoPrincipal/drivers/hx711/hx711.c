@@ -84,6 +84,56 @@ static int32_t hx711_read_raw(gpio_num_t dout_pin, gpio_num_t sck_pin)
     return data;
 }
 
+static void insertion_sort_int32(int32_t arr[], int n)
+{
+    for (int i = 1; i < n; i++)
+    {
+        int32_t key = arr[i];
+        int j = i - 1;
+        while (j >= 0 && arr[j] > key)
+        {
+            arr[j + 1] = arr[j];
+            j--;
+        }
+        arr[j + 1] = key;
+    }
+}
+
+#define MEDIAN_SAMPLES 7
+
+static int32_t hx711_read_median_trimmed(gpio_num_t dout_pin, gpio_num_t sck_pin)
+{
+    int32_t samples[MEDIAN_SAMPLES];
+    uint8_t valid = 0;
+    uint16_t invalid_count = 0;
+
+    while (valid < MEDIAN_SAMPLES)
+    {
+        int32_t reading = hx711_read_raw(dout_pin, sck_pin);
+        if (reading != HX711_INVALID_READING)
+        {
+            samples[valid++] = reading;
+        }
+        else
+        {
+            invalid_count++;
+            if (invalid_count > MEDIAN_SAMPLES * 2)
+                return HX711_INVALID_READING;
+        }
+        vTaskDelay(pdMS_TO_TICKS(10));
+    }
+
+    insertion_sort_int32(samples, MEDIAN_SAMPLES);
+
+    int64_t sum = 0;
+    for (int i = 2; i < MEDIAN_SAMPLES - 2; i++)
+    {
+        sum += samples[i];
+    }
+
+    return (int32_t)(sum / 3);
+}
+
 static int32_t hx711_read_average(gpio_num_t dout_pin, gpio_num_t sck_pin, uint8_t samples)
 {
     int64_t sum = 0;
@@ -242,7 +292,7 @@ double hx711_read_sensor_weight(int8_t id)
     calib_local = sensors[id].calib_factor;
     xSemaphoreGive(s_mutex);
 
-    int32_t raw = hx711_read_average(dout_pin, sck_pin, AVERAGE_NUMBER);
+    int32_t raw = hx711_read_median_trimmed(dout_pin, sck_pin);
     if (raw == HX711_INVALID_READING)
     {
         ESP_LOGW(ROTULO_LOCAL, "Sensor %d: leitura inválida", id);
@@ -251,8 +301,8 @@ double hx711_read_sensor_weight(int8_t id)
 
     double diff = raw - offset_local;
 
-    // if (AT_CALIBRATION)
-    ESP_LOGI(ROTULO_LOCAL, "Sensor[%d]:Raw{%ld}|Offset{%ld}|Diff{%f}", id, raw, offset_local, diff);
+    if (AT_CALIBRATION)
+        ESP_LOGI(ROTULO_LOCAL, "Sensor[%d]:Raw{%ld}|Offset{%ld}|Diff{%f}", id, raw, offset_local, diff);
 
     return diff / calib_local;
 }
