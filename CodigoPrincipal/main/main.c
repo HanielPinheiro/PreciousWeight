@@ -9,10 +9,10 @@
 char *ROTULO_LOCAL = "MAIN";
 
 hx711_t sensors[NUM_WEIGHT_SENSORS] = {
-    {.id = 0, .dout_pin = SCALE1_DOUT, .sck_pin = SCALE1_SCK, .offset = 405827, .calib_factor = 399.65},
-    {.id = 1, .dout_pin = SCALE2_DOUT, .sck_pin = SCALE2_SCK, .offset = 217586, .calib_factor = 404.1},
-    {.id = 2, .dout_pin = SCALE3_DOUT, .sck_pin = SCALE3_SCK, .offset = 316565, .calib_factor = 390.1},
-    {.id = 3, .dout_pin = SCALE4_DOUT, .sck_pin = SCALE4_SCK, .offset = 310182, .calib_factor = 398.1}};
+    {.id = 0, .dout_pin = SCALE1_DOUT, .sck_pin = SCALE1_SCK, .offset = 405827, .calib_factor = 397.34},
+    {.id = 1, .dout_pin = SCALE2_DOUT, .sck_pin = SCALE2_SCK, .offset = 217586, .calib_factor = 405.06},
+    {.id = 2, .dout_pin = SCALE3_DOUT, .sck_pin = SCALE3_SCK, .offset = 316565, .calib_factor = 390.86},
+    {.id = 3, .dout_pin = SCALE4_DOUT, .sck_pin = SCALE4_SCK, .offset = 310182, .calib_factor = 398.96}};
 
 static char *ROTULO_SAFETY = "SAFETY";
 
