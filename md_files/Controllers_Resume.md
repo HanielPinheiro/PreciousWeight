@@ -1,262 +1,102 @@
-# Precious Weight Architecture
+# Precious Weight — Arquitetura (Resumo)
 
-## What This Document Covers
+## Sobre Este Documento
 
-This file describes the current solution that is actually implemented in the Java backend and how it communicates with the scale over MQTT.
+Este arquivo resume a arquitetura do **backend Java** atual (Spring Boot) do sistema Precious Weight (balanças neonatais). O conteúdo foi **verificado contra o código-fonte** e corrigido em relação a versões anteriores.
 
-Only the active flow is documented here.
-Topics and features that are not part of the current backend solution were intentionally removed.
+> Para um detalhamento temático, consulte os arquivos complementares:
+> `01_Visao_Geral_Backend.md`, `02_Arquitetura_e_Camadas.md`, `03_Modelo_de_Dados_Bancos.md`,
+> `04_Autenticacao_e_Seguranca.md`, `05_Contrato_MQTT.md`, `06_API_REST_Endpoints.md`,
+> `07_Regras_de_Negocio_e_Fluxos.md` e `08_Auditoria_Envers.md`.
 
-## System Overview
+## Sistema em Visão Geral
 
-The system has 3 main parts:
+O sistema tem 3 partes:
+1. **App Flutter** (cliente — não neste repositório)
+2. **Backend Java** (`spring.security` — este repositório)
+3. **Balança ESP32** (dispositivo físico, acessa via MQTT)
 
-1. Flutter app
-2. Java backend (`spring.security`)
-3. ESP32 scale connected through MQTT
+O backend é a ponte HTTP ↔ MQTT:
+- O Flutter chama endpoints HTTP.
+- O backend valida regras e persiste dados.
+- O backend publica comandos MQTT para a balança.
+- O backend escuta as respostas MQTT e armazena o resultado.
 
-The backend is the bridge between HTTP and MQTT:
+## Bancos de Dados
 
-- Flutter calls HTTP endpoints
-- The backend validates business rules and persists data
-- The backend publishes MQTT commands to the scale
-- The backend listens for MQTT responses and stores the returned data
+Dois bancos MySQL lógicos:
 
-## Databases
+### Banco `app` (negócio)
+- `babies`, `scales`, `weights`, `wifi_connectivity`, `wifi_strengths`
+- Campos de balança relevantes: `scale_id`, `scale_hash`, `scale_state`, `is_connected`, `scale_last_connected_at`, `scale_last_disconnected_at`, `scale_last_wifi_strength`
 
-There are 2 logical databases in the solution:
+### Banco `auth` (segurança + registro de dispositivos)
+- `users`, `roles`, `user_roles_rel`, `scales` (registro de dispositivo = `ScaleDataModel`)
+- Campos do registro: `scale_id` (UUID), `scale_mac`, `scale_pop`, `scale_qrcode`
 
-### App DB
+## Mapeamento de Identidade da Balança
 
-Stores business data used by the application:
+- `app.scales.scale_hash` = `auth.scales.scale_id` (UUID)
+- `auth.scales.scale_mac` = sufixo dos tópicos MQTT (`/scales/<mac>`, `/weights/<mac>`, `/status/<mac>`, `/wifi/<mac>`)
 
-- babies
-- scales
-- weights
-- wifi_strengths
+Resolução de identidade: `scale_id` (app) → `scale_hash` → UUID (auth) → `mac` → tópico MQTT.
 
-Relevant scale fields now used by the solution:
+## Contrato MQTT (Atualizado)
 
-- `scale_id`
-- `scale_hash`
-- `scale_state`
-- `is_connected`
-- `scale_last_connected_at`
-- `scale_last_disconnected_at`
+O backend usa os seguintes tópicos:
 
-### Auth DB
+| Direção | Tópico | Payloads |
+|---------|--------|----------|
+| Comandos (backend→balança) | `/scales/<mac>` | `[BAB]<id>`, `[TIM]<HH:mm>`, `[RUN]`, `[CLE]`, `[MEA]`, `[TAR]`, `[WFS]`, `[WIF]` |
+| Pesos (balança→backend) | `/weights/<mac>` | `[MEA]{<valor>}` (manual, **não salva**) / `[WEI]<valor>` (agendada, **salva**) |
+| Status (balança→backend) | `/status/<mac>` | `CONNECTED`, `DISCONNECTED` |
+| Sinal WiFi (balança→backend) | `/wifi/<mac>` | `[WFS]<inteiro>` |
+| Status da API | `api/status` | `ONLINE`, `OFFLINE`, `CONNECTED` (retido) |
 
-Stores authentication and device registry data:
+**Divergência corrigida:** a resposta de intensidade WiFi chega em `/wifi/<mac>` (e **não** `/scales/<mac>`). O tópico `/sensors/#` **não** é usado.
 
-- users
-- roles
-- scale_data
+Comandos publicados por `MqttPublisherService` (QoS 2, com retry).
 
-The `scale_data` record is the device registry entry used to connect the business scale to the physical device.
+## Fluxos Ativos
 
-Important fields:
+1. **Registrar dispositivo (admin)**: cria `ScaleDataModel` (UUID, MAC, PoP gerado em 8 caracteres). QR Code PNG 250×250 via ZXing com o UUID.
+2. **Vincular balança de negócio**: cria `ScaleModel` com `scale_hash = uuid`.
+3. **Associar bebê à balança**: valida regras; envia `[CLE]` → `[BAB]` → `[TIM]...` → `[RUN]`.
+4. **Desassociar bebê**: envia `[CLE]`; limpa vínculo.
+5. **Medição manual**: publica `[MEA]`, aguarda resposta em `/weights/<mac>`, retorna o peso (não persiste).
+6. **Medição de sinal WiFi**: publica `[WFS]`, aguarda resposta em `/wifi/<mac>`, persiste em `wifi_strengths`.
+7. **Tarar / trocar WiFi**: publica `[TAR]` / `[WIF]`, aguarda 2s.
+8. **Rastreio de conexão**: `/status/<mac>` `CONNECTED`/`DISCONNECTED` → atualiza `is_connected`, timestamps e grava `wifi_connectivity`.
 
-- `scale_id` (UUID)
-- `mac`
-- `pop`
+## Endpoints Relevantes
 
-## Scale Identity Mapping
+### Balanças (`/scales`)
+- `list`, `search/{id}`, `hash/{hashId}`, `set/{id}`, `enable/{id}`, `disable/{id}`
+- `baby/set`, `baby/unset`
+- `measure_now/{scaleId}`, `tare/{scaleId}`, `wifi_strength/{scaleId}`, `change_wifi/{scaleId}`
 
-The backend uses this mapping:
+### Registro de dispositivos (`/scale_data`)
+- `search/{id}`, `qr/{id}`, `list`, `new`, `update`
 
-- app scale `scale_hash` = auth scale_data `scale_id`
-- auth scale_data `mac` = MQTT topic suffix used by the backend
+### Outros
+- Bebês: `/babies/list|search|save|enable|disable|update|image|qr`
+- Pesagens: `/weight/list|save|babies/{babyId}|scales/{scaleId}`
+- Auditoria: `/audit/babies|scales|weights`
+- Autenticação: `/login`, `/login/reset_password`; usuários: `/users/new`, `/users/list`
 
-This means:
+> **Nota:** os caminhos não possuem prefixo `/api/v1`. Todos os endpoints usam POST.
 
-1. A device is first registered in `scale_data`
-2. The same UUID is linked into the app `scales` table
-3. When the backend needs to talk to the scale, it resolves:
-   - app scale -> scale hash
-   - scale hash -> auth scale UUID
-   - auth scale UUID -> MAC
-   - MAC -> MQTT topic suffix
+## Arquivos Principais do Backend
 
-## MQTT Contract Used By The Backend
+- `controllers/app/ScaleController.java`, `controllers/app/BabyController.java`, `controllers/app/WeightController.java`, `controllers/app/AuditController.java`
+- `controllers/auth/LoginController.java`, `controllers/auth/ScaleDataController.java`, `controllers/auth/UserController.java`
+- `app/services/ScaleService.java`, `app/services/BabyService.java`
+- `auth/services/MqttPublisherService.java`, `auth/services/MqttSubscriberService.java`, `auth/services/ScaleDataService.java`
+- `config/auth/SecurityConfig.java`, `config/auth/AdminUserConfig.java`
+- `config/data_source/AppDataSourceConfig.java`, `config/data_source/AuthDataSourceConfig.java`
+- `config/mqtt/MqttConfig.java`
+- `config/system/ApiConstants.java`, `config/system/MqttConstants.java`, `config/system/DataTransferLayerConstants.java`
 
-The current backend uses these topics:
+## Removido da Documentação
 
-### Command Topic
-
-- `/scales/<mac>`
-
-Used by the backend to send commands to the scale.
-
-Commands currently used:
-
-- `[BAB]<babyId>`
-- `[TIM]<HH:mm>`
-- `[RUN]`
-- `[CLE]`
-- `[MEA]`
-- `[WFS]`
-
-### Weight Topic
-
-- `/weights/<mac>`
-
-Used by the scale to publish weight measurements.
-
-Expected payload format:
-
-- `Peso{<value>}`
-
-The backend parses the numeric value and stores it in `weights`.
-
-### Status Topic
-
-- `/status/<mac>`
-
-Used by the scale to publish connectivity events:
-
-- `CONNECTED`
-- `DISCONNECTED`
-
-The backend updates the scale connection state and timestamps in the database.
-
-### Wi-Fi Strength Response
-
-The current solution expects the Wi-Fi strength response on:
-
-- `/scales/<mac>`
-
-Expected payload prefix:
-
-- `[WFS]`
-
-The backend extracts the integer value from the payload and stores it in `wifi_strengths`.
-
-### Disabled Topic
-
-The backend does not use `/sensors/#`.
-
-This topic was intentionally removed from the documented solution.
-
-## Active Backend Flow
-
-### 1. Register device in auth registry
-
-Admin creates a `scale_data` record with:
-
-- UUID
-- MAC
-- generated PoP
-
-The current PoP generation happens in:
-
-- [ScaleDataService.java](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/Api_Java/spring.security/src/main/java/precious_weight/auth/services/ScaleDataService.java)
-
-Current behavior:
-
-- create: generates a PoP
-- update: also regenerates the PoP
-
-### 2. Link device into app scale table
-
-The backend creates an app `scales` row using the auth UUID as `scale_hash`.
-
-### 3. Assign baby to scale
-
-When a baby is assigned, the backend sends:
-
-1. `[BAB]<babyId>`
-2. one or more `[TIM]<HH:mm>`
-3. `[RUN]`
-
-### 4. Unassign baby from scale
-
-The backend sends:
-
-- `[CLE]`
-
-### 5. Measure weight now
-
-The backend:
-
-1. publishes `[MEA]` to `/scales/<mac>`
-2. waits for a response in `/weights/<mac>`
-3. persists the value in `weights`
-4. returns the latest stored weight
-
-### 6. Measure Wi-Fi strength now
-
-The backend:
-
-1. publishes `[WFS]` to `/scales/<mac>`
-2. waits for a response in `/scales/<mac>`
-3. extracts the integer signal value from the payload
-4. persists it in `wifi_strengths`
-5. returns the latest stored Wi-Fi strength
-
-### 7. Track connection status
-
-When the scale publishes to `/status/<mac>`:
-
-- `CONNECTED`:
-  - `is_connected = true`
-  - `scale_last_connected_at = now`
-- `DISCONNECTED`:
-  - `is_connected = false`
-  - `scale_last_disconnected_at = now`
-
-## Relevant Endpoints
-
-These are the most relevant endpoints for the current solution:
-
-### Scale management
-
-- `POST /scales/list`
-- `POST /scales/search/{id}`
-- `POST /scales/hash/{hashId}`
-- `POST /scales/set/{id}`
-- `POST /scales/enable/{id}`
-- `POST /scales/disable/{id}`
-
-### Baby-scale relation
-
-- `POST /scales/baby/set`
-- `POST /scales/baby/unset`
-
-### Real-time operations
-
-- `POST /scales/measure_now/{scaleId}`
-- `POST /scales/wifi_strength/{scaleId}`
-- `POST /scales/connection/{scaleId}`
-
-### Device registry
-
-- `POST /scale_data/list`
-- `POST /scale_data/new`
-- `POST /scale_data/update`
-- `POST /scale_data/search/{id}`
-- `POST /scale_data/qr/{id}`
-
-## Files That Implement The Current Solution
-
-Main backend files:
-
-- [ScaleController.java](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/Api_Java/spring.security/src/main/java/precious_weight/controllers/app/ScaleController.java)
-- [ScaleService.java](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/Api_Java/spring.security/src/main/java/precious_weight/app/services/ScaleService.java)
-- [MqttSubscriberService.java](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/Api_Java/spring.security/src/main/java/precious_weight/auth/services/MqttSubscriberService.java)
-- [MqttPublisherService.java](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/Api_Java/spring.security/src/main/java/precious_weight/auth/services/MqttPublisherService.java)
-- [ScaleDataService.java](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/Api_Java/spring.security/src/main/java/precious_weight/auth/services/ScaleDataService.java)
-
-Persistence for the recent solution changes:
-
-- [WifiStrengthModel.java](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/Api_Java/spring.security/src/main/java/precious_weight/app/models/WifiStrengthModel.java)
-- [ScaleModel.java](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/Api_Java/spring.security/src/main/java/precious_weight/app/models/ScaleModel.java)
-- [RerunScripts.md](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/Api_Java/md_files/RerunScripts.md)
-
-## What Was Removed From The Documentation
-
-The following items were intentionally removed because they do not describe the current backend solution:
-
-- generic Spring Boot boilerplate docs
-- old flow text not tied to the real implementation
-- `/sensors/#` as part of the active API integration
-- unnecessary firmware internals that do not change the backend contract
+- Não são parte da solução atual do backend: `/sensors/#`, fluxos de firmware não utilizados no contrato backend, e conteúdo genérico de boilerplate Spring não relacionado.
