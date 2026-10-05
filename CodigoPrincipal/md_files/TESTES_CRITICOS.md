@@ -1,35 +1,35 @@
 # TESTES_CRITICOS.md — Checklist de Validação (UTI Neonatal)
 
-Atualizado refletindo a arquitetura com **inicialização por fases independentes (PESAGEM antes do WIFI)**, **degradação graciosa SD down → buffer RAM 10 slots**, **bloqueio de segurança 120s**, e **weights.txt como único arquivo estruturado de pesagens**.
+Checklist de injeção de falhas **alinhado ao comportamento real do firmware em HEAD**. Revisado contra o source: **pesagem agendada e manual dependem de WiFi/MQTT** (o scheduler só é armado após WiFi+SNTP), enquanto a **aquisição/agregação de sensores roda desde o boot (Fase 2)**. O teste 120 s de segurança e o outbox offline permanecem válidos.
 
 ---
 
 ## 1. Provisionamento BLE
 
-| ID  | Caso                                               | Passo-a-passo                                                                                                                                                                                     | Esperado                                                                                                                                                                                                                          |
-| --- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| P1  | Provisionamento frio (sem credenciais)             | 1. Flash o firmware. 2. Clique para resetar e forçar estado NÃO provisionado (ou execute `[WIF]`). 3. Abra app de provisionamento e conecte no device name. 4. Entre SSID + senha da rede válida. | ➡️ BLE permanece visível até credencial enviada. ➡️ Dentro de ~5s após envio: BLE desaparece, ESP32 conecta no AP, obtém IP, sincroniza SNTP, inicia MQTT. ➡️ SD: `audit.log` tem `EVT\|...\|MQTT_CONNECTED` (se MQTT conectar).  |
-| P2  | Tempo limite de STA antes de reprovisionamento BLE | 1. Credenciais existem mas AP está desligado. 2. Reseta. 3. Mede tempo de espera.                                                                                                                 | ➡️ 3 tentativas STA × 15s timeout ≈ 45s. ➡️ Depois cai em BLE provisionamento. ➡️ **Durante essas 45s + BLE indefinido: as pesagens agendadas CONTINUAM funcionando e gravando no SD.**                                           |
-| P3  | Provisionamento enquanto peso agendado passa       | 1. Boot às 07:59 com horário agendado 08:00. 2. Começa provisionamento BLE no celular, demora ≥ 2 min (propositalmente lento). 3. Aguarda relógio real passar de 08:00.                           | ➡️ **Em 08:00:00 a pesagem é feita.** ➡️ Mesmo que ainda estaja no BLE. ➡️ `weights.txt` recebe uma linha `MEA\|seq\|epoch\|scheduled\|xx.xx`. ➡️ Depois que o WiFi conectar, o outbox.log (ou RAM buffer) envia a mensagem MQTT. |
+| ID | Caso | Passo-a-passo | Esperado |
+|----|------|---------------|----------|
+| P1 | Provisionamento frio (sem credenciais) | 1. Flash o firmware. 2. Acione `[WIF]` para forçar estado não provisionado. 3. App de provisionamento conecta no device name. 4. Envie SSID + senha da rede válida. | BLE visível até credencial enviada. Em ~5 s: BLE some, ESP32 conecta no AP, obtém IP, sincroniza SNTP, inicia MQTT. `audit.log` ganha `EVT\|...\|MQTT_CONNECTED`. |
+| P2 | Timeout de STA antes de reprovisionamento BLE | 1. Credenciais existem, mas AP desligado. 2. Reset. 3. Mede tempo de espera. | 3 tentativas STA × 15 s ≈ 45 s. Sem IP, cai em BLE provisioning. **Atenção:** durante esse período **não há scheduler armado** (depende de WiFi); apenas leitura/agregação de sensores e tara de boot ativas. `g_sys.wifi_up=false`. |
+| P3 | Provisionamento enquanto "passa o horário agendado" | 1. Boot sem WiFi. 2. Horário agendado em baby.txt é carregado do SD. 3. Demora no BLE passando do horário. | **A pesagem agendada NÃO dispara sem WiFi** — o scheduler (`init_weight_sensors_timer`) só é criado após WiFi+SNTP. O horário carregado fica armazenado e, quando o WiFi subir, o scheduler arma o **próximo** horário a partir daquele momento (ver §5 para o cálculo). Nenhum `MEA|...|scheduled` é gerado durante o BLE. |
 
 ---
 
 ## 2. Conectividade — Runtime
 
-| ID  | Caso                                  | Passo-a-passo                                                                                                                                                  | Esperado                                                                                                                                                                                                                                                                          |
-| --- | ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| C1  | WiFi cai por 5 min enquanto pesa      | 1. Sistema online normal. 2. Agende um horário em 1 min. 3. Desligue o AP por 5 minutos. 4. Passe 2 pesagens agendadas nesse meio tempo. 5. Ligue AP de volta. | ➡️ Cada pesagem: gravou em weights.txt e botou em outbox.log `P\|...\|/weights/...`. ➡️ Durante ausência WiFi: não crasha, WDT não dispara. ➡️ Quando WiFi volta (~30s para DHCP + SNTP + MQTT connect): outbox_worker reenvia os 2 pesos. Cada um recebe `S\|seq` no outbox.log. |
-| C2  | Broker MQTT cai mas WiFi fica UP      | 1. Online. 2. Execute `[MEA]`. 3. Desligue broker por 3 min. 4. Execute `[MEA]` 2× e espere um agendado. 5. Ligue broker.                                      | ➡️ Mesmo que WiFi esteja OK, MQTT publish falha. As 3 medições vão para outbox.log pendentes. ➡️ Quando broker sobe: MQTT cliente reconecta, outbox_worker lê 3 pendentes, publica, marca S\|seq.                                                                                 |
-| C3  | Threshold de desconexão → reset_wifi? | 1. Runtime WiFi UP. 2. Desliga AP permanentemente. 3. Conta eventos `WIFI_EVENT_STA_DISCONNECTED` com script na UART.                                          | ➡️ Depois de 15 desconexões: chama `reset_wifi()` → para MQTT → deleta credenciais NVS → reinicia ESP32. ➡️ No próximo boot, volta ao provisionamento BLE.                                                                                                                        |
-| C4  | WiFi signal strength                  | 1. Online. 2. `[WFS]`.                                                                                                                                         | ➡️ Publica RSSI atual em **`/wifi/<service>`**. ➡️ Não crasha.                                                                                                                                                                                                                    |
+| ID | Caso | Passo-a-passo | Esperado |
+|----|------|---------------|----------|
+| C1 | WiFi cai por 5 min enquanto pesa | 1. Sistema online normal (scheduler armado). 2. Agende 1 min à frente. 3. Desligue o AP por 5 min. 4. Deixe 2 pesagens agendadas passarem. 5. Ligue AP. | Cada pesagem: grava em weights.txt e, se publish falhar, `P\|...` no outbox.log. Sem crash/WDT durante ausência. Quando WiFi volta (~30 s DHCP+SNTP+MQTT), outbox_worker (1 Hz) reenvia e marca `S\|seq`. |
+| C2 | Broker MQTT cai mas WiFi fica UP | 1. Online. 2. `[MEA]`. 3. Desligue broker 3 min. 4. `[MEA]` 2× + 1 agendado. 5. Ligue broker. | WiFi OK mas publish falha → as medições vão a outbox.log pendentes. Broker sobe → outbox_worker reenvia e marca `S\|seq`. |
+| C3 | Flood de desconexões → reset | 1. Runtime WiFi UP. 2. Desliga AP permanentemente. 3. Conta `WIFI_EVENT_STA_DISCONNECTED`. | Após **15 desconexões**: `reset_wifi()` → stop MQTT → `esp_wifi_restore()` (apaga credenciais) → `esp_wifi_deinit()` → `esp_restart()`. No próximo boot, provisionamento BLE. |
+| C4 | Força do sinal WiFi | 1. Online. 2. `[WFS]`. | Publica RSSI em `/wifi/<service>` com payload `[WFS]{rssi}`. Não crasha. |
 
 ---
 
 ## 3. Cartão SD
 
-### 3.1 Estrutura de arquivos (ATUALIZADA: sem measurements.log, weights.txt recebe os MEA|...)
+### 3.1 Estrutura de arquivos
 
-Após **qualquer boot bem sucedido + pelo menos 1 comando**, `/sdcard/scales/` DEVE conter **exatamente**:
+Após boot + ≥1 comando, `/sdcard/scales/` deve conter:
 
 ```
 /sdcard/scales/
@@ -37,51 +37,55 @@ Após **qualquer boot bem sucedido + pelo menos 1 comando**, `/sdcard/scales/` D
 ├── weights.txt         (MEA|seq|epoch|manual/scheduled|xx.xx)
 ├── baby.txt            (baby_id + weight_times)
 ├── state.txt           (boot_epoch, reset_reason, baby_id, horários)
-├── sequence.txt        (um número uint32_t monotônico)
-├── audit.log           (EVT|...|INFO|WARN|ERROR|CRITICAL)
+├── sequence.txt        (uint32 monotônico)
+├── audit.log           (EVT|...)
 ├── commands.log        (CMD|seq|epoch|payload)
-├── critical.log        (apenas EVT critical)
+├── critical.log        (só EVT critical)
 └── outbox.log          (P|... e S|...)
 ```
 
-❌ **`measurements.log` não deve existir** — se aparecer, regressão.
+❌ `measurements.log` não deve existir — regressão.
 
 ### 3.2 Casos de falha SD
 
-| ID  | Caso                                               | Passo-a-passo                                                                                                                                                                   | Esperado                                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| --- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| S1  | Cartão em BRANCO / sem `/sdcard/scales`            | 1. Formate cartão FAT32 vazio. 2. Insira. 3. Boot.                                                                                                                              | ➡️ Cria `/sdcard/scales/`. ➡️ `state.txt`, `sequence.txt`, etc aparecem no primeiro uso. ➡️ Passa normal.                                                                                                                                                                                                                                                                                                                                              |
-| S2  | Cartão AUSENTE no boot                             | 1. Retire SD. 2. Resete. 3. Espere >120s. 4. Durante os primeiros 120s: `[MEA]` e/ou pesagem agendada.                                                                          | ➡️ Fase1: SD down → `g_sys.sd_ok=false`. ➡️ Contínua boot. Fase2 inicia HX711/sensors/timer. ➡️ **0-120s: Balança pesa.** Pesagens entram em **RAM buffer 10 slots estáticos**. Não crasha. ➡️ **120s sanity check dispara.** IF `mqtt_up == false NESTE momento`: 🔴 bloqueio segurança. IF `mqtt_up == true NESTE momento`: publica 1 alerta CRITICAL em **`/status/<service>`** (MQTT_TOPIC_CONN_STATUS) informando `OPERATING_ONLINE_ONLY_NO_OFFLINE_FALLBACK`. Segue pesando por MQTT. |
-| S3  | Cartão AUSENTE no boot, MQTT conecta antes de 120s | 1. Retire SD. 2. Boot. 3. WiFi válido, broker ok. 4. Mede quanto tempo até MQTT conectar — precisa ser <120s. 5. Sanity check 120s.                                             | ➡️ Sistema PESA e PUBLICA via MQTT tudo. ➡️ 120s: sanity vê `mqtt_up=true, sd_ok=false` → envia 1 alerta CRITICAL (única vez). ➡️ Sistema operante, porém sem fallback offline (conforme alerta).                                                                                                                                                                                                                                                      |
-| S4  | Remove cartão durante runtime                      | 1. SD OK, operando. 2. Meio de fisgada com pinça ou remova (não recomendado fisicamente — use power injection control). 3. Em seguida dê `[MEA]`. 4. Depois espere um agendado. | ➡️ Próxima escrita SD vai falhar em sdcard_write_file. ➡️ sdcard_persistence: `g_sys.sd_ok` continua **verdadeiro (dado inconsistente) porém as writes falham silenciosamente → cai em RAM buffer 10 slots.** ➡️ Se não inserir SD de volta e não passar de 10 pesos: mantém. Se passar 10: log ERRO "RAM buffer CHEIO" e descarta mais novos (melhor que crashar).                                                                                    |
-| S5  | SD FULL (ENOSPC)                                   | 1. Cartão ~100% cheio. 2. Force `[MEA]` em loop.                                                                                                                                | ➡️ sdcard_write_file retorna ESP_FAIL quando ENOSPC. ➡️ Espera-se tratamento em camada sdcard.c → **idealmente emite evento `SD_FULL` via MQTT** (hoje depende se tem caminho que publica; senão no mínimo não crasha).                                                                                                                                                                                                                                |
+| ID | Caso | Passo-a-passo | Esperado |
+|----|------|---------------|----------|
+| S1 | Cartão em branco / sem `/sdcard/scales` | 1. Cartão FAT32 vazio. 2. Insira. 3. Boot. | Cria `/sdcard/scales/`. Arquivos aparecem no primeiro uso. Passa normal. |
+| S2 | Cartão ausente no boot | 1. Retire SD. 2. Reset. 3. `[MEA]` (via MQTT) nos primeiros 120 s. | Fase 1: `g_sys.sd_ok=false`; boot continua. Fase 2 inicializa HX711/sensors. **O `[MEA]`/agendada não geram peso sem WiFi/MQTT** (ver §2). Se MQTT estiver up, peso é publicado; em SD down, `pw_outbox_add` cai em **RAM buffer 10 slots**. No sanity 120 s: SD=fail & MQTT=fail → bloqueio; SD=fail & MQTT=ok → alerta CRITICAL em `/status/` e segue. |
+| S3 | SD ausente, MQTT conecta < 120 s | 1. Retire SD. 2. Boot. 3. Broker ok. 4. Mede tempo até MQTT conectar (<120 s). 5. Sanity 120 s. | Pesa e publica via MQTT (pesagens exigem comando/agenda → online). Sanity vê `mqtt_up=true, sd_ok=false` → alerta CRITICAL (1 vez). Sistema operante, sem fallback offline. |
+| S4 | Remove SD durante runtime | 1. SD OK, online. 2. Remova. 3. `[MEA]`. 4. Espere agendado. | Próxima escrita SD falha; `g_sys.sd_ok` fica inconsistente (true), writes falham silenciosamente → cai em RAM buffer. Se >10 pendentes: loga ERRO "RAM buffer CHEIO" e descarta novos. Não crasha. |
+| S5 | SD FULL (ENOSPC) | 1. Cartão ~100% cheio. 2. Loop `[MEA]`. | `sdcard_write_file` retorna ESP_FAIL; `last_sd_errno=ENOSPC`. Na task sdcard, após 5 falhas, gera evento CRITICAL `SD_FULL` em audit/critical.log (publicação MQTT comentada). Não crasha. |
 
 ---
 
 ## 4. Energia / Power-Cut
 
-| ID  | Caso                                                                | Passo-a-passo                                                                                                                                                            | Esperado                                                                                                                                                                                     |
-| --- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| E1  | Corta energia DURANTE escrita SD                                    | 1. Coloque para pesagem em loop (agendado 1min). 2. Corte energia no momento exato da escrita (instrumente toggle GPIO + scope se tiver; senão 10x sorteio). 3. Religue. | ➡️ Não deixa o cartão ilegível. ➡️ `state.txt` ainda é passível de escrita (cria de novo se vazio). ➡️ `sequence.txt` se corrompido → recria em 0. ➡️ Não deadlock. Não loop crash infinito. |
-| E2  | Corta energia DURANTE publish `[MEA]` (outbox pendente não enviado) | 1. Com WiFi UP aguarde um `[MEA]`. 2. No segundo em que a medição acontece, corte ANTES do ack do broker. 3. Ligue de volta. 4. Verifique outbox.log.                    | ➡️ Se o `P                                                                                                                                                                                   | seq | ...` foi escrito ANTES do corte: boot → MQTT conecta → outbox_worker reenvia este peso. ✅ NADA PERDIDO. ➡️ Se o corte foi exatamente na escrita do P | ... e linha ficou malformada (incompleta): parse por sscanf rígido ignora a linha e segue. Não crasha. |
+| ID | Caso | Passo-a-passo | Esperado |
+|----|------|---------------|----------|
+| E1 | Corte de energia DURANTE escrita SD | 1. Loop de pesagem agendado (online, 1 min). 2. Corte energia na escrita. 3. Religue. | Cartão permanece legível. `state.txt` recriado se vazio. `sequence.txt` corrompido → recria em 0 (monotonicidade perdida nesse caso, ver nota). Sem deadlock/loop de crash. |
+| E2 | Corte DURANTE publish `[MEA]` (outbox pendente) | 1. WiFi UP. 2. `[MEA]`. 3. Corte antes do ack do broker. 4. Religue. 5. Verifique outbox.log. | Se `P\|seq\|...` escrito antes do corte → boot reenvia e marca `S\|seq` (nada perdido). Se linha malformada → `sscanf` rígido ignora e segue, sem crash. |
+
+> Nota E1: a monotonicidade estrita do `sequence.txt` assume escrita atômica; um corte no meio da sobrescrita pode zerar o ID (código recria em 0). É uma limitação conhecida — backends devem tolerar reinício de sequência após corrupção do arquivo.
 
 ---
 
 ## 5. Timeline / Auditoria
 
-| ID  | Caso                                                                                    | Esperado                                                                                                                                                                                                                                                                                              |
-| --- | --------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| A1  | [BAB] + vários [TIM] + [RUN] + [MEA] + [WFS]                                            | ➡️ `/acks/<service>` recebe todos OK? (Nota: acks desativados no momento, confirmar status em PROJETO_RESUMO.md §6.) ➡️ De toda forma: `commands.log` grava CMD\|seq\|epoch\|payload para CADA comando. ➡️ `audit.log` grava EVT. ➡️ `weights.txt` grava MEA somente para [MEA] e pesagens agendadas. |
-| A2  | Pesagem agendada produz 1 entrada weights.txt + 1 /weights publish + 1 outbox se falhou | Agende. Execute. Confira no SD.                                                                                                                                                                                                                                                                       | ➡️ 1 linha MEA. ➡️ 1 publicação (sucesso) OU 1 P\|... no outbox.log (falha). ➡️ Não produz duplicatas. Não produz "meia" publicação. |
-| A3  | Manutenção de sequence_id por reboot                                                    | 1. `[MEA]` → seq=X. 2. Resete. 3. `[MEA]` → seq=X+1.                                                                                                                                                                                                                                                  | ➡️ Sequence ID continua monotônico. ➡️ Não volta para 1 a cada boot (a menos que SD esteja ausente, aí roda em RAM).                 |
+| ID | Caso | Esperado |
+|----|------|----------|
+| A1 | `[BAB]` + vários `[TIM]` + `[RUN]` + `[MEA]` + `[WFS]` | `commands.log` grava `CMD\|...` para cada comando; `audit.log` grava `EVT`; `weights.txt` grava `MEA` para `[MEA]` e pesagens agendadas. Atenção: `[RUN]` só arma scheduler se WiFi/SNTP ok. |
+| A2 | Pesagem agendada: 1 entrada weights + 1 publish/outbox | 1 linha `MEA`. 1 publicação (sucesso) OU 1 `P\|...` no outbox (falha). Sem duplicatas nem meia-publicação. |
+| A3 | Manutenção de sequence_id por reboot | `[MEA]` → seq=X; reset; `[MEA]` → seq=X+1. **Nota:** se SD ausente no boot, sequence roda em RAM a partir de 0 (reinicia). Com SD ok, é monotônico persistido. |
 
 ---
 
 ## 6. Limites / Robustez
 
-| ID  | Caso                          | Esperado                                                                            |
-| --- | ----------------------------- | ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| L1  | Exceder MAX_WEIGHT_TIMES      | 1. Envie >10 [TIM]. 2. Monitora heap + stack.                                       | ➡️ Os extras são rejeitados. ➡️ Não há leak de heap / corrupção. ➡️ Retorna ERR no command ack (se ativado).                                                                                                                                                           |
-| L2  | Flood comandos em /scales/    | 1. Publica 1000 comandos/s via script.                                              | ➡️ Firmware não trava. ➡️ Se command queue encher: loga ERRO (ou pelo menos não recebe mais). ➡️ Não WDT reset. ➡️ Pesagens agendadas continuam respeitando deadlines.                                                                                                 |
-| L3  | RAM buffer 10 slots + SD=fail | 1. Retire SD. 2. Deixe WiFi desligado. 3. Execute `[MEA]` 12x em intervalos.        | ➡️ 1-10: bufferiza em RAM, loga WARN no UART. ➡️ 11-12: loga ERRO "RAM buffer CHEIO" e descarta. Não crasha. Não stack overflow. ➡️ Se religar WiFi antes de 120s: primeiros 10 são enviados.                                                                          |
-| L4  | Bloqueio de segurança 120s    | 1. Retire SD. 2. Deixe AP desligado (nunca conecta WiFi/MQTT). 3. Boot. 4. Cê 120s. | ➡️ 0~120s: pesa normalmente, tudo em RAM buffer. ➡️ >120s: `pw_safety_critical_loop` dispara. ➡️ LED `BLINK_LED_CRITICAL_ERROR`. ➡️ Mensagem a cada 2s: "SD + MQTT INDISPONIVEIS...". ➡️ Parou de pesar (bloqueio proposital). ➡️ WDT não dispara (vTaskDelay libera). |
+| ID | Caso | Esperado |
+|----|------|----------|
+| L1 | Exceder `MAX_WEIGHT_TIMES` (10) | Enviar >10 `[TIM]` → extras rejeitados (retorna "ERROR_MAX_WEIGHT_TIMES_ACHIEVED" em `/weights/`). Sem leak/corrupção. |
+| L2 | Flood de comandos em `/scales/` | 1000 cmd/s. Sem trava. Se fila de comandos (10) encher → loga "Fila de comandos MQTT cheia". Sem WDT reset. Agendadas mantêm deadline (task dedicada). |
+| L3 | RAM buffer 10 slots + SD=fail | SD down, WiFi down (sem pesagens possíveis, mas validar enfileiramento se MQTT estiver up). 1–10: bufferiza em RAM; >10: ERRO "RAM buffer CHEIO", descarta. Não crasha. |
+| L4 | Bloqueio de segurança 120 s | SD ausente + AP desligado (MQTT nunca conecta). Boot. Esperar 120 s. | 0–120 s: aquisição de sensores ativa, porém sem pesagens (sem MQTT p/ comandar/agendar). >120 s: `pw_safety_critical_loop` dispara, LED CRITICAL, mensagem a cada 2 s "SD + MQTT INDISPONIVEIS...". Sistema para de operar propositalmente. WDT não dispara (`vTaskDelay`). |
+
+---
