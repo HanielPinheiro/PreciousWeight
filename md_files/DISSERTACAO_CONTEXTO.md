@@ -68,16 +68,16 @@ Lista completa e versões versionadas em [pubspec.yaml](file:///e:/Academico/Mes
 
 O projeto separa **UI**, **estado** e **infraestrutura**:
 
-| Camada                | Diretório                                                                                                                          | Responsabilidade                                                                                                 |
-| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| Entrada do app        | [lib/main.dart](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/lib/main.dart)                         | Registra Providers (`MultiProvider`) e define `MaterialApp`, temas luz/escuro e rota inicial (Login).            |
-| Views (UI)            | [lib/views/](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/lib/views/)                               | Telas e fluxos: Login, Home, Bebês, Balanças, Registros (auditoria).                                             |
-| Providers (estado)    | [lib/repository/providers/](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/lib/repository/providers/) | `BabyProvider` e `ScalesProvider` (`ChangeNotifier`) com cache em memória.                                       |
-| API clients           | [lib/api/](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/lib/api/)                                   | Clients por recurso: users, babies, scales, weights, logs.                                                       |
-| Models                | [lib/models/](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/lib/models/)                             | Modelos de domínio e mapeamento JSON.                                                                            |
-| Services (infra)      | [lib/repository/services/](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/lib/repository/services/)   | `api_service.dart` (HTTP + erros), `qrcode_service.dart` (scanner), `bluefi_service.dart` (provisionamento BLE). |
-| Design system         | [lib/repository/design/](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/lib/repository/design/)       | Tema, cores, tipografia e estilos de botão.                                                                      |
-| Widgets reutilizáveis | [lib/repository/widgets/](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/lib/repository/widgets/)     | `elements.dart` (componentes de UI), `menu.dart` (navegação inferior), `baby_weight_chart.dart` (gráfico).       |
+| Camada | Diretório | Responsabilidade |
+|--------|-----------|------------------|
+| Entrada do app | [lib/main.dart](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/lib/main.dart) | Registra Providers (`MultiProvider`) e define `MaterialApp`, temas luz/escuro e rota inicial (Login). |
+| Views (UI) | [lib/views/](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/lib/views/) | Telas e fluxos: Login, Home, Bebês, Balanças, Registros (auditoria). |
+| Providers (estado) | [lib/repository/providers/](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/lib/repository/providers/) | `BabyProvider` e `ScalesProvider` (`ChangeNotifier`) com cache em memória. |
+| API clients | [lib/api/](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/lib/api/) | Clients por recurso: users, babies, scales, weights, logs. |
+| Models | [lib/models/](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/lib/models/) | Modelos de domínio e mapeamento JSON. |
+| Services (infra) | [lib/repository/services/](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/lib/repository/services/) | `api_service.dart` (HTTP + erros), `qrcode_service.dart` (scanner), `bluefi_service.dart` (provisionamento BLE). |
+| Design system | [lib/repository/design/](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/lib/repository/design/) | Tema, cores, tipografia e estilos de botão. |
+| Widgets reutilizáveis | [lib/repository/widgets/](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/lib/repository/widgets/) | `elements.dart` (componentes de UI), `menu.dart` (navegação inferior), `baby_weight_chart.dart` (gráfico). |
 
 ---
 
@@ -277,7 +277,6 @@ Fluxo detalhado:
 6. Envia credenciais com `provisionWifi(deviceName, pop, ssid, password)`.
 
 **Integração nativa de Bluetooth:**
-
 - O app usa `MethodChannel('bluetooth_helper')` (checagem pontual) e `EventChannel('bluetooth_helper_state')` (monitora ligar/desligar do BT).
 - Implementação **Android** em [MainActivity.kt](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/android/app/src/main/kotlin/com/example/untitled/MainActivity.kt) (usa `BluetoothAdapter` + `BroadcastReceiver`).
 - Implementação **iOS** em [AppDelegate.swift](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/ios/Runner/AppDelegate.swift) (usa `CBCentralManager`).
@@ -292,14 +291,12 @@ Fluxo detalhado:
 - `_canReceiveMqttCommands` = `_isScaleOnline && _scaleActive`.
 
 Bloco **sem bebê** (`_withoutBaby`):
-
 - "Ativar/Inativar Balança" — `enableOrDisableScale`.
 - "Associar Balança a um Bebê" — abre `ScaleBabies` para escolher bebê disponível.
 
 Bloco **detalhes** (`_showScaleDetails`): exibe hash e estado operacional.
 
 Bloco **comandos** (`_showScaleCommands`):
-
 - **Força de sinal Wi-Fi** — na carga (`_loadData`), se `isConnected`, chama `requestWifiStrength` para atualizar o cache (e, em falha, marca a balança offline via `updateScaleConnectivity`).
 - **"Medir Peso Agora"** (`_measureWeightNow`): executa `requestWeightNow`, exibe o valor retornado numa caixa "Peso Medido", e **permite salvar o peso no banco** (`WeightApi.saveWeight`) **somente se houver bebê associado**.
 - **"Realizar Tara"** (`_tareScale`): chama `requestTare`.
@@ -435,25 +432,25 @@ Ao usar este material, **não inferir capacidades ausentes do código**. Em part
 
 ## 16. Referência rápida de arquivos de código (mapa do app)
 
-| Camada / função                         | Arquivo                                                                                                                                                                                                                                                                                         |
-| --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Entrada / providers                     | [main.dart](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/lib/main.dart)                                                                                                                                                                                          |
-| Navegação inferior + sair               | [menu.dart](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/lib/repository/widgets/menu.dart)                                                                                                                                                                       |
-| Estado bebês                            | [baby_provider.dart](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/lib/repository/providers/baby_provider.dart)                                                                                                                                                   |
-| Estado balanças                         | [scales_provider.dart](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/lib/repository/providers/scales_provider.dart)                                                                                                                                               |
-| HTTP + erros                            | [api_service.dart](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/lib/repository/services/api_service.dart)                                                                                                                                                        |
-| Tratamento 401/expirado                 | [api_error_handler.dart](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/lib/repository/helper/api_error_handler.dart)                                                                                                                                              |
-| QR scanner                              | [qrcode_service.dart](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/lib/repository/services/qrcode_service.dart)                                                                                                                                                  |
-| Provisionamento BLE                     | [bluefi_service.dart](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/lib/repository/services/bluefi_service.dart)                                                                                                                                                  |
-| Home (hub de escaneamento)              | [home.dart](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/lib/views/home/home.dart)                                                                                                                                                                               |
-| Detalhes balança (operações remotas)    | [scales_details.dart](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/lib/views/scales/scales_details.dart)                                                                                                                                                         |
-| Associação bebê↔balança                 | [scales_babies.dart](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/lib/views/scales/scales_babies.dart)                                                                                                                                                           |
-| Detalhes bebê (gráfico)                 | [babies_details.dart](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/lib/views/babies/babies_details.dart)                                                                                                                                                         |
-| Gráfico evolução                        | [baby_weight_chart.dart](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/lib/repository/widgets/baby_weight_chart.dart)                                                                                                                                             |
-| Kit de UI                               | [elements.dart](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/lib/repository/widgets/elements.dart)                                                                                                                                                               |
-| Constantes/endpoints/base               | [constants.dart](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/lib/repository/helper/constants.dart)                                                                                                                                                              |
-| Modelos (bebê/balança/peso/log/usuário) | [lib/models/](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/lib/models/)                                                                                                                                                                                          |
-| Clients de API                          | [lib/api/](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/lib/api/)                                                                                                                                                                                                |
-| Bluetooth nativo (Android/iOS)          | [MainActivity.kt](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/android/app/src/main/kotlin/com/example/untitled/MainActivity.kt) · [AppDelegate.swift](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/ios/Runner/AppDelegate.swift) |
-| Permissões (Android/iOS)                | [AndroidManifest.xml](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/android/app/src/main/AndroidManifest.xml) · [Info.plist](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/ios/Runner/Info.plist)                                   |
-| Testes                                  | [test/baby_provider_test.dart](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/test/baby_provider_test.dart) · [test/baby_weight_chart_test.dart](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/test/baby_weight_chart_test.dart)     |
+| Camada / função | Arquivo |
+|-----------------|---------|
+| Entrada / providers | [main.dart](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/lib/main.dart) |
+| Navegação inferior + sair | [menu.dart](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/lib/repository/widgets/menu.dart) |
+| Estado bebês | [baby_provider.dart](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/lib/repository/providers/baby_provider.dart) |
+| Estado balanças | [scales_provider.dart](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/lib/repository/providers/scales_provider.dart) |
+| HTTP + erros | [api_service.dart](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/lib/repository/services/api_service.dart) |
+| Tratamento 401/expirado | [api_error_handler.dart](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/lib/repository/helper/api_error_handler.dart) |
+| QR scanner | [qrcode_service.dart](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/lib/repository/services/qrcode_service.dart) |
+| Provisionamento BLE | [bluefi_service.dart](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/lib/repository/services/bluefi_service.dart) |
+| Home (hub de escaneamento) | [home.dart](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/lib/views/home/home.dart) |
+| Detalhes balança (operações remotas) | [scales_details.dart](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/lib/views/scales/scales_details.dart) |
+| Associação bebê↔balança | [scales_babies.dart](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/lib/views/scales/scales_babies.dart) |
+| Detalhes bebê (gráfico) | [babies_details.dart](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/lib/views/babies/babies_details.dart) |
+| Gráfico evolução | [baby_weight_chart.dart](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/lib/repository/widgets/baby_weight_chart.dart) |
+| Kit de UI | [elements.dart](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/lib/repository/widgets/elements.dart) |
+| Constantes/endpoints/base | [constants.dart](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/lib/repository/helper/constants.dart) |
+| Modelos (bebê/balança/peso/log/usuário) | [lib/models/](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/lib/models/) |
+| Clients de API | [lib/api/](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/lib/api/) |
+| Bluetooth nativo (Android/iOS) | [MainActivity.kt](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/android/app/src/main/kotlin/com/example/untitled/MainActivity.kt) · [AppDelegate.swift](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/ios/Runner/AppDelegate.swift) |
+| Permissões (Android/iOS) | [AndroidManifest.xml](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/android/app/src/main/AndroidManifest.xml) · [Info.plist](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/ios/Runner/Info.plist) |
+| Testes | [test/baby_provider_test.dart](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/test/baby_provider_test.dart) · [test/baby_weight_chart_test.dart](file:///e:/Academico/Mestrado/UNIFESP/LuizGalvao/PreciousWeight/App_Flutter/test/baby_weight_chart_test.dart) |
